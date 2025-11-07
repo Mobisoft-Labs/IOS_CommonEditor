@@ -3,19 +3,46 @@
 
 import PackageDescription
 
+//let package = Package(
+//    name: "IOS_CommonEditor",
+//    products: [
+//        // Products define the executables and libraries a package produces, making them visible to other packages.
+//        .library(
+//            name: "IOS_CommonEditor",
+//            targets: ["IOS_CommonEditor"]),
+//    ],
+//    targets: [
+//        // Targets are the basic building blocks of a package, defining a module or a test suite.
+//        // Targets can depend on other targets in this package and products from dependencies.
+//        .target(
+//            name: "IOS_CommonEditor"),
+//
+//    ]
+//)
+
 let package = Package(
     name: "IOS_CommonEditor",
+    platforms: [
+        .iOS(.v16)
+    ],
     products: [
-        // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
             name: "IOS_CommonEditor",
-            targets: ["IOS_CommonEditor"]),
+            targets: ["IOS_CommonEditor"]
+        ),
+    ],
+    dependencies: [
+        // ✅ Add FMDB dependency here
+        .package(url: "https://github.com/ccgus/fmdb.git", from: "2.7.9")
     ],
     targets: [
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "IOS_CommonEditor"),
-
-    ]
+            name: "IOS_CommonEditor",
+            dependencies: [
+                // ✅ Link FMDB to this target
+                .product(name: "FMDB", package: "fmdb")
+            ]
+        ),
+    ],
+    swiftLanguageModes: [.v5]
 )

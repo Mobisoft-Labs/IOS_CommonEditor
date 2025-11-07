@@ -1,0 +1,498 @@
+//
+//  TreeViewModel.swift
+//  Tree
+//
+//  Created by IRIS STUDIO IOS on 30/12/23.
+//
+
+import Foundation
+import Combine
+
+
+public class LayersViewModel2 : ObservableObject{
+    
+  weak var templateHandler : TemplateHandler!
+    var cancellables = Set<AnyCancellable>()
+    var actionCancellables = Set<AnyCancellable>()
+    var layerConfig: LayersConfiguration?
+    var logger: PackageLogger?
+//    @Published var isCellSelected : Bool = false
+//    @Published var lockStatus : Bool = false
+//    @Published var isEditParent : Bool = false
+    var selectedID = 0
+    var isLockAllStatus: Bool {
+        return templateHandler.currentPageModel!.unlockedModel.count == 0 ? true : false
+    }
+    
+//    func refreshData(child:BaseModel) {
+//        
+////        parentIdsSelected = isSelected(childModel: child  )
+////        toExpandSelected()
+//    }
+    
+    func synchronizeEditStateToExpansionState() {
+        for layer in layers {
+            synchronizeStateForNode(layer)
+        }
+    }
+
+    private func synchronizeStateForNode(_ node: BaseModel) {
+        // If the node is a ParentModel, synchronize editState to isExpanded
+        if let parentNode = node as? ParentModel {
+            parentNode.isExpanded = parentNode.editState
+           
+        }
+        node.isLayerAtive = node.isActive
+        // If the node has children, recursively synchronize their state
+        if let parentNode = node as? ParentModel {
+            for child in parentNode.activeChildren {
+                synchronizeStateForNode(child)
+            }
+        }
+    }
+    
+    
+    func onDoneClicked(){
+        templateHandler.deepSetCurrentModel(id: selectedID)
+    }
+
+    public func setTemplateHandler(th:TemplateHandler) {
+        self.templateHandler = th
+        layers = [th.currentPageModel! as BaseModel]
+        layers.first?.depthLevel = 0
+        actionCancellables.removeAll()
+        synchronizeEditStateToExpansionState()
+        updateFlatternTree()
+        cancellables.removeAll()
+        
+        $selectedChild.sink { model in
+            
+            self.selectedChild?.isLayerAtive = false
+            self.selectedID = model?.modelId ?? 0
+            model?.isLayerAtive = true
+            
+        }.store(in: &cancellables)
+        
+        selectedChild = th.currentModel
+        
+    }
+    func observeModel() {
+
+    }
+    var layers = [BaseModel]()
+    var flatternTree = [BaseModel]()
+    
+    var parentIdsSelected: [Int] = []
+    @Published var selectedChild:BaseModel?
+    
+    init() {
+      
+    }
+    
+    func setPackageLogger(logger: PackageLogger, layersConfig: LayersConfiguration){
+        self.logger = logger
+        self.layerConfig = layersConfig
+    }
+    
+    func updateFlatternTree() {
+        flatternTree = flattenedLayers()
+    }
+    
+    var flatternNode = [Int]()
+    
+    
+    
+    func lockAll(){
+        guard let model = templateHandler.currentPageModel else {
+            logger?.printLog("current Page model is nil")
+            
+            return
+        }
+        
+        let lockArray = model.unlockedModel
+//        model.unlockedModel.removeAll()
+        model.lockUnlockState = lockArray
+       
+        // change button State
+    }
+    
+    
+    func unLockAll(){
+        guard let model = templateHandler.currentPageModel else {
+            logger?.printLog("current Page model is nil")
+            
+            return
+        }
+        
+        let unlockArray = templateHandler.filterAndTransformUnlockAll(model)
+        model.lockUnlockState = unlockArray
+//        model.unlockedModel = unlockArray
+        // change button State
+    }
+    
+    
+    func isSelected(childModel: BaseModel?) -> [Int] {
+        guard let childModel = childModel else {
+            return []
+        }
+       let flatTree = flattenedLayersForAllParent()
+        
+        var parentIds: [Int] = []
+
+        // Recursive function to find parent IDs
+        func findParentIds(model: BaseModel?) {
+            if let parentId = model?.parentId {
+                parentIds.append(parentId)
+                if let parentModel = flatTree.first(where: { $0.modelId == parentId }) as? ParentModel {
+//                    parentModel.editState = true
+                    if parentModel.depthLevel != 0{
+                        findParentIds(model: parentModel)
+                    }
+                  
+                }
+                
+            }
+            
+        }
+
+        findParentIds(model: childModel)
+
+        return parentIds
+    }
+    
+   private func binarySearchForParentID(nodes: [BaseModel], targetParentID: Int) -> BaseModel? {
+        var low = 0
+        var high = nodes.count - 1
+
+        while low <= high {
+            let mid = (low + high) / 2
+            let midNode = nodes[mid]
+
+            if midNode.modelId == targetParentID {
+                return midNode
+            } else if  midNode.modelId < targetParentID {
+                low = mid + 1
+            } else {
+                high = mid - 1
+            }
+        }
+
+        return nil
+    }
+    
+    // Method to flatten the tree based on expansion state
+    func flattenedLayers() -> [BaseModel] {
+        
+        var result: [BaseModel] = []
+
+        for layer in layers {
+            result += flattenedNodes(layer)
+        }
+        
+        return result
+    }
+
+    // Helper method to recursively flatten nodes based on expansion state
+    private func flattenedNodes(_ node: BaseModel) -> [BaseModel] {
+        var result: [BaseModel] = []
+
+        
+        if let node = node as? ParentModel, node.isExpanded {
+            if  node.modelId != 0 && !(node is PageInfo){
+//                node.isLayerAtive = node.isActive
+                result.append(node)
+            }
+            
+            for child in node.activeChildren {
+                result += flattenedNodes(child)
+            }
+        } else {
+//            node.isLayerAtive = node.isActive
+            result.append(node)
+        }
+
+        return result
+    }
+    
+    
+    func expandNode(_ node:ParentModel , expand: Bool) {
+        var result: [BaseModel] = []
+        
+        for child in node.activeChildren {
+            result += flattenedNodes(child)
+        }
+        
+        if let index = flatternTree.firstIndex(where: { $0.modelId == node.modelId }) {
+            
+            if expand {
+                var counter = index + 1
+                result.forEach { node in
+                    addChildToFlatternTree(node: node, atIndex: counter)
+                    counter += 1
+                }
+            }else{
+                result.forEach { node in
+                    removeChildrenFromFlatternTree(for: node.modelId)
+                }
+                
+            }
+        }
+        
+    }
+    
+    // Method to flatten the tree based on expansion state for Full tree expand
+   private func flattenedLayersForAllParent() -> [BaseModel] {
+        var result: [BaseModel] = []
+
+        for layer in layers {
+            result += flattenedNodesForAllParent(layer)
+        }
+
+        return result
+    }
+    private func flattenedNodesForAllParent(_ node: BaseModel) -> [BaseModel] {
+        var result: [BaseModel] = []
+
+        if let node = node as? ParentModel, node.children.count>0 {
+            result.append(node)
+            for child in node.children {
+                result += flattenedNodes(child)
+            }
+        } else {
+            result.append(node)
+        }
+
+        return result
+    }
+    
+    // Method to toggle the expansion state of a node
+    func toggleLock(nodeID: Int) {
+        if let node = findNodeByID(nodeID) {
+            node.lockStatus = !node.lockStatus
+          //  updateFlatternTree()
+        }
+    }
+//    func toggleHidden(nodeID: Int) {
+//        if let node = findNodeByID(nodeID) {
+//            node.isHidden = !node.isHidden
+//          //  updateFlatternTree()
+//        }
+//    }
+    // Method to toggle the expansion state of a node
+    func toggleExpansion(nodeID: Int) {
+        if let node = findNodeByID(nodeID) as? ParentModel {
+            node.isExpanded = !node.isExpanded
+          //  isEditParent = node.isExpanded
+          //  updateFlatternTree()
+        }
+    }
+
+    func removeChildrenFromFlatternTree(for nodeID: Int) {
+        // Find the node in the flattened tree
+        if let index = flatternTree.firstIndex(where: { $0.modelId == nodeID }) {
+            let node = flatternTree[index]
+
+            // Remove children nodes from the flattened tree
+            flatternTree.remove(at: index) // All(where: { $0.parentId == node.modelId })
+        }
+        // You might also need to update other data structures or perform additional logic based on your data model.
+    }
+    
+    func addChildToFlatternTree(node: BaseModel , atIndex:Int) {
+        // Find the node in the flattened tree
+//        if let index = flatternTree.firstIndex(where: { $0.modelId == nodeID }) {
+//            let node = flatternTree[index]
+
+            // Remove children nodes from the flattened tree
+            flatternTree.insert(node, at: atIndex)
+       // }
+        // You might also need to update other data structures or perform additional logic based on your data model.
+    }
+    
+    func increaseOrderId(parentNode:ParentModel,order:Int)->ParentModel{
+        // order of all children
+        parentNode.increaseOrderFromIndex(order)
+        
+        return parentNode
+        
+    }
+    
+    func decreaseOrderId(parentNode:ParentModel,order:Int)->ParentModel{
+        // order of all children
+        parentNode.decreaseOrderFromIndex(order)
+        
+        return parentNode
+        
+    }
+    
+    func increaseChildLevel(depthLevel:Int,sourceNode:ParentModel)->ParentModel{
+        
+        sourceNode.increaseChildLevel(newLevel: depthLevel, logger: logger)
+        return sourceNode
+    }
+    
+    
+    
+    func decreaseChildLevel(depthLevel:Int,sourceNode:ParentModel)->ParentModel{
+        
+        sourceNode.decreaseChildLevel(newLevel: depthLevel, logger: logger)
+        
+        return sourceNode
+    }
+    
+    func moveNode(sourceNode: BaseModel, inParent destinationParentNode: Int?, at order: Int) {
+        // Check if destination's Parent node is not null
+        guard let destinationParentId = destinationParentNode, var destinationParent = findNodeByID(destinationParentId)  as? ParentModel else {
+            return
+        }
+        
+        // Check if Source node has a parent
+        guard var sourceParentNode = findNodeByID(sourceNode.parentId) as? ParentModel else {
+            return
+        }
+
+        if destinationParent.modelId == sourceParentNode.modelId {
+            
+            moveNodeInSameParent(parentNode: &destinationParent, sourceNode: sourceNode, order: order)
+        } else {
+            moveNodeInDifferentParent(sourceParentNode: &sourceParentNode, destinationParentNode: &destinationParent, sourceNode: sourceNode, order: order)
+        }
+
+        // Update the flattened tree if needed
+        updateFlatternTree()
+    }
+
+    private func moveNodeInSameParent(parentNode: inout ParentModel, sourceNode: BaseModel, order: Int) {
+        let sourceSequence = sourceNode.orderInParent
+        parentNode.children.insert(sourceNode, at: order)
+
+        // Remove source node from Source's parent at source sequence
+        // Update source Node order
+        sourceNode.orderInParent = order
+        if order < sourceSequence{
+               if let index = parentNode.children.lastIndex(where: {$0.modelId == sourceNode.modelId}){
+                   parentNode.children.remove(at: index)
+               }else{
+                   print("source node is not present at source Parent's children")
+               }
+               parentNode   = increaseOrderId(parentNode: parentNode, order: order)
+           }
+           else{
+               parentNode   = increaseOrderId(parentNode: parentNode, order: order)
+               if let index = parentNode.children.firstIndex(where: {$0.modelId == sourceNode.modelId}){
+                   parentNode.children.remove(at: index)
+               }else{
+                   print("source node is not present at source Parent's children")
+               }
+               parentNode   = decreaseOrderId(parentNode: parentNode, order: sourceSequence)
+              
+           }
+           
+    }
+
+    private func moveNodeInDifferentParent(sourceParentNode: inout ParentModel, destinationParentNode: inout ParentModel, sourceNode: BaseModel, order: Int) {
+        let sourceSequence = sourceNode.orderInParent
+        sourceNode.parentId = destinationParentNode.modelId
+        sourceNode.orderInParent = order
+
+        // Remove source node from Source's parent at source sequence
+        if let index = sourceParentNode.children.firstIndex(where: { $0.modelId == sourceNode.modelId }) {
+            sourceParentNode.children.remove(at: index)
+        }
+
+        // Adjust depth level if needed
+        if sourceNode.depthLevel == destinationParentNode.depthLevel+1{ // same parent
+            // if depth level is same don't change depth level
+        }else if sourceNode.depthLevel > destinationParentNode.depthLevel+1{
+            // child is move to parent
+            sourceNode.depthLevel = destinationParentNode.depthLevel+1
+            if let sourceIsParent = sourceNode as? ParentModel {
+                sourceIsParent.decreaseChildLevel(newLevel: destinationParentNode.depthLevel+1, logger: logger)
+            }
+            
+        }else{
+            // parent is move to child
+            sourceNode.depthLevel = destinationParentNode.depthLevel+1
+            if let sourceIsParent = sourceNode as? ParentModel {
+                sourceIsParent.increaseChildLevel(newLevel: destinationParentNode.depthLevel+1, logger: logger)
+            }
+        }
+
+        destinationParentNode.children.insert(sourceNode, at: order)
+
+        // Update the rest of the sequence
+        destinationParentNode = increaseOrderId(parentNode: destinationParentNode, order: order)
+        sourceParentNode = decreaseOrderId(parentNode: sourceParentNode, order: sourceSequence)
+    }
+
+  //  private func removeNode(parentNode: inout BaseModel, node: BaseModel, at sequence: Int) {
+//        if let index = parentNode.children.firstIndex(where: { $0.modelId == node.modelId }) {
+//            parentNode.children.remove(at: sequence)
+//        } else {
+//            print("Source node is not present at source Parent's children")
+//        }
+  //  }
+
+    
+   
+    // Helper method to find a node by ID in the layers tree
+     func findNodeByID(_ nodeID: Int) -> BaseModel? {
+        for layer in layers {
+            if let foundNode = layer.findNodeByID(nodeID) {
+                return foundNode
+            }
+        }
+        return nil
+    }
+    
+    func getChildrenIndexPaths(for parentIndexPath: IndexPath) -> [IndexPath] {
+        let parentNode = flatternTree[parentIndexPath.item]
+
+        var indexPaths: [IndexPath] = []
+        var currentIndex = parentIndexPath.item + 1
+
+        // Ensure the currentIndex is within bounds
+        while currentIndex < flatternTree.count {
+            let currentNode = flatternTree[currentIndex]
+
+            // Check if the currentNode is a child of the parentNode
+            if parentNode.depthLevel < currentNode.depthLevel {
+                let childIndexPath = IndexPath(item: currentIndex, section: parentIndexPath.section)
+                indexPaths.append(childIndexPath)
+            } else {
+                // Break the loop if the currentNode is not a child
+                break
+            }
+
+            currentIndex += 1
+        }
+
+        return indexPaths
+    }
+}
+
+extension LayersViewModel2{
+    
+    func lockAllModels(){
+        if let model = templateHandler.currentPageModel{
+            lockAll(parentInfo: model, state: true)
+        }
+    }
+    
+    func unlockAllModels(){
+        if let model = templateHandler.currentPageModel {
+            lockAll(parentInfo: model, state: true)
+        }
+    }
+    
+    func lockAll(parentInfo:ParentModel,state:Bool){
+        for child in parentInfo.children{
+            child.lockStatus = state
+           _ = DBManager.shared.updateLockStatus(modelId: child.modelId, newValue: child.lockStatus.toString())
+            if child is ParentModel{
+                lockAll(parentInfo: child as! ParentModel, state: state)
+            }
+        }
+    }
+
+}
