@@ -588,7 +588,7 @@ extension MetalEngine {
             if !isDBDisabled{
                 _ = DBManager.shared.updateTemplateRatioId(templateId: templateHandler.currentTemplateInfo!.templateId, newValue: ratioModel!.id)
             }
-            if let ratio = templateHandler.currentTemplateInfo?.ratioInfo.getRatioInfo(ratioInfo: ratioModel!, refSize: engineConfig.BASE_SIZE, logger: logger){
+            if let ratio = templateHandler.currentTemplateInfo?.ratioInfo.getRatioInfo(ratioInfo: ratioModel!, refSize: engineConfig.getBaseSize(), logger: logger){
                 templateHandler.currentTemplateInfo?.ratioInfo = ratio
             }
       
@@ -723,7 +723,7 @@ extension MetalEngine {
             Task { [weak self] in
                 guard let self = self else { return }
                 
-                await  sceneManager.changeRatio(ratio: newRefSize, refSize: engineConfig.BASE_SIZE)
+                await sceneManager.changeRatio(ratio: newRefSize, refSize: engineConfig.getBaseSize())
                 await MainActor.run {
 //                    guard let self = self else { return }
                     self.viewManager?.ratioDidChange(page: templateHandler.currentPageModel!)

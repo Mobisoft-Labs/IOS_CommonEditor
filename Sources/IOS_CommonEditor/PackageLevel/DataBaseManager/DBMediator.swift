@@ -70,11 +70,11 @@ class DBMediator : DictCacheProtocol  {
             stickerInfo.setBaseModel(baseModel: baseModel, refSize: refSize)
             if baseModel.modelType == "IMAGE"{
                 guard let stickerModel = dbManager.getStickerModel(stickerId: baseModel.dataId) else {
-                    dbManager.logger?.printLog(" BaseModel found but not sticker")
+                    DBManager.logger?.printLog(" BaseModel found but not sticker")
                     return nil}
                 stickerInfo.setStickerModel(stickerModel: stickerModel)
                 guard let imageModel = dbManager.getImage(imageId: stickerModel.imageId) else{
-                    dbManager.logger?.printLog(" StickerModel found but not Image")
+                    DBManager.logger?.printLog(" StickerModel found but not Image")
                     return nil
                 }
                 stickerInfo.setImageModel(image: imageModel)
@@ -102,11 +102,11 @@ class DBMediator : DictCacheProtocol  {
 
         if baseModel.modelType == "IMAGE"{
             guard let stickerModel = dbManager.getStickerModel(stickerId: baseModel.dataId) else {
-                dbManager.logger?.printLog(" BaseModel found but not sticker")
+                DBManager.logger?.printLog(" BaseModel found but not sticker")
                 return nil}
             stickerInfo.setStickerModel(stickerModel: stickerModel)
             guard let imageModel = dbManager.getImage(imageId: stickerModel.imageId) else{
-                dbManager.logger?.printLog(" StickerModel found but not Image")
+                DBManager.logger?.printLog(" StickerModel found but not Image")
                 return nil
             }
             stickerInfo.setImageModel(image: imageModel)
@@ -130,10 +130,10 @@ class DBMediator : DictCacheProtocol  {
         
             if model.modelType == "TEXT"{
                 guard let textModel = dbManager.getTextModel(textId: model.dataId)else{
-                    dbManager.logger?.printLog(" BaseModel found but not textModel")
+                    DBManager.logger?.printLog(" BaseModel found but not textModel")
                     return nil
                 }
-                textInfo.setTextModel(textModel: textModel, engineConfig: dbManager.engineConfig)
+                textInfo.setTextModel(textModel: textModel, engineConfig: DBManager.engineConfig)
                 if onlinePreview { addModel(model: textInfo) ; }
                 return textInfo
             }
@@ -423,17 +423,17 @@ class DBMediator : DictCacheProtocol  {
         }
         let tempInfo = TemplateInfo()
         guard let templateModel = dbManager.getTemplate(templateId: tempID) else{
-            dbManager.logger?.printLog("template Model not found for templateID: \(tempID)")
+            DBManager.logger?.printLog("template Model not found for templateID: \(tempID)")
             return nil
         }
         if let dbRatioModel = dbManager.getRatioDbModel(ratioId: templateModel.ratioId){
-            tempInfo.ratioInfo.setRatioModel(ratioInfo: dbRatioModel, refSize: refSize, logger: dbManager.logger)
+            tempInfo.ratioInfo.setRatioModel(ratioInfo: dbRatioModel, refSize: refSize, logger: DBManager.logger)
         }
         tempInfo.setTemplateModel(with: templateModel)
         let ListOfPages = dbManager.getActivePagesList(templateId: tempID)
         
         if ListOfPages.isEmpty {
-            dbManager.logger?.printLog("No Pages Found")
+            DBManager.logger?.printLog("No Pages Found")
             return tempInfo
         }
         
@@ -782,9 +782,9 @@ extension DBMediator{
       
             do{
                 
-                image = try await dbManager.logger?.fetchImage(imageURL: dbImageModel.serverPath)
+                image = try await DBManager.logger?.fetchImage(imageURL: dbImageModel.serverPath)
                 if let imageData = image?.pngData() {
-                    try dbManager.logger?.saveImageToDocumentsDirectory(imageData: imageData, filename: dbImageModel.serverPath, directory: dbManager.logger!.getAssetPath()!)
+                    try DBManager.logger?.saveImageToDocumentsDirectory(imageData: imageData, filename: dbImageModel.serverPath, directory: DBManager.logger!.getAssetPath()!)
                 }
                
             }

@@ -275,7 +275,7 @@ extension SceneComposable {
         }
         
         
-        func createText(_ textInfo: TextInfo) -> TextChild {
+    func createText(_ textInfo: TextInfo) -> TextChild {
             let textInfo_ = textInfo
             DispatchQueue.main.async{
                 textInfo_.width = textInfo.width+textInfo.internalWidthMargin

@@ -24,8 +24,8 @@ public class DBManager : DBInterface{
         dB_fileName = "DESIGN_DB.db"
         
         // Get the database directory path safely
-        guard let documentsDirectory = logger?.getDBPath() else {
-            logger?.printLog("Error: Database directory path is invalid.")
+        guard let documentsDirectory = DBManager.logger?.getDBPath() else {
+            DBManager.logger?.printLog("Error: Database directory path is invalid.")
             return
         }
         
@@ -35,9 +35,9 @@ public class DBManager : DBInterface{
         // Check if the database file exists
         if FileManager.default.fileExists(atPath: db_local_path) {
             database = FMDatabase(path: db_local_path)
-            logger?.printLog("Design database initialized at: \(db_local_path)")
+            DBManager.logger?.printLog("Design database initialized at: \(db_local_path)")
         } else {
-            logger?.printLog("Warning: Design database not found at \(db_local_path). Consider calling createCopyOfDatabaseIfNeeded().")
+            DBManager.logger?.printLog("Warning: Design database not found at \(db_local_path). Consider calling createCopyOfDatabaseIfNeeded().")
         }
     }
     
@@ -339,45 +339,45 @@ public class DBManager : DBInterface{
 
 extension DBManager {
     
-    static func createCopyOfDatabaseIfNeeded() {
+    static public func createCopyOfDatabaseIfNeeded() {
         // Get the database file path from the app bundle
         guard let bundlePath = Bundle.main.url(forResource: "DESIGN_DB", withExtension: "db") else {
-            DBManager.shared.logger?.printLog("Error: DESIGN_DB.db not found in the app bundle.")
+            DBManager.logger?.printLog("Error: DESIGN_DB.db not found in the app bundle.")
             return
         }
         
         // Get the destination directory (App's document directory)
-        guard let destPath = DBManager.shared.logger?.getDBPath() else {
-            DBManager.shared.logger?.printLog("Error: Destination database path is invalid.")
+        guard let destPath = DBManager.logger?.getDBPath() else {
+            DBManager.logger?.printLog("Error: Destination database path is invalid.")
             return
         }
         
         // Create the full destination path
-        let fullDestPath = destPath.appendingPathComponent(DBManager.shared.logger?.getDBName() ?? "DESIGN_DB.db")
+        let fullDestPath = destPath.appendingPathComponent(DBManager.logger?.getDBName() ?? "DESIGN_DB.db")
         
         // Check if the database already exists
         if FileManager.default.fileExists(atPath: fullDestPath.path) {
-            DBManager.shared.logger?.printLog("Database already exists at path: \(fullDestPath.path)")
+            DBManager.logger?.printLog("Database already exists at path: \(fullDestPath.path)")
         } else {
             do {
                 // Copy database from bundle to documents directory
                 try FileManager.default.copyItem(at: bundlePath, to: fullDestPath)
-                DBManager.shared.logger?.printLog("Database copied successfully to: \(fullDestPath.path)")
+                DBManager.logger?.printLog("Database copied successfully to: \(fullDestPath.path)")
             } catch {
-                DBManager.shared.logger?.printLog("Error copying database: \(error.localizedDescription)")
+                DBManager.logger?.printLog("Error copying database: \(error.localizedDescription)")
             }
         }
     }
-    static func createCopyOfStickerDatabaseIfNeeded() {
+    static public func createCopyOfStickerDatabaseIfNeeded() {
         // Get the database file path from the app bundle
         guard let bundlePath = Bundle.main.url(forResource: "StickersDatabase", withExtension: "db") else {
-            DBManager.shared.logger?.printLog("Error: StickersDatabase.db not found in the app bundle.")
+            DBManager.logger?.printLog("Error: StickersDatabase.db not found in the app bundle.")
             return
         }
         
         // Get the destination directory (App's document directory)
-        guard let destPath = DBManager.shared.logger?.getDBPath() else {
-            DBManager.shared.logger?.printLog("Error: Destination database path is invalid.")
+        guard let destPath = DBManager.logger?.getDBPath() else {
+            DBManager.logger?.printLog("Error: Destination database path is invalid.")
             return
         }
         
@@ -386,15 +386,15 @@ extension DBManager {
         
         // Check if the database already exists
         if FileManager.default.fileExists(atPath: fullDestPath.path) {
-            DBManager.shared.logger?.printLog("Sticker database already exists at path: \(fullDestPath.path)")
+            DBManager.logger?.printLog("Sticker database already exists at path: \(fullDestPath.path)")
         } else {
             do {
                 // Copy database from bundle to documents directory
                 try FileManager.default.copyItem(at: bundlePath, to: fullDestPath)
-                DBManager.shared.logger?.printLog("Sticker database copied successfully to: \(fullDestPath.path)")
+                DBManager.logger?.printLog("Sticker database copied successfully to: \(fullDestPath.path)")
 //                StickerDBManager.shared?.seedLegacyStickersIfNeeded(force: true)
             } catch {
-                DBManager.shared.logger?.printLog("Error copying sticker database: \(error.localizedDescription)")
+                DBManager.logger?.printLog("Error copying sticker database: \(error.localizedDescription)")
             }
         }
     }
@@ -458,7 +458,7 @@ extension DBManager{
         }
     }
     
-    func manageDatabaseVersions() {
+    public func manageDatabaseVersions() {
         if dBVersion < 3 {
             let tableName = TABLE_TEMPLATE
             DBManager.shared.deleteTemplateByColumnNew(columnValue: "TEMPLATE")
@@ -488,7 +488,7 @@ extension DBManager{
 
             // Update DB version
             dBVersion = 3
-            logger?.logInfo("Migration to version 3 complete")
+            DBManager.logger?.logInfo("Migration to version 3 complete")
         }
         if dBVersion < 4 {
             addColumnIfNeeded(tableName: TABLE_TEMPLATE, column: OUTPUT_TYPE, type: "INT", defaultValue: 0)
@@ -502,12 +502,12 @@ extension DBManager{
                     
                     dBVersion = 5
                 } catch {
-                    logger?.logError("Failed to backfill \(MASK_SHAPE): \(error)")
+                    DBManager.logger?.logError("Failed to backfill \(MASK_SHAPE): \(error)")
                 }
             
             
                
-            logger?.logInfo("Migration to version 4 complete")
+            DBManager.logger?.logInfo("Migration to version 4 complete")
         }
         
         

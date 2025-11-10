@@ -350,9 +350,10 @@ public class SceneManager  : NSObject, SceneComposable , TemplateObserversProtoc
     var child : StickerChild!
     var child2 : StickerChild!
 //    var currentChild:MChild?
-    func prepareSceneGraph(templateInfo:TemplateInfo) async -> Bool  {
+    func prepareSceneGraph(templateInfo:TemplateInfo, sceneConfig: SceneConfiguration) async -> Bool  {
         print("LOL_5")
             // step 1 create scene
+        self.sceneConfig = sceneConfig
             currentScene = MScene(templateInfo: templateInfo)
             
             //  RESIZE =  metalDisplay!.bounds.size
@@ -551,10 +552,11 @@ public class ThumbManager : SceneComposable {
     func cacheChild(key: Int, value: MChild) { }
     
     weak var templateHandler : TemplateHandler?
-    init(templateHandler:TemplateHandler, resourceProvider: TextureResourceProvider, logger: PackageLogger) {
+    init(templateHandler:TemplateHandler, resourceProvider: TextureResourceProvider, logger: PackageLogger, sceneConfig: SceneConfiguration) {
         self.templateHandler = templateHandler
         self.logger = logger
         self.resourceProvider = resourceProvider
+        self.sceneConfig = sceneConfig
         self.textureCache = TextureCache(maxSize: CGSize(width: 150, height: 150), enhancePageSize: true, resourceProvider: resourceProvider, logger: logger)
         commandQueue = MetalDefaults.GPUDevice.makeCommandQueue()!
         

@@ -57,8 +57,8 @@ class ChildCollectionView: UICollectionView, UICollectionViewDelegate, UICollect
 
     func setupCollectionView() {
         // Set up the collection view layout, register cells, etc.
-        
-        let nib = UINib(nibName: "ChildCVCell", bundle: nil)
+        let bundle = Bundle.module
+        let nib = UINib(nibName: "ChildCVCell", bundle: bundle)
         self.register(nib, forCellWithReuseIdentifier: "cell")
         // e.g., registerNib, set collectionViewLayout, etc.
     }

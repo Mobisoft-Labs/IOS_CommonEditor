@@ -272,20 +272,22 @@ public final class TimelineView: UIView , ActionStateObserversProtocol , PlayerC
     
 
     //MARK: - Init // JD StartHere - Removing model but before that create architecture on EXCEL
-    public override init(frame:CGRect){
+    public init(frame:CGRect, logger: PackageLogger, timelineConfig: TimelineConfiguration){
          
         // pageModel = model
 //         rulingParentModel = model
-        super.init(frame: frame)
-         
-//        commonSetup()
-    }
-    
-    func setPackageLogger(logger: PackageLogger, timelineConfig: TimelineConfiguration){
         self.logger = logger
         self.timelineConfig = timelineConfig
+        super.init(frame: frame)
+         
         commonSetup()
     }
+    
+//    public func setPackageLogger(logger: PackageLogger, timelineConfig: TimelineConfiguration){
+//        self.logger = logger
+//        self.timelineConfig = timelineConfig
+//        commonSetup()
+//    }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")

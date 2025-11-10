@@ -19,8 +19,8 @@ public class StickerDBManager: DBInterface{
         dB_fileName = "StickersDatabase.db"
         
         // Get the database directory path safely
-        guard let documentsDirectory = logger?.getDBPath() else {
-            logger?.printLog("Error: Database directory path is invalid.")
+        guard let documentsDirectory = DBManager.logger?.getDBPath() else {
+            DBManager.logger?.printLog("Error: Database directory path is invalid.")
             return
         }
         
@@ -30,10 +30,10 @@ public class StickerDBManager: DBInterface{
         // Check if the database file exists
         if FileManager.default.fileExists(atPath: db_local_path) {
             database = FMDatabase(path: db_local_path)
-            logger?.printLog("Sticker database initialized at: \(db_local_path)")
+            DBManager.logger?.printLog("Sticker database initialized at: \(db_local_path)")
            
         } else {
-            logger?.printLog("Warning: Sticker database not found at \(db_local_path). Consider calling createCopyOfStickerDatabaseIfNeeded().")
+            DBManager.logger?.printLog("Warning: Sticker database not found at \(db_local_path). Consider calling createCopyOfStickerDatabaseIfNeeded().")
         }
     }
     

@@ -90,9 +90,6 @@ public class ActionStates: ObservableObject {
     @Published public var lastSelectedFilter: FiltersEnum = .none
     @Published public var isCurrentModelDeleted: Bool = false
     @Published public var shouldRefreshOnAddComponent: Bool = false
-    @Published var lastSelectedCategoryIndexIN: Int = 0
-    @Published var lastSelectedCategoryIndexOUT: Int = 0
-    @Published var lastSelectedCategoryIndexLOOP: Int = 0
     @Published public var lastSelectedFont: String = "Default"
     @Published public var lastSelectedFlipH: Bool = false
     @Published public var lastSelectedFlipV: Bool = false

@@ -17,7 +17,7 @@ extension DBManager{
         let query = "SELECT * FROM \(TABLE_TEMPLATE) WHERE CATEGORY = '\(ByCategoryName)';"
         var templatesIDs = [Int]()
         guard let resultSet = try? runQuery(query, values: nil) else {
-            logger?.logError("No Templates For Category Found")
+            DBManager.logger?.logError("No Templates For Category Found")
             return templatesIDs
         }
         
@@ -939,7 +939,7 @@ extension DBManager{
                 maxSequence = Int(resultSet.int(forColumnIndex: 0))
             }
         } catch let error {
-            logger?.printLog("Error getting max template sequence: \(error.localizedDescription)")
+            DBManager.logger?.printLog("Error getting max template sequence: \(error.localizedDescription)")
         }
 
         return maxSequence
@@ -968,7 +968,7 @@ extension DBManager{
                 }
             }
         } catch let error {
-            logger?.printLog("Error getting max child index: \(error.localizedDescription)")
+            DBManager.logger?.printLog("Error getting max child index: \(error.localizedDescription)")
         }
 
         return maxChildIndex
@@ -1036,7 +1036,7 @@ extension DBManager{
                 pageArrayList.append(values)
             }
         } catch let error {
-            logger?.printLog("Error getting page list: \(error.localizedDescription)")
+            DBManager.logger?.printLog("Error getting page list: \(error.localizedDescription)")
         }
 
         return pageArrayList
@@ -1124,7 +1124,7 @@ extension DBManager{
              
             }
         } catch let error {
-            logger?.printLog("Error getting image model: \(error.localizedDescription)")
+            DBManager.logger?.printLog("Error getting image model: \(error.localizedDescription)")
         }
 
         return image
@@ -1160,7 +1160,7 @@ extension DBManager{
              
             }
         } catch let error {
-            logger?.printLog("Error getting image: \(error.localizedDescription)")
+            DBManager.logger?.printLog("Error getting image: \(error.localizedDescription)")
         }
 
         return image
@@ -1411,7 +1411,7 @@ extension DBManager{
 
         
         if baseModel.width == 0 || baseModel.height == 0 {
-            logger?.logError("Model Size Not Right \(baseModel)")
+            DBManager.logger?.logError("Model Size Not Right \(baseModel)")
             return nil
         }
 
@@ -1934,7 +1934,7 @@ extension DBManager{
 
         let query = "SELECT * FROM \(TABLE_KEYFRAMES);"
         guard let resultSet = try? runQuery(query, values: nil) else {
-            logger?.printLog("keyFrame Model not fetched")
+            DBManager.logger?.printLog("keyFrame Model not fetched")
             return keyframeModelArray
         }
 
@@ -1984,7 +1984,7 @@ extension DBManager{
 
         let query = "SELECT * FROM \(TABLE_KEYFRAMES) WHERE \(ANIMATION_TEMPLATE_ID) = \(animationTemplateID);"
         guard let resultSet = try? runQuery(query, values: nil) else {
-            logger?.printLog("keyFrame Model not fetched")
+            DBManager.logger?.printLog("keyFrame Model not fetched")
             return keyframeModelArray
         }
 
@@ -2051,7 +2051,7 @@ extension DBManager{
             }
             return animationCategoriesModel
         }catch{
-            logger?.printLog("Error in fetch Animation Category model")
+            DBManager.logger?.printLog("Error in fetch Animation Category model")
         }
 
        
@@ -2086,7 +2086,7 @@ extension DBManager{
                return animationTemplate
             }
         } catch {
-            logger?.printLog("Error in fetch Animation Templates: \(error)")
+            DBManager.logger?.printLog("Error in fetch Animation Templates: \(error)")
         }
 
         return animationTemplate

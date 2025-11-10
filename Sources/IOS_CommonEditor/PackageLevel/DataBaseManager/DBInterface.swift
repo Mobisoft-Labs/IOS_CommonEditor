@@ -11,8 +11,8 @@ import FMDB
 
 public class DBInterface : NSObject {
     
-    var logger: DBLogger?
-    var engineConfig: EngineConfiguration?
+    static public var logger: DBLogger?
+    static public var engineConfig: EngineConfiguration?
     
     public let databaseQueue = DispatchQueue(label: "DB_SERIAL_Q")
    var semaphore = DispatchSemaphore(value: 1)
@@ -81,7 +81,7 @@ public class DBInterface : NSObject {
     
 
     
-    func setDBLogger(logger: DBLogger, engineConfig: EngineConfiguration){
+    static public func setDBLogger(logger: DBLogger, engineConfig: EngineConfiguration){
         self.logger = logger
         self.engineConfig = engineConfig
     }
@@ -107,12 +107,12 @@ public class DBInterface : NSObject {
                        print("DB Version: \(result)")
                        return result
                    } else {
-                       logger?.printLog("db user_version \(database.lastError)")
+                       DBInterface.logger?.printLog("db user_version \(database.lastError)")
                        semaphore.signal()
                        return 0
                    }
                } catch   {
-                   logger?.printLog("db user_version \(error.localizedDescription)")
+                   DBInterface.logger?.printLog("db user_version \(error.localizedDescription)")
                    semaphore.signal()
                    return 0
                }
@@ -135,10 +135,10 @@ public class DBInterface : NSObject {
               do {
                   try updateQuery(query, values: nil)
                   semaphore.signal()
-                  logger?.printLog("success  !! new DBVersion : \(version)")
+                  DBInterface.logger?.printLog("success  !! new DBVersion : \(version)")
               }
               catch {
-                  logger?.printLog("error user_version")
+                  DBInterface.logger?.printLog("error user_version")
                   semaphore.signal()
               }
 //          }
@@ -170,14 +170,14 @@ public class DBInterface : NSObject {
             catch let error {
                 
                 semaphore.signal()
-                logger?.printLog("Execute Query Failed - \(error.localizedDescription)")
+                DBInterface.logger?.printLog("Execute Query Failed - \(error.localizedDescription)")
 //                throw SwiftError.toast("Execute Query Failed - \(error.localizedDescription)")
                 throw error
             }
             
         }else{
             semaphore.signal()
-            logger?.printLog("Execute Query Failed")
+            DBInterface.logger?.printLog("Execute Query Failed")
 //            throw SwiftError.toast("Execute Query Failed - ")
             throw NSError(domain: "DBInterface", code: -1, userInfo: [NSLocalizedDescriptionKey: "Execute Query Failed - "])
         }
@@ -202,7 +202,7 @@ public class DBInterface : NSObject {
                 catch {
                     semaphore.signal()
 //                    throw SwiftError.toast("Execute Multiple Query Failed - ")
-                    logger?.printLog("Execute Multiple Query Failed - ")
+                    DBInterface.logger?.printLog("Execute Multiple Query Failed - ")
                                       
                 }
         }
@@ -223,7 +223,7 @@ public class DBInterface : NSObject {
                 }
                 catch {
                                 semaphore.signal()
-                    logger?.printLog("Update Query Failed - ")
+                    DBInterface.logger?.printLog("Update Query Failed - ")
 //                    throw SwiftError.toast("Update Query Failed - ")
                 }
             }

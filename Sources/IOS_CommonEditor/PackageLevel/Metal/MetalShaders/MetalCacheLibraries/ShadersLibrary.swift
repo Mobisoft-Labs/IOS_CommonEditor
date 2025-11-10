@@ -61,7 +61,14 @@ class FragmentShader : MShader {
 
 class VertexShader : MShader {
     @Injected var shaderLibrary : ShaderLibrary
-
+//
+//    private var shaderLibrary: ShaderLibrary {
+//            guard let lib = DependencyResolver.shared?.resolve(ShaderLibrary.self) else {
+//                fatalError("❌ ShaderLibrary not found in resolver")
+//            }
+//            return lib
+//        }
+    
     var name: String
     var functionName: String
     var function: MTLFunction!
@@ -110,10 +117,11 @@ public class ShaderLibrary {
 
     var logger: PackageLogger?
     
-    func initialise(logger: PackageLogger){
-        DefaultLibrary = MetalDefaults.GPUDevice.makeDefaultLibrary()
-        loadDefaultShaders()
+    public func initialise(logger: PackageLogger){
+        DefaultLibrary = try? MetalDefaults.GPUDevice.makeDefaultLibrary(bundle: .module)
         setPackLogger(logger: logger)
+        loadDefaultShaders()
+        
     }
     
     func setPackLogger(logger: PackageLogger){

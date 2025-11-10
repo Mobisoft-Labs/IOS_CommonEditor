@@ -33,12 +33,12 @@ extension DBManager {
 
             do {
                 try updateQuery(query, values: nil)
-                logger?.printLog("true")
+                DBManager.logger?.printLog("true")
                 print("music table")
                 created = true
             } catch {
-                logger?.printLog("Could not create table.")
-                logger?.printLog(error.localizedDescription)
+                DBManager.logger?.printLog("Could not create table.")
+                DBManager.logger?.printLog(error.localizedDescription)
             }
         }
 

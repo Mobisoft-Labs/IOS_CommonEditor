@@ -12,7 +12,7 @@ extension DBManager{
     // MARK: - Insertion    
     func replaceTemplateRowIfNeeded(template: DBTemplateModel) -> Int {
         var insertedRowId: Int = -1
-        logger?.printLog("OpenGlTest In DesignDbHelper insertTemplateRow")
+        DBManager.logger?.printLog("OpenGlTest In DesignDbHelper insertTemplateRow")
         
         let query = "REPLACE INTO \(TABLE_TEMPLATE) (\(TEMPLATE_NAME), \(CATEGORY), \(RATIO_ID), \(THUMB_SERVER_PATH), \(THUMB_LOCAL_PATH), \(THUMB_TIME), \(TOTAL_DURATION), \(SEQUENCE), \(IS_PREMIUM), \(CATEGORY_TEMP), \(DATA_PATH), \(SERVER_TEMPLATE_ID), \(IS_DETAILS_DOWNLOAD), \(IS_RELEASED), \(COLOR_PALLETE_ID), \(FONT_SET_ID), \(EVENT_DATA), \(EVENT_TIME), \(VENUE), \(NAME1), \(NAME2), \(RSVP), \(BASE_COLOR), \(LAYOUT_ID), \(EVENT_ID), \(TEMPLATE_STATUS), \(ORIGINAL_TEMPLATE), \(TEMPLATE_EVENT_STATUS), \(SOFT_DELETE), \(EVENT_TEMPLATE_JSON), \(USER_ID), \(EVENT_START_DATE), \(SHOW_WATERMARK)) VALUES ('\(template.templateName)', '\(template.category)', '\(template.ratioId)', '\(template.thumbServerPath)', '\(template.thumbLocalPath)', '\(template.thumbTime)', '\(template.totalDuration)', '\(template.sequence_Temp)', '\(template.isPremium)', '\(template.categoryTemp)', '\(template.dataPath)', '\(template.templateId)', '\(template.isDetailDownloaded)', '\(template.isRelease)', '\(template.colorPalleteId)', '\(template.fontSetId)', '\(template.eventData)', '\(template.eventTime)', '\(template.venue)', '\(template.name1)', '\(template.name2)', '\(template.rsvp)', '\(template.baseColor)', '\(template.layoutId)', '\(template.eventId)', '\(template.templateStatus)','\(template.originalTemplate)','\(template.templateEventStatus)','\(template.softDelete)','\(template.eventTemplateJson)', '\(template.userId)', '\(template.eventStartDate)', '\(template.showWatermark)' )"
 
@@ -245,12 +245,12 @@ extension DBManager{
             do{
                 let fileManager = FileManager.default
                 
-                guard let templateThumbnails = logger?.getThumnailPath() else{
-                    throw logger!.documentsDirectoryNotFound()
+                guard let templateThumbnails = DBManager.logger?.getThumnailPath() else{
+                    throw DBManager.logger!.documentsDirectoryNotFound()
                 }
                 
-                guard let myDesignsPath = logger?.getMyDesignsPath() else{
-                    throw logger!.documentsDirectoryNotFound()
+                guard let myDesignsPath = DBManager.logger?.getMyDesignsPath() else{
+                    throw DBManager.logger!.documentsDirectoryNotFound()
                 }
                 
                 let sourceURL = templateThumbnails.appendingPathComponent(filename)
@@ -275,8 +275,8 @@ extension DBManager{
             do{
                 let fileManager = FileManager.default
                 
-                guard let myDesignsPath = logger?.getMyDesignsPath() else{
-                    throw logger!.documentsDirectoryNotFound()
+                guard let myDesignsPath = DBManager.logger?.getMyDesignsPath() else{
+                    throw DBManager.logger!.documentsDirectoryNotFound()
                 }
                 
                 
@@ -460,7 +460,7 @@ extension DBManager{
             parent.modelId = newParentID
             return parent
         }else{
-            logger?.printLog("parent not found")
+            DBManager.logger?.printLog("parent not found")
         }
         return nil
     }
@@ -478,7 +478,7 @@ extension DBManager{
             parent.modelId = newParentID
             return parent
         }else{
-            logger?.printLog("parent not found")
+            DBManager.logger?.printLog("parent not found")
         }
         return nil
     }
@@ -1175,12 +1175,12 @@ extension DBManager{
             do{
                 let fileManager = FileManager.default
                 
-                guard let templateThumbnails = logger?.getThumnailPath() else{
-                    throw logger!.documentsDirectoryNotFound()
+                guard let templateThumbnails = DBManager.logger?.getThumnailPath() else{
+                    throw DBManager.logger!.documentsDirectoryNotFound()
                 }
                 
-                guard let myDesignsPath = logger?.getMyDesignsPath() else{
-                    throw logger!.documentsDirectoryNotFound()
+                guard let myDesignsPath = DBManager.logger?.getMyDesignsPath() else{
+                    throw DBManager.logger!.documentsDirectoryNotFound()
                 }
                 
                 let sourceURL = templateThumbnails.appendingPathComponent(filename)
@@ -1204,8 +1204,8 @@ extension DBManager{
             do{
                 let fileManager = FileManager.default
                 
-                guard let myDesignsPath = logger?.getMyDesignsPath() else{
-                    throw logger!.documentsDirectoryNotFound()
+                guard let myDesignsPath = DBManager.logger?.getMyDesignsPath() else{
+                    throw DBManager.logger!.documentsDirectoryNotFound()
                 }
                 
                 
@@ -1241,7 +1241,7 @@ extension DBManager{
     
     func duplicatePageTemplate(page:PageInfo,newtempID:Int,currentTime:Float = 0.0,order:Int = 0)->Int{
         
-        var duplicatePage = page.getBaseModel(refSize: logger!.getBaseSize())
+        var duplicatePage = page.getBaseModel(refSize: DBManager.logger!.getBaseSize())
         let oldTime = duplicatePage.startTime
         duplicatePage.parentId = newtempID
         duplicatePage.templateID = newtempID

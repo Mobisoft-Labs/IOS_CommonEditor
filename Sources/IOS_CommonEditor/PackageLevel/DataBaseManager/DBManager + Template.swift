@@ -25,7 +25,7 @@ extension DBManager {
     // Delete query for individual column in TEMPLATE table
     func deleteTemplateByColumn(columnName: String, columnValue: String) -> Bool {
         let query = "DELETE FROM TABLE_TEMPLATE WHERE \(columnName) = '\(columnValue)'"
-            logger?.logInfo("Downloaded Templates Deleted")
+        DBManager.logger?.logInfo("Downloaded Templates Deleted")
         return executeQuery(query: query)
     }
 

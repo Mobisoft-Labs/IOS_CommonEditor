@@ -121,9 +121,10 @@ public class OfflineSceneRenderer : SceneComposable  {
     
     var fileHandler : ExportFileHandler
     
-    public init(settings: ExportSettings , fileHandler : ExportFileHandler , isUserSubscribed : Bool, logger: PackageLogger, resourceProvider: TextureResourceProvider){
+    public init(settings: ExportSettings , fileHandler : ExportFileHandler , isUserSubscribed : Bool, logger: PackageLogger, resourceProvider: TextureResourceProvider, sceneConfig: SceneConfiguration){
         self.logger = logger
         self.resourceProvider = resourceProvider
+        self.sceneConfig = sceneConfig
         textureCache = TextureCache(maxSize: settings.resolution.assetsMaxSize, resourceProvider: resourceProvider, logger: logger)
         context = CIContext()
 //        ShaderLibrary.initialise()

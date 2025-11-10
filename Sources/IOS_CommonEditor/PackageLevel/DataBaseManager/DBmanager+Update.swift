@@ -30,12 +30,12 @@ extension DBManager{
         do {
             try updateQuery(query, values: values)
         } catch {
-            logger?.logError("Failed to update thumb time in db.")
+            DBManager.logger?.logError("Failed to update thumb time in db.")
         }
     }
     
     public func updateTemplateRatio(templateId: Int, templateRatioId: Int) throws {
-        logger?.printLog("In DesignDbHelper updateTemplateRow")
+        DBManager.logger?.printLog("In DesignDbHelper updateTemplateRow")
 
         let query = "UPDATE \(TABLE_TEMPLATE) SET \(RATIO_ID) = ? WHERE \(TEMPLATE_ID) = ?"
         let values: [Any] = [templateRatioId, templateId]
@@ -49,7 +49,7 @@ extension DBManager{
     
     
     func updateTemplateCategoryAndThumbPath(templateId: Int, category: String?, thumbPath: String?, sequence: Int) throws {
-        logger?.printLog("In DesignDbHelper updateTemplateRow")
+        DBManager.logger?.printLog("In DesignDbHelper updateTemplateRow")
 
         let query = "UPDATE \(TABLE_TEMPLATE) SET \(CATEGORY) = ?, \(THUMB_LOCAL_PATH) = ?, \(SEQUENCE) = ? WHERE \(TEMPLATE_ID) = ?"
         let values: [Any] = [category as Any, thumbPath as Any, sequence, templateId]
@@ -66,7 +66,7 @@ extension DBManager{
    
 
     func updateTemplateThumbPath(templateId: Int, thumbPath: String) throws {
-        logger?.printLog("In DesignDbHelper updateTemplateRow")
+        DBManager.logger?.printLog("In DesignDbHelper updateTemplateRow")
 
         let query = "UPDATE \(TABLE_TEMPLATE) SET \(THUMB_LOCAL_PATH) = ? WHERE \(TEMPLATE_ID) = ?"
         let values: [Any] = [thumbPath, templateId]
@@ -79,7 +79,7 @@ extension DBManager{
     }
 
     func updateImageLocalPath(currentPath: String, newPath: String) throws {
-        logger?.printLog("In DesignDbHelper updateTemplateRow")
+        DBManager.logger?.printLog("In DesignDbHelper updateTemplateRow")
 
         let query = "UPDATE \(TABLE_IMAGE) SET \(LOCAL_PATH) = ? WHERE \(LOCAL_PATH) = ?"
         let values: [Any] = [newPath, currentPath]
@@ -93,7 +93,7 @@ extension DBManager{
     
     
     func updateImageLocalPath(imageId: Int, newPath: String) throws {
-        logger?.printLog("In DesignDbHelper updateTemplateRow")
+        DBManager.logger?.printLog("In DesignDbHelper updateTemplateRow")
 
         let query = "UPDATE \(TABLE_IMAGE) SET \(LOCAL_PATH) = ? WHERE \(IMAGE_ID) = ?"
         let values: [Any] = [newPath, imageId]
@@ -252,7 +252,7 @@ extension DBManager{
     }
     
     func updateTemplateIsHeaderDownload(bool: Int, categoryID:Int) throws {
-        logger?.printLog("In DesignDbHelper updateTemplateRow")
+        DBManager.logger?.printLog("In DesignDbHelper updateTemplateRow")
 
         let query = "UPDATE \(TABLE_CATEGORY) SET \(IS_HEADER_DOWNLOADED) = ? WHERE \(CATEGORY_ID) = ?"
         let values: [Any] = [bool, categoryID]
@@ -265,7 +265,7 @@ extension DBManager{
     }
     
     func updateTemplateIsDetailDownload(bool: Int, templateID:Int) throws {
-        logger?.printLog("In DesignDbHelper updateTemplateRow")
+        DBManager.logger?.printLog("In DesignDbHelper updateTemplateRow")
 
         let query = "UPDATE \(TABLE_TEMPLATE) SET \(IS_DETAILS_DOWNLOAD) = ? WHERE \(TEMPLATE_ID) = ?"
         let values: [Any] = [bool, templateID]
@@ -528,7 +528,7 @@ extension DBManager {
 
         do {
             try updateQuery(query, values: values)
-            logger?.printLog("moveModel Data update")
+            DBManager.logger?.printLog("moveModel Data update")
             return true
         } catch {
             return false

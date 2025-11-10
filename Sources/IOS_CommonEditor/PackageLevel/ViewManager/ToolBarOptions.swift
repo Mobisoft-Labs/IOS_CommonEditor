@@ -19,7 +19,7 @@ struct EditOnItem : View {
             } label: {
                 HStack {
                     ToolbarImageViewSystem(imageName: AppIcons.doneCheckMark,color: vmConfig.accentColorSwiftUI.opacity(0.5))
-                    ToolBarTextItem(text: "Edit_OFF"/*.translate()*/,textColor: vmConfig.accentColorSwiftUI)
+                    ToolBarTextItem(text: "Edit_OFF".translate(),textColor: vmConfig.accentColorSwiftUI)
 
                         
                 }
@@ -39,7 +39,7 @@ struct UnLockItem : View {
         } label: {
             HStack {
                 ToolbarImageViewSystem(imageName: AppIcons.lock,color: vmConfig.accentColorSwiftUI)
-                ToolBarTextItem(text: "unlock_"/*.translate()*/,textColor: vmConfig.accentColorSwiftUI)
+                ToolBarTextItem(text: "unlock_".translate(),textColor: vmConfig.accentColorSwiftUI)
 
             }
         }
@@ -111,7 +111,7 @@ struct EditItem : View {
                 model.editState = true
             } label: {
                 VStack {
-                    ToolBarTextItem(text: "Edit_"/*.translate()*/,textColor: vmConfig.accentColorSwiftUI)
+                    ToolBarTextItem(text: "Edit_".translate(),textColor: vmConfig.accentColorSwiftUI)
                 }
             }
         }else if let model = currentModel as? TextInfo {
@@ -119,7 +119,7 @@ struct EditItem : View {
                 actions.didEditTextClicked = true
             } label: {
                 VStack {
-                    ToolBarTextItem(text: "Edit_"/*.translate()*/,textColor: vmConfig.accentColorSwiftUI)
+                    ToolBarTextItem(text: "Edit_".translate(),textColor: vmConfig.accentColorSwiftUI)
                 }
             }
         }

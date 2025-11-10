@@ -212,7 +212,7 @@ public class TemplateInfo : ObservableObject {
     var showWatermark : Int = 0
 
     
-    public var outputType : OutputType = .Image
+    public var outputType : OutputType = .Video
     //END
     public var pageInfo = [PageInfo]()
    @Published public var ratioInfo = RatioInfo()

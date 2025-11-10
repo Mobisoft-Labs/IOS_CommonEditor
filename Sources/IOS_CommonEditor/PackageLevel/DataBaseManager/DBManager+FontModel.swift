@@ -15,7 +15,7 @@ extension DBManager{
         if FileManager.default.fileExists(atPath: db_local_path) {
             database = FMDatabase(path: db_local_path)
             
-            logger?.printLog("db local path:- \(db_local_path)")
+            DBManager.logger?.printLog("db local path:- \(db_local_path)")
             //create animation table
     
             
@@ -48,11 +48,11 @@ extension DBManager{
                 try updateQuery(query, values: nil)
                 //        }
                 
-                logger?.printLog("true")
+                DBManager.logger?.printLog("true")
                 created = true
             }
-            catch {  logger?.printLog("Could not create table.")
-                logger?.printLog(error.localizedDescription)
+            catch {  DBManager.logger?.printLog("Could not create table.")
+                DBManager.logger?.printLog(error.localizedDescription)
                 
             }
         }

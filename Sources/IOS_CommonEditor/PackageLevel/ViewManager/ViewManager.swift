@@ -159,15 +159,23 @@ public class ViewManager : GestureHandler ,
         self.editView = canvasView
         self.logger = logger
         self.vmConfig = vmConfig
+//        guard let templateHandler = templateHandler else { return }
+//        zoomHostingerController = UIHostingController(rootView: ZoomController(actionStates: templateHandler.currentActionState))
+//        zoomHostingerController?.view.frame = CGRect(x: Int(logger.getBaseSize().width) - 135, y: 10, width: 130, height: 40)
+//        zoomHostingerController?.view.backgroundColor = .clear
+//        zoomHostingerController?.view.isHidden = true
+//        self.editView?.addSubview(zoomHostingerController!.view)
+    
+    }
+    
+    public func setZoomController(){
         guard let templateHandler = templateHandler else { return }
         zoomHostingerController = UIHostingController(rootView: ZoomController(actionStates: templateHandler.currentActionState))
         zoomHostingerController?.view.frame = CGRect(x: Int(logger.getBaseSize().width) - 135, y: 10, width: 130, height: 40)
         zoomHostingerController?.view.backgroundColor = .clear
         zoomHostingerController?.view.isHidden = true
         self.editView?.addSubview(zoomHostingerController!.view)
-    
     }
-    
 
     
     // Function used for setting the model of currently tapped view.

@@ -42,14 +42,14 @@ public class StackedViewController: UIViewController, CustomCollectionViewDelega
         
         // Add the "Layers" label to the navigation panel
         let layersLabel = UILabel()
-        layersLabel.text = "Layers_"/*.translate()*/
+        layersLabel.text = "Layers_".translate()
         layersLabel.textColor = .label
         layersLabel.translatesAutoresizingMaskIntoConstraints = false
         navigationPanel.addSubview(layersLabel)
         
         // Add elements to the navigation panel (e.g., buttons, labels)
         let panelButton = UIButton(type: .system)
-        panelButton.setTitle("Done_"/*.translate()*/, for: .normal)
+        panelButton.setTitle("Done_".translate(), for: .normal)
         panelButton.setTitleColor(UIColor(viewModel.layerConfig!.accentColorSwiftUI), for: .normal)
         panelButton.translatesAutoresizingMaskIntoConstraints = false
         panelButton.addTarget(self, action: #selector(panelButtonTapped), for: .touchUpInside)
@@ -146,7 +146,7 @@ public class StackedViewController: UIViewController, CustomCollectionViewDelega
         navBarView.translatesAutoresizingMaskIntoConstraints = false
 
         let titleLabel = UILabel()
-        titleLabel.text = "Home_"/*.translate()*/
+        titleLabel.text = "Home_".translate()
         titleLabel.font = UIFont.systemFont(ofSize: 18, weight: .bold)
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         navBarView.addSubview(titleLabel)

@@ -127,37 +127,37 @@ extension MetalEngine {
         return CGPoint(x: newChildCenterX, y: newChildCenterY)
     }
     
-    func changeSize(newBaseSize:CGSize) {
-        isLoading = true
-        self.baseSize = newBaseSize
-        engineConfig.BASE_SIZE = newBaseSize
-//        templateHandler.setCurrentModel(id: -1) // JDCHange
-        shouldRenderOnScene = false
-            let ratioId = templateHandler.currentTemplateInfo?.ratioId
-            let ratioModel = DBManager.shared.getRatioDbModel(ratioId: ratioId!)
-            if let ratio = templateHandler.currentTemplateInfo?.ratioInfo.getRatioInfo(ratioInfo: ratioModel!, refSize: newBaseSize, logger: logger){
-                let oldSize = templateHandler.currentTemplateInfo?.ratioSize
-                let newRefSize = ratio.ratioSize
-                updateRatioOFPage2(newPageSize: newRefSize,newBaseSize: newBaseSize)
-              
-                Task {
-                    await sceneManager.changeRatio(ratio: newRefSize, refSize: newBaseSize)
-                    await MainActor.run {
-                        
-                        shouldRenderOnScene = true
-                        sceneManager.redraw()
-                        editorView?.frame.size = newBaseSize
-                        editorView?.updateCenter()
-                        isLoading = false
-                    }
-                }
-                
-
-    //            engine.viewManager?.ratioDidChange(page: engine.templateHandler.currentPageModel!)
-    //            engine.templateHandler.selectCurrentPage()
-              }
-        
-    }
+//    func changeSize(newBaseSize:CGSize) {
+//        isLoading = true
+//        self.baseSize = newBaseSize
+//        engineConfig.BASE_SIZE = newBaseSize
+////        templateHandler.setCurrentModel(id: -1) // JDCHange
+//        shouldRenderOnScene = false
+//            let ratioId = templateHandler.currentTemplateInfo?.ratioId
+//            let ratioModel = DBManager.shared.getRatioDbModel(ratioId: ratioId!)
+//            if let ratio = templateHandler.currentTemplateInfo?.ratioInfo.getRatioInfo(ratioInfo: ratioModel!, refSize: newBaseSize, logger: logger){
+//                let oldSize = templateHandler.currentTemplateInfo?.ratioSize
+//                let newRefSize = ratio.ratioSize
+//                updateRatioOFPage2(newPageSize: newRefSize,newBaseSize: newBaseSize)
+//              
+//                Task {
+//                    await sceneManager.changeRatio(ratio: newRefSize, refSize: newBaseSize)
+//                    await MainActor.run {
+//                        
+//                        shouldRenderOnScene = true
+//                        sceneManager.redraw()
+//                        editorView?.frame.size = newBaseSize
+//                        editorView?.updateCenter()
+//                        isLoading = false
+//                    }
+//                }
+//                
+//
+//    //            engine.viewManager?.ratioDidChange(page: engine.templateHandler.currentPageModel!)
+//    //            engine.templateHandler.selectCurrentPage()
+//              }
+//        
+//    }
     
     
     func updateRatioOFPage2(newPageSize:CGSize , newBaseSize : CGSize){

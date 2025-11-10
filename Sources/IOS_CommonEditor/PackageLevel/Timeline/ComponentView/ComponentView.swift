@@ -528,7 +528,8 @@ class ComponentView: UIView {
     
     // MARK: - Private Methods
     private func setupXIB() {
-        let nib = UINib(nibName: "ComponentView", bundle: nil)
+        let bundle = Bundle.module
+        let nib = UINib(nibName: "ComponentView", bundle: bundle)
         if let contentView = nib.instantiate(withOwner: self, options: nil).first as? UIView {
             contentView.frame = bounds
             contentView.autoresizingMask = [.flexibleWidth, .flexibleHeight]

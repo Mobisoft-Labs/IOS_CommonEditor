@@ -210,8 +210,7 @@ public class MetalEngine : ObservableObject, TemplateObserversProtocol , ActionS
     // TODO: JM Initialise ThumbManager By Check Only If Its Nil Alredy Otherwise call updateThumb Directly
     func captureThumbImage() async{
         if thumbManagar == nil{
-            thumbManagar = ThumbManager(templateHandler: templateHandler, resourceProvider: resourceProvider, logger: logger)
-            thumbManagar?.sceneConfig = sceneConfig
+            thumbManagar = ThumbManager(templateHandler: templateHandler, resourceProvider: resourceProvider, logger: logger, sceneConfig: sceneConfig)
         }
         thumbManagar?.textureCache.fetchIdealSize = CGSize(width: 500, height: 500)
         await thumbManagar?.updatePageThumb(pageModel: templateHandler.currentPageModel!, currentTime: templateHandler.currentTemplateInfo!.thumbTime, size: CGSize(width: 500, height: 500))
@@ -272,8 +271,7 @@ public class MetalEngine : ObservableObject, TemplateObserversProtocol , ActionS
         templateHandler.templateDuration = Double(templateInfo.totalDuration)
         templateHandler.playerControls = timeLoopHandler
         templateHandler.currentActionState.currentMusic = DBManager.shared.getMusicInfo(templateID: templateInfo.templateId)
-        thumbManagar = ThumbManager(templateHandler:templateHandler, resourceProvider: resourceProvider, logger: logger)
-        thumbManagar?.sceneConfig = sceneConfig
+        thumbManagar = ThumbManager(templateHandler:templateHandler, resourceProvider: resourceProvider, logger: logger, sceneConfig: sceneConfig)
         // save template info for future use
         setCurrentTemplate(templateInfo: templateInfo)
 
@@ -304,7 +302,7 @@ public class MetalEngine : ObservableObject, TemplateObserversProtocol , ActionS
                 
                 
                 
-                let didSucceed = await self.sceneManager.prepareSceneGraph(templateInfo: templateInfo)
+                let didSucceed = await self.sceneManager.prepareSceneGraph(templateInfo: templateInfo, sceneConfig: sceneConfig)
                 
                 sceneManager.canRenderWatermark(!(engineConfig.isPremium || templateHandler.currentTemplateInfo?.isPremium == 1))
                 if didSucceed {
@@ -493,7 +491,7 @@ extension MetalEngine {
                     
                 }
                 
-                let loaded = await sceneManager.prepareSceneGraph(templateInfo: templateInfo)
+                let loaded = await sceneManager.prepareSceneGraph(templateInfo: templateInfo, sceneConfig: sceneConfig)
                 if loaded {
                     sceneManager.canRenderWatermark(!(engineConfig.isPremium || templateInfo.isThisTemplateBought))
 
@@ -502,8 +500,7 @@ extension MetalEngine {
                     
                     if loadThumbnails  {
                         //                    if thumbManagar == nil {
-                        thumbManagar = ThumbManager(templateHandler: templateHandler, resourceProvider: resourceProvider, logger: logger)
-                        thumbManagar?.sceneConfig = sceneConfig
+                        thumbManagar = ThumbManager(templateHandler: templateHandler, resourceProvider: resourceProvider, logger: logger, sceneConfig: sceneConfig)
                         //                    }
                         
                         thumbManagar?.sceneProgress = { [weak self]  progress in
@@ -642,7 +639,7 @@ extension MetalEngine {
                     
                 }
                 
-                let loaded = await sceneManager.prepareSceneGraph(templateInfo: templateInfo)
+                let loaded = await sceneManager.prepareSceneGraph(templateInfo: templateInfo, sceneConfig: sceneConfig)
                 if loaded {
                     
                     var canRenderWatermark : Bool = false
@@ -658,8 +655,7 @@ extension MetalEngine {
                     
                     if loadThumbnails  {
                         //                    if thumbManagar == nil {
-                        thumbManagar = ThumbManager(templateHandler: templateHandler, resourceProvider: resourceProvider, logger: logger)
-                        thumbManagar?.sceneConfig = sceneConfig
+                        thumbManagar = ThumbManager(templateHandler: templateHandler, resourceProvider: resourceProvider, logger: logger, sceneConfig: sceneConfig)
                         //                    }
                         
                         thumbManagar?.sceneProgress = { [weak self]  progress in
@@ -791,7 +787,7 @@ extension MetalEngine {
                 
                 
                 
-                let loaded = await sceneManager.prepareSceneGraph(templateInfo: templateInfo)
+                let loaded = await sceneManager.prepareSceneGraph(templateInfo: templateInfo, sceneConfig: sceneConfig)
                 if loaded {
                     sceneManager.canRenderWatermark(!(engineConfig.isPremium || templateInfo.isThisTemplateBought))
 
@@ -800,8 +796,7 @@ extension MetalEngine {
                     
                     if loadThumbnails  {
                         //                    if thumbManagar == nil {
-                        thumbManagar = ThumbManager(templateHandler: templateHandler, resourceProvider: resourceProvider, logger: logger)
-                        thumbManagar?.sceneConfig = sceneConfig
+                        thumbManagar = ThumbManager(templateHandler: templateHandler, resourceProvider: resourceProvider, logger: logger, sceneConfig: sceneConfig)
                         //                    }
                         
                         thumbManagar?.sceneProgress = { progress in

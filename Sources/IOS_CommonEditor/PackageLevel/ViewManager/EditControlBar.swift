@@ -21,7 +21,7 @@ struct EditControlBar: View, Identifiable {
                 } label: {
                     HStack {
                         ToolbarImageViewSystem(imageName: AppIcons.doneCheckMark,color: vmConfig.accentColorSwiftUI.opacity(0.5))
-                        ToolBarTextItem(text: "Edit_OFF"/*.translate()*/,textColor: vmConfig.accentColorSwiftUI)
+                        ToolBarTextItem(text: "Edit_OFF".translate(),textColor: vmConfig.accentColorSwiftUI)
                         
                         
                     }
@@ -31,7 +31,7 @@ struct EditControlBar: View, Identifiable {
                     currentModel.editState = true
                 } label: {
                     VStack {
-                        ToolBarTextItem(text: "Edit_"/*.translate()*/,textColor: vmConfig.accentColorSwiftUI)
+                        ToolBarTextItem(text: "Edit_".translate(),textColor: vmConfig.accentColorSwiftUI)
                     }
                 }
             }

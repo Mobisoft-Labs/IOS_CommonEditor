@@ -33,7 +33,7 @@ extension DBManager{
            _ = deleteTemplateRow(templateId: templateID, ratioId: 0)
            count+=1
         }
-        logger?.logInfo("TEMPLATE type Templates Deleted Total : \(count)")
+        DBManager.logger?.logInfo("TEMPLATE type Templates Deleted Total : \(count)")
         return true
     }
 
@@ -58,7 +58,7 @@ extension DBManager{
               deleted = true
            }
            catch {
-               logger?.printLog("failed to deleteTemplate")
+               DBManager.logger?.printLog("failed to deleteTemplate")
            }
            
        return deleted
@@ -93,7 +93,7 @@ extension DBManager{
               deleted = true
            }
            catch {
-               logger?.printLog("failed to deleteTemplate")
+               DBManager.logger?.printLog("failed to deleteTemplate")
            }
            
        return deleted
@@ -108,7 +108,7 @@ extension DBManager{
               deleted = true
            }
            catch {
-               logger?.printLog("failed to deleteTemplate")
+               DBManager.logger?.printLog("failed to deleteTemplate")
            }
            
        return deleted
@@ -123,7 +123,7 @@ extension DBManager{
            deleted = true
         }
         catch {
-            logger?.printLog("failed to deleteTemplate")
+            DBManager.logger?.printLog("failed to deleteTemplate")
         }
         
     return deleted
@@ -137,7 +137,7 @@ extension DBManager{
                   deleted = true
                }
                catch {
-                   logger?.printLog("failed to deleteTemplate")
+                   DBManager.logger?.printLog("failed to deleteTemplate")
                }
                
            return deleted
@@ -153,7 +153,7 @@ extension DBManager{
                deleted = true
             }
             catch {
-                logger?.printLog("failed to deleteTemplate")
+                DBManager.logger?.printLog("failed to deleteTemplate")
             }
             
         return deleted
@@ -184,7 +184,7 @@ extension DBManager{
                deleted = true
             }
             catch {
-                logger?.printLog("failed to deleteTemplate")
+                DBManager.logger?.printLog("failed to deleteTemplate")
             }
             
         return deleted
@@ -199,7 +199,7 @@ extension DBManager{
                deleted = true
             }
             catch {
-                logger?.printLog("failed to deleteTemplate")
+                DBManager.logger?.printLog("failed to deleteTemplate")
             }
             
         return deleted
@@ -213,7 +213,7 @@ extension DBManager{
                deleted = true
             }
             catch {
-                logger?.printLog("failed to deleteTemplate")
+                DBManager.logger?.printLog("failed to deleteTemplate")
             }
             
         return deleted

@@ -155,7 +155,7 @@ public class BaseModel :ObservableObject, BaseModelProtocol{
 //    @Published var copy : Bool = false
 //    @Published var paste : Bool = false
     
-    @Published public var thumbImage: UIImage? = UIImage(named: "none")!
+    @Published public var thumbImage: UIImage? = UIImage(named: "none") ?? UIImage(systemName: "plus")
     
     @Published var beginStartTime:Float = 0.0
     @Published var endStartTime:Float = 0.0

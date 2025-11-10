@@ -12,7 +12,6 @@ import UIKit
 public protocol EngineConfiguration {
     var progress: Float { get set }
     var isPremium: Bool { get }
-    var BASE_SIZE: CGSize { get set }
     var contentScaleFactor: CGFloat { get }
     var getSnappingMode: Int { get }
     func fetchImage(imageURL: String) async throws -> UIImage?
@@ -30,6 +29,7 @@ public protocol EngineConfiguration {
     func getFontAssetsPath() -> URL?
     func getMuicPath() -> URL?
     func getLocalMusicPath() -> URL?
+    func getBaseSize() -> CGSize
     func logReplaceSticker()
     func logAddText()
     func logAddSticker()

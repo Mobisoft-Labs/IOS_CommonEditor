@@ -44,7 +44,7 @@ public class PipelineLibrary {
 //        initialise()
     }
     
-    func initialise(logger: PackageLogger) {
+    public func initialise(logger: PackageLogger) {
        if dict.isEmpty{
            addColorRenderPipelineState()
            addImageRenderPipelineState()
@@ -152,7 +152,8 @@ public class PipelineLibrary {
 extension MChild {
     var pipelineLibrary: PipelineLibrary {
 //        return Injection.shared.inject(type: PipelineLibrary.self)!
-        Injected<PipelineLibrary>().wrappedValue
+//        Injected<PipelineLibrary>().wrappedValue
+        return (DependencyResolver.shared?.resolve(PipelineLibrary.self))!
     }
     func switchTo(type:PipelineLibraryType) {
         renderPipelineState = pipelineLibrary.getPipelineState(type: type)

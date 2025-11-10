@@ -51,7 +51,7 @@ public class MVertexDescriptorLibrary {
     public init() {
 //       initialise()
     }
-     func initialise() {
+     public func initialise() {
        vertesDescriptors.updateValue(PCTVertedDescriptor(), forKey: .PositionColorTexture)
    }
     
