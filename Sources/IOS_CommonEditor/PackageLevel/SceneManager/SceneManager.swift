@@ -996,6 +996,7 @@ public class TextureCache {
                             
                         }
                     }else{
+                        logger.logError("Error fetching server image.")
                         let img = resourceProvider.getDefaultImage()
                         
                         if let img = img{
@@ -1020,6 +1021,7 @@ public class TextureCache {
                     
                 }
                 catch{
+                    logger.logError("Error fetching server image.")
                     let img = resourceProvider.getDefaultImage()
                     
                     if let img = img{
@@ -1101,6 +1103,7 @@ public class TextureCache {
                     
                 
             }else{
+                logger.logError("Error fetching image from documents.")
                 let img = resourceProvider.getDefaultImage()
                 
                 if let img = img, let imageData = img.pngData(){
@@ -1300,6 +1303,7 @@ func getTextureBGFromServer(imageName:String,id:Int,crop:CGRect = CGRect(x: 0.0,
                            
                        }
                    }else{
+                       logger.logError("Error fetching server BG image.")
                        let img = resourceProvider.getDefaultImage()
                        
                        if let img = img{
@@ -1323,6 +1327,7 @@ func getTextureBGFromServer(imageName:String,id:Int,crop:CGRect = CGRect(x: 0.0,
                    
                }
                catch{
+                   logger.logError("Error fetching server BG image.")
                    let img = resourceProvider.getDefaultImage()
                    
                    if let img = img{

@@ -696,13 +696,13 @@ extension MetalEngine {
         }.store(in: &actionStateCancellables)
        
         
-        templateHandler.currentActionState.$didCloseTabbarTapped.dropFirst().sink { [weak self] value in
-            guard let self = self else { return }
-            if value == true{
-               // templateHandler.deepSetCurrentModel(id: templateHandler.currentModel!.parentId)
-                templateHandler.setCurrentModel(id: templateHandler.currentModel!.parentId)
-            }
-        }.store(in: &actionStateCancellables)
+//        templateHandler.currentActionState.$didCloseTabbarTapped.dropFirst().sink { [weak self] value in
+//            guard let self = self else { return }
+//            if value == true{
+//               // templateHandler.deepSetCurrentModel(id: templateHandler.currentModel!.parentId)
+//                templateHandler.setCurrentModel(id: templateHandler.currentModel!.parentId)
+//            }
+//        }.store(in: &actionStateCancellables)
         
         guard let templateHandler = self.templateHandler else {
             logger.logError("template handler nil")

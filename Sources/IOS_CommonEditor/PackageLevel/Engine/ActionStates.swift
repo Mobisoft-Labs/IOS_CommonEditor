@@ -38,9 +38,9 @@ enum ZoomEditView{
 
 
 public class ActionStates: ObservableObject {
-    @Published var personalizedState : Bool = false
-    @Published public var didPersonalizeTapped : Bool = false
-    @Published var didPersonalizeTappedFromSaveNEdit : Bool = false
+//    @Published var personalizedState : Bool = false
+//    @Published public var didPersonalizeTapped : Bool = false
+//    @Published var didPersonalizeTappedFromSaveNEdit : Bool = false
     @Published var zoomEditView : ZoomEditView = .scaleUp
     
     var logger: PackageLogger?
@@ -85,15 +85,15 @@ public class ActionStates: ObservableObject {
     @Published var isTextInUpdateMode: Bool = false
     @Published var thumbUpdateId: Int = 0
     @Published public var isTextNotValid = false
-    @Published var lastSelectedBGContent: AnyBGContent?
-    @Published public var lastSelctedOverlayContent: AnyBGContent?
-    @Published public var lastSelectedFilter: FiltersEnum = .none
+//    @Published var lastSelectedBGContent: AnyBGContent?
+//    @Published public var lastSelctedOverlayContent: AnyBGContent?
+//    @Published public var lastSelectedFilter: FiltersEnum = .none
     @Published public var isCurrentModelDeleted: Bool = false
     @Published public var shouldRefreshOnAddComponent: Bool = false
-    @Published public var lastSelectedFont: String = "Default"
-    @Published public var lastSelectedFlipH: Bool = false
-    @Published public var lastSelectedFlipV: Bool = false
-    @Published public var lastSelectedBGColor: AnyBGContent?
+//    @Published public var lastSelectedFont: String = "Default"
+//    @Published public var lastSelectedFlipH: Bool = false
+//    @Published public var lastSelectedFlipV: Bool = false
+//    @Published public var lastSelectedBGColor: AnyBGContent?
   //  @Published var parentEditState: Bool = false
     
     // MARK: - Page-Level State
@@ -118,16 +118,16 @@ public class ActionStates: ObservableObject {
     @Published var addNewpage: AnyBGContent = BGColor(bgColor: .blue)
     
     // MARK: - Action Tracking State
-    @Published public var didUseMeTapped: Bool = false
-    @Published public var didPurchasedTapped: Bool = false
+//    @Published public var didUseMeTapped: Bool = false
+//    @Published public var didPurchasedTapped: Bool = false
     @Published public var didPreviewTapped: Bool = false
     @Published public var didGroupTapped: Bool = false
     @Published public var didCancelTapped: Bool = false
     @Published public var didWatchAdsTapped: Bool = false
     @Published public var didGetPremiumTapped: Bool = false
-    @Published public var didCloseTabbarTapped: Bool = false
+//    @Published public var didCloseTabbarTapped: Bool = false
     @Published public var didUngroupTapped: Bool = false
-    @Published public var didLayersTapped: Bool = false
+//    @Published public var didLayersTapped: Bool = false
     @Published public var multiModeSelected: Bool = false
     @Published public var exportPageTapped: Bool = false
     @Published public var snappingMode: SnappingMode = .basic
@@ -164,7 +164,7 @@ public class ActionStates: ObservableObject {
     // MARK: - Editor Visibility State
     @Published public var showNavgiationItems: Bool = false
     @Published public var showMultiSelectNavItems: Bool = false
-    @Published public var showThumbnailNavItems: Bool = false
+//    @Published public var showThumbnailNavItems: Bool = false
    // @Published var hideTimeLine: Bool = false
     @Published var isScrollViewShowOrNot: Bool = false
 
@@ -176,16 +176,16 @@ public class ActionStates: ObservableObject {
     @Published public var lastSelectedCategoryId: Int = 3
     
     // MARK: - Page Transitions/Duration State
-    @Published public var didShowDurationButtonCliked: Bool = false
+//    @Published public var didShowDurationButtonCliked: Bool = false
 
     // MARK: - Last Selected States
-    @Published public var lastSelectedShadowButton: ShadowType = .direction
-    @Published public var lastSelectedBGButton: BGPanelType = .color
-    @Published public var lastSelectedFormatButton: HTextGravity = .Center
+//    @Published public var lastSelectedShadowButton: ShadowType = .direction
+//    @Published public var lastSelectedBGButton: BGPanelType = .color
+//    @Published public var lastSelectedFormatButton: HTextGravity = .Center
     @Published public var lastSelectedTextTab: String = ""
-    @Published public var lastSelectedBGTab: String = ""
-    @Published public var lastSelectedColor: AnyColorFilter?
-    @Published public var lastSelctedBGContent: AnyBGContent?
+//    @Published public var lastSelectedBGTab: String = ""
+//    @Published public var lastSelectedColor: AnyColorFilter?
+//    @Published public var lastSelctedBGContent: AnyBGContent?
 
     @Published public var didEditTextClicked : Bool = false
     @Published var directionOfScrollView : scrollViewDirection = .left

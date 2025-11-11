@@ -66,7 +66,7 @@ public class MetalEngine : ObservableObject, TemplateObserversProtocol , ActionS
     
     
     public func getEditorView(frame:CGRect) {
-        let editorView = EditorView(frame: frame, logger: logger, vmConfig: vmConfig)
+        let editorView = EditorView(frame: frame, logger: logger, vmConfig: vmConfig, sceneConfig: sceneConfig)
         // viewSceneManager.setEditorView(editorView) TODO: JD Pending
         self.editorView = editorView
         editorView.backgroundColor = .clear

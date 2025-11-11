@@ -560,7 +560,7 @@ public class TemplateHandler  : TemplateHandlerProtocol,DictCacheProtocol, Obser
     
     
     
-    func setCurrentModel(id : Int , deepSmartSelect:Bool = true ){
+    public func setCurrentModel(id : Int , deepSmartSelect:Bool = true ){
             
         logger?.logInfo("set id: \(id)")
 

@@ -10,6 +10,7 @@ import UIKit
 public class EditorView : UIView {
     
     var logger: PackageLogger
+    var sceneConfig: SceneConfiguration
     var vmConfig: ViewManagerConfiguration
     
     deinit {
@@ -44,9 +45,10 @@ public class EditorView : UIView {
 //        self.clipsToBounds = true
 //    }
     
-    init(frame: CGRect, logger: PackageLogger, vmConfig: ViewManagerConfiguration) {
+    init(frame: CGRect, logger: PackageLogger, vmConfig: ViewManagerConfiguration, sceneConfig: SceneConfiguration) {
         self.logger = logger   // must initialize before calling super
         self.vmConfig = vmConfig
+        self.sceneConfig = sceneConfig
         super.init(frame: frame)
         setupView()
     }
@@ -83,6 +85,7 @@ public class EditorView : UIView {
             let center = CGPoint(x: self.canvasView.bounds.width/2, y: self.canvasView.bounds.height/2)
             let metalView = IOSMetalView(frame: CGRect(x: 0, y: 0, width: self.canvasView.frame.size.width, height: self.canvasView.frame.size.height))
             metalView.center = center
+            metalView.setPackageLogger(logger: logger, sceneConfig: sceneConfig)
 //            metalView.autoresizingMask = [.flexibleWidth , .flexibleHeight]
 //            metalView.translatesAutoresizingMaskIntoConstraints = true
             
