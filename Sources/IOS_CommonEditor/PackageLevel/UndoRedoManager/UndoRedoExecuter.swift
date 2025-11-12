@@ -320,6 +320,8 @@ public class UndoRedoExecuter{
         case .some(.loopAnimationDurationChange(let loopAnimation)):
             setCurrentModelIfNeeded(engine: engine, currentId: loopAnimation.id)
             engine.templateHandler.currentModel?.loopAnimationDuration = loopAnimation.oldValue
+        case .outputTypeChanged(let output):
+            engine.templateHandler.currentTemplateInfo?.outputType = output.oldvalue
         }
     }
     
@@ -611,6 +613,8 @@ public class UndoRedoExecuter{
         case .some(.loopAnimationDurationChange(let loopAnimation)):
             setCurrentModelIfNeeded(engine: engine, currentId: loopAnimation.id)
             engine.templateHandler.currentModel?.loopAnimationDuration = loopAnimation.newValue
+        case .outputTypeChanged(let output):
+            engine.templateHandler.currentTemplateInfo?.outputType = output.newValue
         }
     }
     

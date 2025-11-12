@@ -69,6 +69,13 @@ enum OperationAction {
     case inAnimationDurationChange(InAnimationDurationChange)
     case outAnimationDurationChange(OutAnimationDurationChange)
     case loopAnimationDurationChange(LoopAnimationDurationChange)
+    case outputTypeChanged(OutputTypeAction)
+}
+
+struct OutputTypeAction{
+    var oldvalue: OutputType
+    var newValue: OutputType
+    var id: Int
 }
 
 struct EditStateAction{

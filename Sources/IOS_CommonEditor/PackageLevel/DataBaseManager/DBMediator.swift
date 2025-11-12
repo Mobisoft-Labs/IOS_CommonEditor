@@ -11,7 +11,7 @@ import UIKit
 
 
 
-class DBMediator : DictCacheProtocol  {
+public class DBMediator : DictCacheProtocol  {
     func cleanUp() {
         resetDictionary()
     }
@@ -29,10 +29,10 @@ class DBMediator : DictCacheProtocol  {
         return childDict[modelId]
     }
     
-    static var shared = DBMediator()
+    public static var shared = DBMediator()
      var dbManager = DBManager()
 
-    var childDict = [Int:BaseModel]()
+    public var childDict = [Int:BaseModel]()
     
     //Template Handler class reference varable for handling the all operation regarding the template.
    // var templateHandler : TemplateHandler = TemplateHandler()
@@ -416,7 +416,7 @@ class DBMediator : DictCacheProtocol  {
 
     var onlinePreview : Bool = false
     
-    func fetchTemplate(tempID:Int,refSize:CGSize , onlinePreview : Bool = true)->TemplateInfo?{
+    public func fetchTemplate(tempID:Int,refSize:CGSize , onlinePreview : Bool = true)->TemplateInfo?{
         self.onlinePreview = onlinePreview
         if onlinePreview {
             resetDictionary()
@@ -452,6 +452,8 @@ class DBMediator : DictCacheProtocol  {
                 tempInfo.addPageInfo(pageInfo: pageInfo)
             }
         }
+        
+//        tempInfo.childDict = childDict
        return tempInfo
     }
     func addPageInfo(){

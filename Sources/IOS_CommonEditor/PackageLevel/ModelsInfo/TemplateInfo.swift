@@ -212,12 +212,14 @@ public class TemplateInfo : ObservableObject {
     var showWatermark : Int = 0
 
     
-    public var outputType : OutputType = .Video
+    @Published public var outputType : OutputType = .Image
     //END
     public var pageInfo = [PageInfo]()
    @Published public var ratioInfo = RatioInfo()
     
-    var ratioSize : CGSize {
+//    public var childDict = [Int:BaseModel]()
+    
+    public var ratioSize : CGSize {
         return CGSize(width: CGFloat(ratioInfo.ratioWidth), height: CGFloat(ratioInfo.ratioHeight))
     }
     
@@ -360,6 +362,10 @@ public class TemplateInfo : ObservableObject {
         }
         return updatedID
     }
+    
+//    func getChildDict() -> [Int:BaseModel]{
+//        
+//    }
     
 //    func decreaseOrderOFChildren(from order:Int,to:Int, pageDuration : Float)->([Int:Int], Float){
 //        var updatedID = [Int:Int]()

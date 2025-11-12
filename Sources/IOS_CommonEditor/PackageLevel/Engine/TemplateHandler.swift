@@ -163,7 +163,7 @@ public class TemplateHandler  : TemplateHandlerProtocol,DictCacheProtocol, Obser
         logger?.printLog("de-init \(self)")
     }
     
-    func setPackageLogger(logger: PackageLogger, engineConfig: EngineConfiguration){
+    public func setPackageLogger(logger: PackageLogger, engineConfig: EngineConfiguration){
         self.logger = logger
         self.engineConfig = engineConfig
         currentActionState.setPackageLogger(logger: logger, actionStateConfig: engineConfig)
@@ -219,7 +219,7 @@ public class TemplateHandler  : TemplateHandlerProtocol,DictCacheProtocol, Obser
     //save current template info
     public var currentTemplateInfo:TemplateInfo?
     
-    var childDict : [Int : BaseModel] = [:]
+    public var childDict : [Int : BaseModel] = [:]
     
     // Contains Reference of CurrentSticker Model.
     public var currentStickerModel : StickerInfo?
@@ -238,7 +238,7 @@ public class TemplateHandler  : TemplateHandlerProtocol,DictCacheProtocol, Obser
 
     var prevSnappingChild : SnappingData = SnappingData(parentState: .CenterX, childState: .CenterX, modelID: -1)
     
-    init(){ }
+    public init(){ }
     
     func cleanUp() {
         childDict.removeAll()

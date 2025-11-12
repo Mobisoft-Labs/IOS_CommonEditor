@@ -174,7 +174,7 @@ extension MetalEngine {
         }
     }
     
-    func updateRatioOFPage(newPageSize:CGSize ){
+    public func updateRatioOFPage(newPageSize:CGSize ){
         guard let templateInfo = templateHandler.currentTemplateInfo else{
             logger.printLog("Template info object is not found to change ratio")
             return

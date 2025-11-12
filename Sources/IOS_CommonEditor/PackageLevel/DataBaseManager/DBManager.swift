@@ -14,7 +14,7 @@ import FMDB
 
 public class DBManager : DBInterface{
     
-    static public let shared: DBManager = DBManager()
+    public static let shared: DBManager = DBManager()
     
     // MARK: - Enum of Table
     

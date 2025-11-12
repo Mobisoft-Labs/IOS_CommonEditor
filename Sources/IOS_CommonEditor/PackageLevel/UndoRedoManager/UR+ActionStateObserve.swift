@@ -74,5 +74,15 @@ extension UndoRedoManager  {
                 addOperation(.musicChanged(MusicChange(id: currentTemplateInfo.templateId, oldMusicModel: templateHandler.currentActionState.currentMusic, newMusicModel: newMusic)))
            }
         }.store(in: &actionStateCancellables)
+        
+        templateHandler.currentTemplateInfo?.$outputType.dropFirst().sink { [weak self] output in
+            guard let self = self else { return }
+            if !undoState {
+                guard let currentTemplateInfo =  templateHandler.currentTemplateInfo else {
+                    logger.logError("No output Found")
+                    return }
+                addOperation(.outputTypeChanged(OutputTypeAction(oldvalue: currentTemplateInfo.outputType, newValue: output, id: currentTemplateInfo.templateId)))
+           }
+        }.store(in: &actionStateCancellables)
      }
 }
