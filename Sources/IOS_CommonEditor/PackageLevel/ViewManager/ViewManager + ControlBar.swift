@@ -8,6 +8,14 @@
 import Foundation
 import SwiftUI
 
+
+public protocol ToolBarIntegrator {
+    func getEasyToolBar() -> any View
+    func getEditToolBar(id: Int, currentModel: ParentInfo) -> any View
+    
+}
+
+
 extension ViewManager {
     
     func addControlBar() {
@@ -17,7 +25,9 @@ extension ViewManager {
 //            return
 //        }
 //        let view = provider.makeEasyToolBar()
-        let view = AnyView(EasyToolBar(vmConfig: vmConfig).environmentObject(templateHandler!).environment(\.sizeCategory, .medium))
+//        TBI.getEasyTooLBar()
+//        let view = AnyView(EasyToolBar(vmConfig: vmConfig).environmentObject(templateHandler!).environment(\.sizeCategory, .medium))
+        let view = AnyView(toolbarConfig.getEasyToolBar())
         if controlBarView == nil {
             controlBarView = UIHostingController(rootView: view )
             controlBarView!.view.frame = CGRect(x: 0, y: 0, width: 180, height: 40)
@@ -151,14 +161,16 @@ extension ViewManager {
 //                    return
 //                }
 //        let view = provider.makeEditControlBar(for: model, id: model.modelId)
-        let view =  EditControlBar(id: model.modelId, vmConfig: vmConfig, currentModel: model)
-        let controlBarView = UIHostingController(rootView: view)
+//        let view =  EditControlBar(id: model.modelId, vmConfig: vmConfig, currentModel: model)
+        let view = toolbarConfig.getEditToolBar(id: model.modelId, currentModel: model)
+        let controlBarView = UIHostingController(rootView: AnyView(view))
         controlBarView.view.frame = CGRect(x: 0, y: 0, width: 40, height: 40)
         editView?.addSubview(controlBarView.view)
         controlBarView.view.isUserInteractionEnabled = true
         controlBarView.view.backgroundColor = .clear
         
-        controlBarContainer.append(controlBarView)
+        controlBarContainer.append(ControlBarEntry(id: model.modelId, controller: controlBarView))
+//        controlBarContainer.append(controlBarView)
         
         controlBarView.view.frame.size = CGSize(width: 40, height: 40)
         let frameOfCurrentView = currentActiveView.convert(currentActiveView.bounds, to: editView)

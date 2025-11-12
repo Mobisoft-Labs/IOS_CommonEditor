@@ -26,7 +26,7 @@ extension ViewManager {
             editStateCancellables[modelID] = Set<AnyCancellable>()
         }
         
-        if self.controlBarContainer.firstIndex(where: { $0.rootView.id == modelID }) == nil {
+        if self.controlBarContainer.firstIndex(where: { $0.id == modelID }) == nil {
             // If no element with the specified `modelID` exists, draw the control bar
             self.drawControlBarForEdit(model: parentModel!)
         } else {
@@ -73,13 +73,13 @@ extension ViewManager {
         let modelID = model.modelId
         let parentModel = model as? ParentInfo
         
-        if let index = controlBarContainer.firstIndex(where: { $0.rootView.id == modelID }) , !parentModel!.editState {
+        if let index = controlBarContainer.firstIndex(where: { $0.id == modelID }) , !parentModel!.editState {
             let controlBarView = controlBarContainer[index]
                       
             // Remove the view from the parent and the array
-            controlBarView.willMove(toParent: nil)
-            controlBarView.view.removeFromSuperview()
-            controlBarView.removeFromParent()
+            controlBarView.controller.willMove(toParent: nil)
+            controlBarView.controller.view.removeFromSuperview()
+            controlBarView.controller.removeFromParent()
               
             controlBarContainer.remove(at: index)
         }

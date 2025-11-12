@@ -12,9 +12,9 @@ extension ViewManager{
     func removeEditListeners(){
         for container in self.controlBarContainer {
             // Remove the view from the parent and the array
-            container.willMove(toParent: nil)
-            container.view.removeFromSuperview()
-            container.removeFromParent()
+            container.controller.willMove(toParent: nil)
+            container.controller.view.removeFromSuperview()
+            container.controller.removeFromParent()
         }
         for model in templateHandler!.currentActionState.multiUnSelectItems {
             print(model)
@@ -36,10 +36,10 @@ extension ViewManager{
         }
         let parentId = templateHandler?.getModel(modelId: id)?.parentId
         if parentId != currentPageView.tag{
-            if let editControlIndex = self.controlBarContainer.firstIndex(where: { $0.rootView.id == parentId }){
+            if let editControlIndex = self.controlBarContainer.firstIndex(where: { $0.id == parentId }){
                 // If no element with the specified `modelID` exists, draw the control bar
                let editControl =  controlBarContainer[editControlIndex]
-                editControl.view.isHidden = true
+                editControl.controller.view.isHidden = true
             }
         }
     }
@@ -61,10 +61,10 @@ extension ViewManager{
                 }){
                     return
                 }
-                if let editControlIndex = self.controlBarContainer.firstIndex(where: { $0.rootView.id == parentId }){
+                if let editControlIndex = self.controlBarContainer.firstIndex(where: { $0.id == parentId }){
                     // If no element with the specified `modelID` exists, draw the control bar
                    let editControl =  controlBarContainer[editControlIndex]
-                    editControl.view.isHidden = false
+                    editControl.controller.view.isHidden = false
                 }
                 
             }

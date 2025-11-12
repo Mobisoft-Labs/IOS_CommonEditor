@@ -46,7 +46,7 @@ public class ViewManager : GestureHandler ,
     var zoomCancellables : Set<AnyCancellable> = Set<AnyCancellable>()
 
     // Container for containing multiple control bar.
-    var controlBarContainer : [UIHostingController<EditControlBar>] = []//[ControlBarEntry] = []//[UIHostingController<EditControlBar>] = []
+    var controlBarContainer : /*[UIHostingController<AnyView>] = []*/[ControlBarEntry] = []//[UIHostingController<EditControlBar>] = []
     
 //    public var controlBarProvider: AnyEditControlBarProvider?
 //    public var easyToolBarProvider: AnyEasyToolBarProvider?
@@ -84,6 +84,7 @@ public class ViewManager : GestureHandler ,
     var logger: PackageLogger
     
     var vmConfig: ViewManagerConfiguration
+    var toolbarConfig: ToolBarIntegrator
     
     //Hostinger View for controllling the ControlBar of View Manger.
     var controlBarView :  UIHostingController<AnyView>?
@@ -135,7 +136,7 @@ public class ViewManager : GestureHandler ,
         logger.printLog("de-init \(self)")
     }
     
-//    public func addControlBar<V: EditControlBarProtocol>(_ view: V) {
+//    public func addEditControlBar<V: EditControlBarProtocol>(_ view: V) {
 //        let controller = UIHostingController(rootView: AnyView(view))
 //        controlBarContainer.append(controller)
 //    }
@@ -154,11 +155,12 @@ public class ViewManager : GestureHandler ,
         observeCurrentActions()
     }
     
-    public init(canvasView : EditorView, logger: PackageLogger, vmConfig: ViewManagerConfiguration) {
+    public init(canvasView : EditorView, logger: PackageLogger, vmConfig: ViewManagerConfiguration, toolbarConfig: ToolBarIntegrator) {
        
         self.editView = canvasView
         self.logger = logger
         self.vmConfig = vmConfig
+        self.toolbarConfig = toolbarConfig
 //        guard let templateHandler = templateHandler else { return }
 //        zoomHostingerController = UIHostingController(rootView: ZoomController(actionStates: templateHandler.currentActionState))
 //        zoomHostingerController?.view.frame = CGRect(x: Int(logger.getBaseSize().width) - 135, y: 10, width: 130, height: 40)
