@@ -865,7 +865,7 @@ extension MetalEngine {
         let templateHandler = await Task { () -> TemplateHandler in
             let handler = TemplateHandler()
             handler.setPackageLogger(logger: logger, engineConfig: engineConfig)
-            handler.childDict = await MainActor.run { databaseManager.childDict }
+            handler.childDict = await MainActor.run { templateInfo.createChildDict() }
             await MainActor.run { databaseManager.cleanUp() }
            
             handler.templateDuration = Double(templateInfo.totalDuration)
@@ -889,7 +889,7 @@ extension MetalEngine {
         }
         
         await Task {
-            await prepareSceneWith(templateInfo: templateInfo, refSize: refSize)
+            await prepareSceneWith(templateInfo: templateHandler.currentTemplateInfo!, refSize: refSize)
         }.value
         
         // 6️⃣ Download Fonts in Parallel
@@ -936,7 +936,8 @@ extension MetalEngine {
     
     public func prepareSceneWith(templateInfo: TemplateInfo, refSize: CGSize) async {
         let newSize = getProportionalSize(currentRatio: CGSize(width: CGFloat(templateInfo.ratioInfo.ratioWidth), height: CGFloat(templateInfo.ratioInfo.ratioHeight)), oldSize: refSize)
-        
+        templateInfo.ratioInfo.ratioWidth = Float(newSize.width)
+        templateInfo.ratioInfo.ratioHeight = Float(newSize.height)
         updateRatioOFPage2(newPageSize: newSize, newBaseSize: refSize)
     }
     

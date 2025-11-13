@@ -355,11 +355,39 @@ public class TemplateInfo : ObservableObject {
         return updatedID
     }
     
-//    func createChildDict() -> [Int: BaseModel]{
-//        for page in pageInfo{
+    func createChildDict() -> [Int: BaseModel]{
+        var childDict = [Int: BaseModel]()
+        for page in pageInfo{
+            childDict[page.modelId] = page
 //            
-//        }
-//    }
+            for child in page.children{
+                if child.modelType == .Sticker{
+                    childDict[child.modelId] = child
+                }else if child.modelType == .Text{
+                    childDict[child.modelId] = child
+                }else if child.modelType == .Parent{
+                    addParentToChildDict(childDict: &childDict, parentModel: child as! ParentInfo)
+                }
+            }
+        }
+        return childDict
+    }
+    
+    func addParentToChildDict(childDict: inout [Int: BaseModel], parentModel: ParentInfo){
+        childDict[parentModel.modelId] = parentModel
+        
+        for child in parentModel.children{
+            if child.modelType == .Sticker{
+                childDict[child.modelId] = child
+            }else if child.modelType == .Text{
+                childDict[child.modelId] = child
+            }else if child.modelType == .Parent{
+                if let innerParent = child as? ParentInfo {
+                    addParentToChildDict(childDict: &childDict, parentModel: innerParent)
+                }
+            }
+        }
+    }
     
 //    func decreaseOrderOFChildren(from order:Int,to:Int, pageDuration : Float)->([Int:Int], Float){
 //        var updatedID = [Int:Int]()
