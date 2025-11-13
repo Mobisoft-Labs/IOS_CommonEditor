@@ -40,6 +40,11 @@ class MChild :  Renderable{
     }
     
  
+    var _respectiveTime: Bool = true {
+        didSet{
+            
+        }
+    }
     
     var _canRenderWatermark : Bool = false{
         didSet {
@@ -93,6 +98,10 @@ class MChild :  Renderable{
     }
     
     var mIsSoftDeleted: Bool = false
+    
+    var respectiveTime: Bool {
+        return parent?.respectiveTime ?? _respectiveTime
+    }
     
     var mIsVisible: Bool = true
     
@@ -158,6 +167,10 @@ class MChild :  Renderable{
     func setMSoftDelete(_ delete: Bool) {
         mIsSoftDeleted = delete
     }
+    
+//    func setRespectiveTime(_ value: Bool){
+//        respectiveTime = value
+//    }
     
     
     func setMCropStyle(cropStyle:Int){

@@ -188,7 +188,6 @@ extension MetalEngine {
     }
     
     
-    
     private func recursiveChildSizeChange(parent:ParentModel,oldParentSize:CGSize,newParentSize:CGSize){
         for child in parent.children{
             let oldChildSize = child.baseFrame.size

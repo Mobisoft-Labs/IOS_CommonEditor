@@ -210,7 +210,20 @@ extension SceneManager {
             
         }.store(in: &actionStateCancellables)
             
+           
+        templateHandler.currentTemplateInfo?.$outputType.dropFirst().sink {   [weak self] type in
+            guard let self = self else { return }
             
+            if type == .Image {
+                currentScene?._respectiveTime = true
+            
+            }else {
+                currentScene?._respectiveTime = false
+            }
+            
+            redraw()
+            
+        }.store(in: &actionStateCancellables)
             
        
         

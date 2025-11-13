@@ -223,14 +223,6 @@ public class TemplateInfo : ObservableObject {
         return CGSize(width: CGFloat(ratioInfo.ratioWidth), height: CGFloat(ratioInfo.ratioHeight))
     }
     
-  
-    
-    
- 
-    
-    
-    
-    
     // Function to update properties using a DBTemplateModel parameter
     func setTemplateModel(with newModel: DBTemplateModel) {
         self.category = newModel.category
@@ -363,8 +355,10 @@ public class TemplateInfo : ObservableObject {
         return updatedID
     }
     
-//    func getChildDict() -> [Int:BaseModel]{
-//        
+//    func createChildDict() -> [Int: BaseModel]{
+//        for page in pageInfo{
+//            
+//        }
 //    }
     
 //    func decreaseOrderOFChildren(from order:Int,to:Int, pageDuration : Float)->([Int:Int], Float){

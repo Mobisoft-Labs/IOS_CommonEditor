@@ -15,7 +15,7 @@ protocol Renderable {
     var canRender : Bool {get}
     var mIsSoftDeleted : Bool {get }
     var mIsVisible : Bool {get }
-
+    var respectiveTime: Bool { get }
    // init(pipelineInfo:MRenderPipelineInfo)
     
     var renderPipelineState : MTLRenderPipelineState! {get set}
@@ -30,6 +30,7 @@ protocol Renderable {
    // func renderOnParentLL(parentLLEncoder: MTLParallelRenderCommandEncoder,currentTime:Float, drawableSize:CGSize)
     func setVertexData(parentEncoder:MTLRenderCommandEncoder)
     func setFragmentData(parentEncoder:MTLRenderCommandEncoder)
+    
 }
 
 
@@ -39,7 +40,9 @@ extension Renderable {
     
     
     var canRender : Bool {
-        if (currentTime >= mStartTime && currentTime <= (mStartTime+mDuration))  && !mIsSoftDeleted && mIsVisible {
+        if respectiveTime{
+            return true
+        }else if (currentTime >= mStartTime && currentTime <= (mStartTime+mDuration))  && !mIsSoftDeleted && mIsVisible {
             if let parent = self as? MParent{
                 if parent.allChild.count == 0{
 //                    printLog("\((self as? MChild)?.identification) Dead")
