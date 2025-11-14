@@ -215,10 +215,10 @@ extension SceneManager {
             guard let self = self else { return }
             
             if type == .Image {
-                currentScene?._respectiveTime = true
+                currentScene?._shouldOverrideCurrentTime = true
             
             }else {
-                currentScene?._respectiveTime = false
+                currentScene?._shouldOverrideCurrentTime = false
             }
             
             redraw()

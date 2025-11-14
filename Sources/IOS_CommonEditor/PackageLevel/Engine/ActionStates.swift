@@ -120,10 +120,10 @@ public class ActionStates: ObservableObject {
     // MARK: - Action Tracking State
 //    @Published public var didUseMeTapped: Bool = false
 //    @Published public var didPurchasedTapped: Bool = false
-    @Published public var didPreviewTapped: Bool = false
+//    @Published public var didPreviewTapped: Bool = false
     @Published public var didGroupTapped: Bool = false
     @Published public var didCancelTapped: Bool = false
-    @Published public var didWatchAdsTapped: Bool = false
+//    @Published public var didWatchAdsTapped: Bool = false
     @Published public var didGetPremiumTapped: Bool = false
 //    @Published public var didCloseTabbarTapped: Bool = false
     @Published public var didUngroupTapped: Bool = false

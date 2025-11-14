@@ -40,7 +40,7 @@ class MChild :  Renderable{
     }
     
  
-    var _respectiveTime: Bool = true {
+    var _shouldOverrideCurrentTime: Bool = true {
         didSet{
             
         }
@@ -99,8 +99,8 @@ class MChild :  Renderable{
     
     var mIsSoftDeleted: Bool = false
     
-    var respectiveTime: Bool {
-        return parent?.respectiveTime ?? _respectiveTime
+    var shouldOverrideCurrentTime: Bool {
+        return parent?.shouldOverrideCurrentTime ?? _shouldOverrideCurrentTime
     }
     
     var mIsVisible: Bool = true

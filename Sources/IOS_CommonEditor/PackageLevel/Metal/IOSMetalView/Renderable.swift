@@ -15,7 +15,7 @@ protocol Renderable {
     var canRender : Bool {get}
     var mIsSoftDeleted : Bool {get }
     var mIsVisible : Bool {get }
-    var respectiveTime: Bool { get }
+    var shouldOverrideCurrentTime: Bool { get }
    // init(pipelineInfo:MRenderPipelineInfo)
     
     var renderPipelineState : MTLRenderPipelineState! {get set}
@@ -40,7 +40,7 @@ extension Renderable {
     
     
     var canRender : Bool {
-        if respectiveTime{
+        if shouldOverrideCurrentTime{
             return true
         }else if (currentTime >= mStartTime && currentTime <= (mStartTime+mDuration))  && !mIsSoftDeleted && mIsVisible {
             if let parent = self as? MParent{

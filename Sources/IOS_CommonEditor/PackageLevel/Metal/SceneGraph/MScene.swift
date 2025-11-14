@@ -24,6 +24,10 @@ class MScene  : MParent {
        return _currentTime
     }
     
+    override var shouldOverrideCurrentTime: Bool{
+        return _shouldOverrideCurrentTime
+    }
+    
     override var canRenderWatermark: Bool {
         return  _canRenderWatermark
     }

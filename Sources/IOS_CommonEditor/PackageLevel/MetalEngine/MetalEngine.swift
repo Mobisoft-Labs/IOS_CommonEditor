@@ -14,13 +14,13 @@ import Network
 public enum EditorUIStates {
     
     case SelectThumbnail
-    case UseMe
+//    case UseMe
     case Preview
-    case Purchase
+//    case Purchase
 //    case ReelsPreview
 //    case LoadingPreview
     case MultipleSelectMode
-    case Personalised
+//    case Personalised
 }
 
 //@MainActor
@@ -53,7 +53,7 @@ public class MetalEngine : ObservableObject, TemplateObserversProtocol , ActionS
     
     public var templateHandler : TemplateHandler!
     
-    public var editorUIState : EditorUIStates = .UseMe
+    public var editorUIState : EditorUIStates = .Preview
     let minStartTime: Float = 3.0
     public var thumbManagar : ThumbManager?
     var logger: PackageLogger
@@ -277,12 +277,12 @@ public class MetalEngine : ObservableObject, TemplateObserversProtocol , ActionS
 
         self.audioPlayer?.setTemplateHandler(templateHandler: templateHandler)
 //        timelineView.setTemplateHandler(templateHandler: templateHandler)
-        if templateHandler.currentTemplateInfo?.isPremium == 1 && !engineConfig.isPremium && templateHandler.currentTemplateInfo?.category != "DRAFT"{
-            editorUIState = .Purchase
-        }
-        else{
-            editorUIState = .UseMe
-        }
+//        if templateHandler.currentTemplateInfo?.isPremium == 1 && !engineConfig.isPremium && templateHandler.currentTemplateInfo?.category != "DRAFT"{
+//            editorUIState = .Purchase
+//        }
+//        else{
+//            editorUIState = .UseMe
+//        }
         
         self.sceneManager.sceneProgress = { [weak self] progress in
             print("Its Coming \(progress)")
@@ -468,12 +468,12 @@ extension MetalEngine {
         await MainActor.run {
             
             self.audioPlayer?.setTemplateHandler(templateHandler: templateHandler)
-            if templateHandler.currentTemplateInfo?.isPremium == 1 && !engineConfig.isPremium && templateHandler.currentTemplateInfo?.category != "DRAFT"{
-                editorUIState = .Personalised
-            }
-            else{
-                editorUIState = .Personalised
-            }
+//            if templateHandler.currentTemplateInfo?.isPremium == 1 && !engineConfig.isPremium && templateHandler.currentTemplateInfo?.category != "DRAFT"{
+//                editorUIState = .Personalised
+//            }
+//            else{
+//                editorUIState = .Personalised
+//            }
         }
         
         // 6️⃣ Download Fonts in Parallel
@@ -702,121 +702,143 @@ extension MetalEngine {
         guard let metalView = canvas.mtkScene else { errorOccured(msj: "metal View not created") ; return  }
         sceneManager.setDisplay(metalView)
     }
-//    public func prepareScene2(templateID: Int, refSize: CGSize , loadThumbnails:Bool ) async -> Bool {
-//        await MainActor.run {
-////            UIStateManager.shared.progress = 0.0
-//            engineConfig.progress = 0.0
-//        }
-//        await Task {
-//        let allFontsChecked =  await checkAndDownloadFontsForTemplateId(templateId: templateID)
-//            logger.printLog("allFontsCheck")
-//        }.value
-//        
-//        // 1️⃣ Fetch template info on main thread
-//        let templateInfo: TemplateInfo? = await MainActor.run {
-//            databaseManager.fetchTemplate(tempID: templateID, refSize: refSize)
-//        }
-//        
-//        guard let templateInfo = templateInfo else {
-//            await MainActor.run { errorOccured(msj: "Template Error \(templateID)") }
-//            return false
-//        }
-//        
-//        await MainActor.run {
-////            UIStateManager.shared.progress = 0.1
-//            engineConfig.progress = 0.1
-//        }
-//        // 2️⃣ Load Canvas on Main Thread
-//        await MainActor.run {
-//            loadCanvas(refSize: refSize)
-//        }
-//        
-//        // 3️⃣ Turn On Metal Display in Background (Sequential)
-//        await Task {
-//            turnOnMetalDisplay()
-//        }.value
-//        
-//        // 4️⃣ Initialize Time Loop Handlers in Background
-//        await Task {
-//            if timeLoopHandler == nil || animTimeLoopHandler == nil {
-//                timeLoopHandler = TimeLoopHnadler(timeLengthDuration: TimeInterval(templateInfo.totalDuration), drawCallManager: drawCallManager)
-//                timeLoopHandler?.setPackagelogger(logger: logger)
-//                animTimeLoopHandler = AnimationTimeLoopHnadler(drawCallManager: drawCallManager!)
-//                animTimeLoopHandler?.setPackageLogger(logger: logger)
-//                sceneManager.setTimeLoopHandler(looper: timeLoopHandler!, animLooper: animTimeLoopHandler!)
-//            }
-//        }.value
-//        
-//        // 5️⃣ Prepare TemplateHandler in Background
-//        let templateHandler = await Task { () -> TemplateHandler in
-//            let handler = TemplateHandler()
-//            handler.setPackageLogger(logger: logger, engineConfig: engineConfig)
-//            handler.childDict = await MainActor.run { databaseManager.childDict }
-//            await MainActor.run { databaseManager.cleanUp() }
-//           
-//            handler.templateDuration = Double(templateInfo.totalDuration)
-//            handler.playerControls = timeLoopHandler
-//            handler.currentActionState.currentMusic = DBManager.shared.getMusicInfo(templateID: templateInfo.templateId)
-//            self.templateHandler = handler
-//            setCurrentTemplate(templateInfo: templateInfo)
-//
-//            return handler
-//        }.value
-//        
-//        await MainActor.run {
-//            
-//            self.audioPlayer?.setTemplateHandler(templateHandler: templateHandler)
+    public func prepareScene2(templateID: Int, refSize: CGSize , loadThumbnails:Bool ) async -> Bool {
+        await MainActor.run {
+//            UIStateManager.shared.progress = 0.0
+            engineConfig.progress = 0.0
+        }
+        await Task {
+        let allFontsChecked =  await checkAndDownloadFontsForTemplateId(templateId: templateID)
+            logger.printLog("allFontsCheck")
+        }.value
+        
+        // 1️⃣ Fetch template info on main thread
+        let templateInfo: TemplateInfo? = await MainActor.run {
+            databaseManager.fetchTemplate(tempID: templateID, refSize: refSize)
+        }
+        
+        guard let templateInfo = templateInfo else {
+            await MainActor.run { errorOccured(msj: "Template Error \(templateID)") }
+            return false
+        }
+        
+        await MainActor.run {
+//            UIStateManager.shared.progress = 0.1
+            engineConfig.progress = 0.1
+        }
+        // 2️⃣ Load Canvas on Main Thread
+        await MainActor.run {
+            loadCanvas(refSize: refSize)
+        }
+        
+        // 3️⃣ Turn On Metal Display in Background (Sequential)
+        await Task {
+            turnOnMetalDisplay()
+        }.value
+        
+        // 4️⃣ Initialize Time Loop Handlers in Background
+        await Task {
+            if timeLoopHandler == nil || animTimeLoopHandler == nil {
+                timeLoopHandler = TimeLoopHnadler(timeLengthDuration: TimeInterval(templateInfo.totalDuration), drawCallManager: drawCallManager)
+                timeLoopHandler?.setPackagelogger(logger: logger)
+                animTimeLoopHandler = AnimationTimeLoopHnadler(drawCallManager: drawCallManager!)
+                animTimeLoopHandler?.setPackageLogger(logger: logger)
+                sceneManager.setTimeLoopHandler(looper: timeLoopHandler!, animLooper: animTimeLoopHandler!)
+            }
+        }.value
+        
+        // 5️⃣ Prepare TemplateHandler in Background
+        let templateHandler = await Task { () -> TemplateHandler in
+            let handler = TemplateHandler()
+            handler.setPackageLogger(logger: logger, engineConfig: engineConfig)
+            handler.childDict = await MainActor.run { databaseManager.childDict }
+            await MainActor.run { databaseManager.cleanUp() }
+           
+            handler.templateDuration = Double(templateInfo.totalDuration)
+            handler.playerControls = timeLoopHandler
+            handler.currentActionState.currentMusic = DBManager.shared.getMusicInfo(templateID: templateInfo.templateId)
+            self.templateHandler = handler
+            setCurrentTemplate(templateInfo: templateInfo)
+
+            return handler
+        }.value
+        
+        await MainActor.run {
+            
+            self.audioPlayer?.setTemplateHandler(templateHandler: templateHandler)
 //            if templateHandler.currentTemplateInfo?.isPremium == 1 && !engineConfig.isPremium && templateHandler.currentTemplateInfo?.category != "DRAFT"{
 //                editorUIState = .Personalised
 //            }
 //            else{
 //                editorUIState = .Personalised
 //            }
-//        }
-//        
-//        // 6️⃣ Download Fonts in Parallel
-//        
-//            // 7️⃣ Prepare Scene Graph (Background Task)
-//            let didSucceed = await Task {
-//                sceneManager.sceneProgress = { progress in
-//                    DispatchQueue.main.async {
-////                        UIStateManager.shared.progress += (progress * ( loadThumbnails ? 0.45 : 0.9))
-//                        self.engineConfig.progress += (progress * ( loadThumbnails ? 0.45 : 0.9))
-//                    }
-//                }
-//                
-//                
-//                
-//                let loaded = await sceneManager.prepareSceneGraph(templateInfo: templateInfo, sceneConfig: sceneConfig)
-//                if loaded {
-//                    sceneManager.canRenderWatermark(!(engineConfig.isPremium || templateInfo.isThisTemplateBought))
-//
-//                    observeCurrentActions()
-//                    observePlayerControls()
-//                    
-//                    if loadThumbnails  {
-//                        //                    if thumbManagar == nil {
-//                        thumbManagar = ThumbManager(templateHandler: templateHandler, resourceProvider: resourceProvider, logger: logger, sceneConfig: sceneConfig)
-//                        //                    }
-//                        
-//                        thumbManagar?.sceneProgress = { progress in
-//                            DispatchQueue.main.async {
-////                                UIStateManager.shared.progress += (progress * 0.45)
-//                                self.engineConfig.progress += (progress * 0.45)
-//                            }
-//                        }
-//                        await thumbManagar?.updateThumbnail(id: 0)
-//                    }
-//                }
-//                return loaded
-//            }.value
-//      
-//        sceneManager.sceneProgress = nil
-//        thumbManagar?.sceneProgress = nil
-//        return true
-//    }
+        }
+        
+        // 6️⃣ Download Fonts in Parallel
+        
+            // 7️⃣ Prepare Scene Graph (Background Task)
+            let didSucceed = await Task {
+                sceneManager.sceneProgress = { progress in
+                    DispatchQueue.main.async {
+//                        UIStateManager.shared.progress += (progress * ( loadThumbnails ? 0.45 : 0.9))
+                        self.engineConfig.progress += (progress * ( loadThumbnails ? 0.45 : 0.9))
+                    }
+                }
+                
+                
+                
+                let loaded = await sceneManager.prepareSceneGraph(templateInfo: templateInfo, sceneConfig: sceneConfig)
+                if loaded {
+                    sceneManager.canRenderWatermark(!(engineConfig.isPremium || templateInfo.isThisTemplateBought))
+
+                    observeCurrentActions()
+                    observePlayerControls()
+                    
+                    if loadThumbnails  {
+                        //                    if thumbManagar == nil {
+                        thumbManagar = ThumbManager(templateHandler: templateHandler, resourceProvider: resourceProvider, logger: logger, sceneConfig: sceneConfig)
+                        //                    }
+                        
+                        thumbManagar?.sceneProgress = { progress in
+                            DispatchQueue.main.async {
+//                                UIStateManager.shared.progress += (progress * 0.45)
+                                self.engineConfig.progress += (progress * 0.45)
+                            }
+                        }
+                        await thumbManagar?.updateThumbnail(id: 0)
+                    }
+                }
+                return loaded
+            }.value
+      
+        sceneManager.sceneProgress = nil
+        thumbManagar?.sceneProgress = nil
+        return true
+    }
     
-    public func prepareScene2(templateInfo: TemplateInfo, refSize: CGSize , loadThumbnails:Bool ) async -> Bool {
+    
+    /*
+     prepareWithID(ID
+     {
+     DB.fetchTemplateINfo
+     
+     templateHandler.dict = db.dict
+     db.cleanup()
+     
+     }
+     
+     prepeareWithTempaltInfo( template
+     {
+     self.currentTmplateInfo = templateINfo
+     templateHandler.dict = templateINfo.getDict
+     
+     }
+     
+     
+     
+     */
+    
+    public func prepareScene5(templateInfo: TemplateInfo, refSize: CGSize , loadThumbnails:Bool ) async -> Bool {
         await MainActor.run {
 //            UIStateManager.shared.progress = 0.0
             engineConfig.progress = 0.0
@@ -866,7 +888,7 @@ extension MetalEngine {
             let handler = TemplateHandler()
             handler.setPackageLogger(logger: logger, engineConfig: engineConfig)
             handler.childDict = await MainActor.run { templateInfo.createChildDict() }
-            await MainActor.run { databaseManager.cleanUp() }
+//            await MainActor.run { databaseManager.cleanUp() }
            
             handler.templateDuration = Double(templateInfo.totalDuration)
             handler.playerControls = timeLoopHandler
@@ -880,17 +902,17 @@ extension MetalEngine {
         await MainActor.run {
             
             self.audioPlayer?.setTemplateHandler(templateHandler: templateHandler)
-            if templateHandler.currentTemplateInfo?.isPremium == 1 && !engineConfig.isPremium && templateHandler.currentTemplateInfo?.category != "DRAFT"{
-                editorUIState = .Personalised
-            }
-            else{
-                editorUIState = .Personalised
-            }
+//            if templateHandler.currentTemplateInfo?.isPremium == 1 && !engineConfig.isPremium && templateHandler.currentTemplateInfo?.category != "DRAFT"{
+//                editorUIState = .Personalised
+//            }
+//            else{
+//                editorUIState = .Personalised
+//            }
         }
         
-        await Task {
-            await prepareSceneWith(templateInfo: templateHandler.currentTemplateInfo!, refSize: refSize)
-        }.value
+        await MainActor.run {
+            self.prepareSceneWith(templateInfo: templateHandler.currentTemplateInfo!, refSize: refSize)
+        }
         
         // 6️⃣ Download Fonts in Parallel
         
@@ -934,10 +956,10 @@ extension MetalEngine {
         return true
     }
     
-    public func prepareSceneWith(templateInfo: TemplateInfo, refSize: CGSize) async {
+    public func prepareSceneWith(templateInfo: TemplateInfo, refSize: CGSize) {
         let newSize = getProportionalSize(currentRatio: CGSize(width: CGFloat(templateInfo.ratioInfo.ratioWidth), height: CGFloat(templateInfo.ratioInfo.ratioHeight)), oldSize: refSize)
         templateInfo.ratioInfo.ratioWidth = Float(newSize.width)
-        templateInfo.ratioInfo.ratioHeight = Float(newSize.height)
+        templateInfo.ratioInfo.ratioHeight = Float(newSize.height)        
         updateRatioOFPage2(newPageSize: newSize, newBaseSize: refSize)
     }
     
