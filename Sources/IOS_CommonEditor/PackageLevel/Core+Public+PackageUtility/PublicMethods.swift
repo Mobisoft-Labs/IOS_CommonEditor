@@ -20,7 +20,7 @@ extension String {
 
 extension String{
     
-    func toFloat() -> CGFloat {
+    public func toFloat() -> CGFloat {
         return CGFloat(Double(self) ?? 0.0)
     }
     func toInt()->Int{
@@ -562,7 +562,7 @@ extension UIColor {
 //            return iosColorString
         }
 
-    func toUIntString() -> String {
+    public func toUIntString() -> String {
         // Get the RGBA components of the color
         guard let components = self.cgColor.components else {
             return "nil"

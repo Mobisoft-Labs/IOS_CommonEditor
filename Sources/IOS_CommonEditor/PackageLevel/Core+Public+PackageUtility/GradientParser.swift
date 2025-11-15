@@ -7,7 +7,7 @@
 
 import Foundation
 
-func parseGradient(from jsonString: String) -> GradientInfo? {
+public func parseGradient(from jsonString: String) -> GradientInfo? {
     
     let data = jsonString.data(using: .utf8)!
     let decoder = JSONDecoder()
@@ -21,7 +21,7 @@ func parseGradient(from jsonString: String) -> GradientInfo? {
     }
 }
 
-func convertGradientToJSONString(_ gradient: GradientInfo) -> String? {
+public func convertGradientToJSONString(_ gradient: GradientInfo) -> String? {
     let encoder = JSONEncoder()
     encoder.outputFormatting = .prettyPrinted
     do {

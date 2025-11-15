@@ -9,7 +9,7 @@ import UIKit
 import Foundation
 import FMDB
 
-public class DBInterface : NSObject {
+open class DBInterface : NSObject {
     
     static public var logger: DBLogger?
     static public var engineConfig: EngineConfiguration?
@@ -21,12 +21,12 @@ public class DBInterface : NSObject {
         case update
     }
     
-    var database: FMDatabase!
-    var dB_fileName : String = "LogoMaker_Local.sqlite"
-    var db_local_path : String
+    public var database: FMDatabase!
+    public var dB_fileName : String = "LogoMaker_Local.sqlite"
+    public var db_local_path : String
     
 
-    var dbIsOpen: Bool {
+    public var dbIsOpen: Bool {
            var isOpen = false
 //           databaseQueue.sync {
         semaphore.wait()
@@ -56,7 +56,7 @@ public class DBInterface : NSObject {
        }
     
     // MARK: - INITIALISATION
-    override init() {
+    public override init() {
         // assign path for database in local directory
         let documentsDirectory = (NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as NSString) as String
         self.db_local_path = documentsDirectory.appending("/\(dB_fileName)")
@@ -152,7 +152,7 @@ public class DBInterface : NSObject {
     // MARK: - PUBLIC METHODS
     
     /// runs given query and return array of result in FMResultSet
-    func runQuery(_ query : String , values : [Any]!) throws -> FMResultSet {
+    public func runQuery(_ query : String , values : [Any]!) throws -> FMResultSet {
         var result: FMResultSet?
         if dbIsOpen {
             semaphore.wait()
@@ -186,7 +186,7 @@ public class DBInterface : NSObject {
     }
     
     /// runs given query and return array of result in FMResultSet
-    func updateMultipleQuery(_ queries : [String] , arrayOfValues : [[Any]]?) throws {
+    public func updateMultipleQuery(_ queries : [String] , arrayOfValues : [[Any]]?) throws {
 //        var result: FMResultSet?
         if dbIsOpen {
 //            try databaseQueue.sync {
@@ -209,7 +209,7 @@ public class DBInterface : NSObject {
     }
     
     /// runs given query and return array of result in FMResultSet
-    func updateQuery(_ query : String , values : [Any]!) throws   {
+    public func updateQuery(_ query : String , values : [Any]!) throws   {
 //        var result: FMResultSet?
         if dbIsOpen {
             semaphore.wait()
@@ -233,7 +233,7 @@ public class DBInterface : NSObject {
     
     
     /// intserts new entry to database and return newly generated row ID
-    func insertNewEntry(query : String)->Int {
+    public func insertNewEntry(query : String)->Int {
         var result: Int?
         if dbIsOpen {
 
@@ -280,7 +280,7 @@ public class DBInterface : NSObject {
     
     
     
-    func buildInsertQueryFor(tableName : String , tableColumnNames : String , tableColoumnValues : String ) -> String {
+    public func buildInsertQueryFor(tableName : String , tableColumnNames : String , tableColoumnValues : String ) -> String {
         semaphore.wait()
         var result: String?
          result =  "insert into \(tableName) (\(tableColumnNames)) values (\(tableColoumnValues));"

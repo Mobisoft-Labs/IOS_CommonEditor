@@ -63,8 +63,8 @@ struct CategoryFormField: Codable, Hashable{
 }
 
 // MARK: - TemplateModel
-struct TemplateHeaderModel: Codable, Identifiable ,Hashable{
-    let id: String
+public struct TemplateHeaderModel: Codable, Identifiable ,Hashable{
+    public let id: String
     let thumbServerPath: String
     let dataPath: String
     let isPremium: String

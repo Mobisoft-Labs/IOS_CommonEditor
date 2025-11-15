@@ -70,9 +70,10 @@ public enum FrameRateSettings {
 
 
 public enum ExportType {
-    
+    case Variants
     case Video
     case Photo
+    case GIF
    // case PDF - future
    // case GIF - future
 }

@@ -38,8 +38,8 @@ public class StickerDBManager: DBInterface{
     }
     
     // Sticker Table
-    let TABLE_STICKER_MASTER = "StickerMaster"
-    let TABLE_STICKER_CATEGORY_MASTER = "StickerCategoryMaster"
+    public let TABLE_STICKER_MASTER = "StickerMaster"
+    public let TABLE_STICKER_CATEGORY_MASTER = "StickerCategoryMaster"
     
     // Sticker Table Column Names
     let sticker_ID = "ID"

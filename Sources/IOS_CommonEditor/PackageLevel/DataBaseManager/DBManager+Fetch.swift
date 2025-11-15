@@ -882,7 +882,7 @@ extension DBManager{
     }
 
     
-    func getRatioDbModelID(ratioWidth: Int, ratioHeight: Int) -> Int {
+    public func getRatioDbModelID(ratioWidth: Int, ratioHeight: Int) -> Int {
         let query = "SELECT \(ID) FROM \(TABLE_RATIOMODEL) WHERE \(RATIO_WIDTH) = \(ratioWidth) AND \(RATIO_HEIGHT) = \(ratioHeight);"
         guard let resultSet = try? runQuery(query, values: nil) else {
             return -1
@@ -929,7 +929,7 @@ extension DBManager{
         return categories
     }
 
-    func getMaxTemplateSequence(category: String) -> Int {
+    public func getMaxTemplateSequence(category: String) -> Int {
         let query = "SELECT MAX(\(SEQUENCE)) FROM \(TABLE_TEMPLATE) WHERE \(CATEGORY) = ?;"
         var maxSequence = 0
 

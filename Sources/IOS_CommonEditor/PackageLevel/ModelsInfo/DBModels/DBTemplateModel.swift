@@ -32,16 +32,16 @@ public enum OutputType : String  {
 public struct DBTemplateModel: Identifiable, Hashable {
     public var id: UUID = UUID()
     public var category: String
-    var categoryTemp: String
+    public var categoryTemp: String
     public var isPremium: Int
-    var ratioId: Int
-    var sequence_Temp: Int
+    public var ratioId: Int
+    public var sequence_Temp: Int
     var templateId: Int
-    var templateName: String
-    var thumbLocalPath: String
-    var thumbServerPath: String
-    var thumbTime: Double
-    var totalDuration: Double
+    public var templateName: String
+    public var thumbLocalPath: String
+    public var thumbServerPath: String
+    public var thumbTime: Double
+    public var totalDuration: Double
     var serverTemplateId : Int
     var dataPath : String
     var isRelease : Int
@@ -68,15 +68,15 @@ public struct DBTemplateModel: Identifiable, Hashable {
     var eventStartDate: String
     var showWatermark : Int
     // End
-    var createdAt: String
-    var updatedAt: String
+    public var createdAt: String
+    public var updatedAt: String
   //  let templateID: String
     
     var outputType = OutputType.Image
     
   
     // Initializer taking a DBTemplate instance and an additional category parameter
-    init(from dbTemplate: ServerDBTemplateHeader) {  // DBTemlateData
+    public init(from dbTemplate: ServerDBTemplateHeader) {  // DBTemlateData
         
         self.category = dbTemplate.categoryTemp
         self.categoryTemp = dbTemplate.categoryTemp
@@ -117,7 +117,7 @@ public struct DBTemplateModel: Identifiable, Hashable {
        // self.templateID = dbTemplate.
     }
     
-    init(from dbTemplate: TemplateHeaderModel) {  // DBTemlateData
+    public init(from dbTemplate: TemplateHeaderModel) {  // DBTemlateData
         
         self.category = "nil"
         self.categoryTemp = "dbTemplate.categoryTemp"
@@ -158,7 +158,7 @@ public struct DBTemplateModel: Identifiable, Hashable {
        // self.templateID = dbTemplate.
     }
     
-    init(from templateData:ServerDBTemplate){
+    public init(from templateData:ServerDBTemplate){
         self.category = templateData.category!
         self.categoryTemp = templateData.categoryTemp
         self.isPremium = Int(templateData.isPremium) ?? 0
@@ -199,7 +199,7 @@ public struct DBTemplateModel: Identifiable, Hashable {
     
     
     // Empty initializer
-    init() {
+    public init() {
         self.category = ""
         self.categoryTemp = ""
         self.isPremium = 0

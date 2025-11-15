@@ -314,7 +314,7 @@ struct ServerImageModel: Codable {
 }
 
 // MARK: Base Model Decodable Model
-struct ServerBaseModel: Codable {
+public struct ServerBaseModel: Codable {
     let modelID: String
     let modelType: String
     let dataID: String

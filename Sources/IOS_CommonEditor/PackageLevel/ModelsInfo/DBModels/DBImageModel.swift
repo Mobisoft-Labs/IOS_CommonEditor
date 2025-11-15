@@ -73,6 +73,25 @@ public struct DBImageModel:DBImageProtocol{
         return model
     }
     
+    public init(imageID: Int = 0, imageType: String = "", serverPath: String = "", localPath: String = "", resID: String = "", isEncrypted: Int = 0, cropX: Double = 0.0, cropY: Double = 0.0, cropW: Double = 1.0, cropH: Double = 1.0, cropStyle: Int = 1, tileMultiple: Double = 1.0, colorInfo: String = "", imageWidth: Double = 300, imageHeight: Double = 300, templateID: Int = -1, sourceTYPE: String = "BUNDLE") {
+        self.imageID = imageID
+        self.imageType = imageType
+        self.serverPath = serverPath
+        self.localPath = localPath
+        self.resID = resID
+        self.isEncrypted = isEncrypted
+        self.cropX = cropX
+        self.cropY = cropY
+        self.cropW = cropW
+        self.cropH = cropH
+        self.cropStyle = cropStyle
+        self.tileMultiple = tileMultiple
+        self.colorInfo = colorInfo
+        self.imageWidth = imageWidth
+        self.imageHeight = imageHeight
+        self.templateID = templateID
+        self.sourceTYPE = sourceTYPE
+    }
     
 }
 public struct ImageModel: Equatable{

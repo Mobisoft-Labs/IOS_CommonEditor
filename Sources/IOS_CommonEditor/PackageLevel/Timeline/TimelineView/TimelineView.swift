@@ -53,7 +53,7 @@ struct TimelineConstants {
     static let rulerHeight : CGFloat = 30
     
     
-    static var timelineBackgroundColr : UIColor = UIColor(named: "editorBG")!
+    static var timelineBackgroundColr : UIColor = UIColor(named: "editorBG") ?? .secondarySystemBackground
     static var rulingParentBGColor : UIColor = .orange
     static var parentModelColor : UIColor = UIColor(named: "parentExpanded") ?? .orange
     static var stickerModelColor : UIColor = UIColor(named: "stickerLayer") ?? .cyan

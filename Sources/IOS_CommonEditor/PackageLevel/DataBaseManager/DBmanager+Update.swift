@@ -22,7 +22,7 @@ extension DBManager{
         }
     }
     
-    func updateTemplateValues(templateId : Int , thumbTime : Double , totalDuration : Double , createdAt: String , updatedAt : String ){
+    public func updateTemplateValues(templateId : Int , thumbTime : Double , totalDuration : Double , createdAt: String , updatedAt : String ){
 //        let query = "UPDATE \(TABLE_TEMPLATE) SET \(UPDATED_AT) = ? WHERE \(TEMPLATE_ID) = ?"
 
         let query = "UPDATE \(TABLE_TEMPLATE) SET \(TOTAL_DURATION) = ? , \(THUMB_TIME) = ? , \(CREATED_AT) = ?, \(UPDATED_AT) = ? WHERE \(TEMPLATE_ID) = ?"

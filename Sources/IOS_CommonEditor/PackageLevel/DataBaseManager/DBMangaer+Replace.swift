@@ -10,7 +10,7 @@ import Foundation
 extension DBManager{
     
     // MARK: - Insertion    
-    func replaceTemplateRowIfNeeded(template: DBTemplateModel) -> Int {
+    public func replaceTemplateRowIfNeeded(template: DBTemplateModel) -> Int {
         var insertedRowId: Int = -1
         DBManager.logger?.printLog("OpenGlTest In DesignDbHelper insertTemplateRow")
         
@@ -39,7 +39,7 @@ extension DBManager{
     
     
     
-    func replaceImageRowIfNeeded(image: DBImageModel) -> Int {
+    public func replaceImageRowIfNeeded(image: DBImageModel) -> Int {
         var insertedRowId:Int = -1
        
         NSLog("OpenGlTest In DesignDbHelper insertImageRow")
@@ -54,7 +54,7 @@ extension DBManager{
         return insertedRowId
      }
     
-    func replaceBaseModelIfNeeded(baseModel: DBBaseModel) -> Int {
+    public func replaceBaseModelIfNeeded(baseModel: DBBaseModel) -> Int {
         var insertedRowId: Int = -1
 
    
@@ -71,7 +71,7 @@ extension DBManager{
     
     
     
-    func replaceStickerRowIfNeeded(stickerDbModel: DBStickerModel) -> Int {
+    public func replaceStickerRowIfNeeded(stickerDbModel: DBStickerModel) -> Int {
         var insertedRowId: Int = -1
         
         
@@ -108,7 +108,7 @@ extension DBManager{
     }
     
 
-    func replaceTextModelIfNeeded(textDbModel: DBTextModel) -> Int {
+    public func replaceTextModelIfNeeded(textDbModel: DBTextModel) -> Int {
         var insertedRowId: Int = -1
    
         let query = "REPLACE INTO \(TABLE_TEXT_MODEL) (\(TEXT), \(TEXT_FONT), \(TEXT_COLOR), \(TEXT_GRAVITY), \(LINE_SPACING), \(LETTER_SPACING), \(SHADOW_COLOR), \(SHADOW_OPACITY), \(SHADOW_RADIUS), \(SHADOW_Dx), \(SHADOW_Dy), \(BG_TYPE), \(BG_DRAWABLE), \(BG_COLOR), \(BG_ALPHA), \(INTERNAL_HEIGHT_MARGIN), \(INTERNAL_WIDTH_MARGIN), \(X_ROATATION_PROG), \(Y_ROATATION_PROG), \(Z_ROATATION_PROG), \(CURVE_PROG),\(TEMPLATE_ID)) VALUES ('\(textDbModel.text)', '\(textDbModel.textFont)', '\(textDbModel.textColor)', '\(textDbModel.textGravity)', \(textDbModel.lineSpacing), \(textDbModel.letterSpacing), '\(textDbModel.shadowColor)', \(textDbModel.shadowOpacity), \(textDbModel.shadowRadius), \(textDbModel.shadowDx), \(textDbModel.shadowDy), '\(textDbModel.bgType)', '\(textDbModel.bgDrawable)', '\(textDbModel.bgColor)', \(textDbModel.bgAlpha), \(textDbModel.internalHeightMargin), \(textDbModel.internalWidthMargin), \(textDbModel.xRotationProg), \(textDbModel.yRotationProg), \(textDbModel.zRotationProg), \(textDbModel.curveProg),\(textDbModel.templateID))"
