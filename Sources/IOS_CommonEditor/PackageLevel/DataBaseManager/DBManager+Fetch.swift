@@ -808,7 +808,7 @@ extension DBManager{
     }
 
     
-    func getRatioDbModel(ratioId: Int) -> DBRatioTableModel? {
+    public func getRatioDbModel(ratioId: Int) -> DBRatioTableModel? {
         let query = "SELECT * FROM \(TABLE_RATIOMODEL) WHERE \(ID) = \(ratioId);"
         
         guard let resultSet = try? runQuery(query, values: nil) else {
