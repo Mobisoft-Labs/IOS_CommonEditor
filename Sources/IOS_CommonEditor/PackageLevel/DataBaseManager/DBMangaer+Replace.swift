@@ -119,7 +119,7 @@ extension DBManager{
         return Int(insertedRowId)
     }
 
-    func replaceAnimationRowIfNeeded(animation: DBAnimationModel) -> Int {
+    public func replaceAnimationRowIfNeeded(animation: DBAnimationModel) -> Int {
         var insertedRowId: Int = -1
         
             let query = "REPLACE INTO \(TABLE_ANIMATION) (\(MODEL_ID), \(IN_ANIMATION_TEMPLATE_ID), \(IN_ANIMATION_DURATION), \(LOOP_ANIMATION_TEMPLATE_ID), \(LOOP_ANIMATION_DURATION), \(OUT_ANIMATION_TEMPLATE_ID), \(OUT_ANIMATION_DURATION),\(TEMPLATE_ID)) VALUES (\(animation.modelId), \(animation.inAnimationTemplateId), \(animation.inAnimationDuration), \(animation.loopAnimationTemplateId), \(animation.loopAnimationDuration), \(animation.outAnimationTemplateId), \(animation.outAnimationDuration),\(animation.templateID))"
@@ -132,7 +132,7 @@ extension DBManager{
         return Int(insertedRowId)
     }
 
-    func replaceMusicInfoRowIfNeeded(musicDbModel: MusicInfo) -> Int {
+    public func replaceMusicInfoRowIfNeeded(musicDbModel: MusicInfo) -> Int {
         var insertedRowId: Int = -1
         
         let query = "REPLACE INTO \(TABLE_MUSICINFO) (\(MUSIC_TYPE), \(NAME), \(MUSIC_PATH), \(PARENT_ID), \(PARENT_TYPE), \(START_TIME), \(END_TIME_OF_AUDIO), \(DURATION),\(TEMPLATE_ID)) VALUES ('\(musicDbModel.musicType)', '\(musicDbModel.name)', '\(musicDbModel.musicPath)', \(musicDbModel.parentID), \(musicDbModel.parentType), \(musicDbModel.startTimeOfAudio), \(musicDbModel.endTimeOfAudio), \(musicDbModel.duration),\(musicDbModel.templateID))"

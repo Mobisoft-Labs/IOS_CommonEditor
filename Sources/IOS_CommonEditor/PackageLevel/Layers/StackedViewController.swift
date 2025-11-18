@@ -213,13 +213,15 @@ public class StackedViewController: UIViewController, CustomCollectionViewDelega
         viewModel.onDoneClicked()
 
         self.navigationController?.isNavigationBarHidden = false
-        viewModel.layerConfig!.removeOrDismissViewController(self)
+//        viewModel.layerConfig!.removeOrDismissViewController(self)
+        self.dismiss(animated: true)
     
         // Handle panel button action
     }
     
     @objc func didcancelClicked(_ sender: UIButton) {
-        viewModel.layerConfig!.removeOrDismissViewController(self)
+//        viewModel.layerConfig!.removeOrDismissViewController(self)
+        self.dismiss(animated: true)
     }
     
     

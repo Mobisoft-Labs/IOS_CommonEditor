@@ -34,7 +34,7 @@ extension SceneComposable {
 
         let text = TextInfo()
         text.modelId = -1
-        text.text = "Ace LogoMaker"
+        text.text = "Flyer Maker"
         text.textColor = sceneConfig!.accentColor
         text.bgColor = .clear
         text.width = Float(rootSize.width) * 0.3

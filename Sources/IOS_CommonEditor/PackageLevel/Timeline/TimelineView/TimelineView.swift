@@ -125,13 +125,13 @@ public final class TimelineView: UIView , ActionStateObserversProtocol , PlayerC
     let SCREEN_WIDTH : CGFloat = min(UIScreen.main.bounds.size.width, UIScreen.main.bounds.size.height)
     
     var logger: PackageLogger?
-    var timelineConfig: TimelineConfiguration?{
-        didSet{
-            if let config = timelineConfig {
-                TimelineConstants.applyConfig(config)
-            }
-        }
-    }
+    var timelineConfig: TimelineConfiguration?//{
+//        didSet{
+//            if let config = timelineConfig {
+//                TimelineConstants.applyConfig(config)
+//            }
+//        }
+//    }
     
     deinit {
         logger?.printLog("de-init \(self)")
@@ -165,7 +165,7 @@ public final class TimelineView: UIView , ActionStateObserversProtocol , PlayerC
         
         observeCurrentActions()
         observePlayerControls()
-
+        TimelineConstants.applyConfig(timelineConfig!)
     }
     
    

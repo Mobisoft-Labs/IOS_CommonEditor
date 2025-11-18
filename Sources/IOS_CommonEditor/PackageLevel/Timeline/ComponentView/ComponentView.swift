@@ -321,14 +321,13 @@ class ComponentView: UIView {
     }
     /// Button for right drag action
     var rightDragButton: DragView = {
-        let btn = DragView(frame: .zero, image: UIImage(named: "right")!)
-        
+        let btn = DragView(frame: .zero, image: UIImage(named: "rightT")!)
         btn.translatesAutoresizingMaskIntoConstraints = false
         return btn
     }()
     
     var leftDragButton: DragView = {
-        let btn = DragView(frame: .zero, image: UIImage(named: "left")!)
+        let btn = DragView(frame: .zero, image: UIImage(named: "leftT")!)
         btn.translatesAutoresizingMaskIntoConstraints = false
 //        btn.roundCorners(corners: [.bottomLeft, .topLeft], radius: 5)
         return btn
@@ -368,6 +367,8 @@ class ComponentView: UIView {
         self.logger = logger
         self.timelineConfig = timelineConfig
         self.timelineDelegate?.updateThumbPostion(componentView: self)
+        rightDragButton.setUpTimelineConfig(timelineConfig: timelineConfig)
+        leftDragButton.setUpTimelineConfig(timelineConfig: timelineConfig)
         cancellables.removeAll()
        // onSelectView(isSelected: model.isSelected)
         
@@ -485,8 +486,10 @@ class ComponentView: UIView {
 //                    }
                     if isRulingModel{
                         expandButton.setTitle("Collapse_".translate(), for: .normal)
+                        expandButton.backgroundColor = timelineConfig?.accentColorToggleButton
                     }else{
                         expandButton.setTitle("Expand_".translate(), for: .normal)
+                        expandButton.backgroundColor = timelineConfig?.accentColorToggleButton
                     }
                     
                     
@@ -594,8 +597,6 @@ class ComponentView: UIView {
       //  expandButton.isHidden = true
         leftDragButton.isHidden = true
         rightDragButton.isHidden = true
-        rightDragButton.setUpTimelineConfig(timelineConfig: timelineConfig)
-        leftDragButton.setUpTimelineConfig(timelineConfig: timelineConfig)
         addSubview(expandButton)
         addSubview(leftDragButton)
         addSubview(displayView)
