@@ -1960,7 +1960,8 @@ public func downsample(imageAt imageURL: String,
     return UIImage(cgImage: downsampledImage)
 }
 
-func downsampleLocal(imageData: Data,
+
+public func downsampleLocal(imageData: Data,
                 to pointSize: CGSize,
                 scale: CGFloat = UIScreen.main.scale) -> UIImage? {
 

@@ -72,7 +72,7 @@ public class ParentModel : BaseModel {
     
     
     
-    @Published var children = [ BaseModel ]()
+    @Published public var children = [ BaseModel ]()
     
     public var activeChildren: [BaseModel] {
         // Filter the children where softDelete is false

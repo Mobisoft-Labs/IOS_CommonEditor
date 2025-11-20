@@ -38,6 +38,12 @@ public struct ReplaceModel :  Equatable{
     let modelID : Int
     public var imageModel : ImageModel
     var baseFrame : Frame
+    
+    public init(modelID: Int, imageModel: ImageModel, baseFrame: Frame) {
+        self.modelID = modelID
+        self.imageModel = imageModel
+        self.baseFrame = baseFrame
+    }
 }
 public struct DBImageModel:DBImageProtocol{
     public var imageID: Int = 0

@@ -11,9 +11,17 @@ import UIKit
 public struct Frame{
     var size:CGSize
     public var center:CGPoint
-    var rotation:Float
+    public var rotation:Float
     var shouldRevert : Bool = false
     var isParentDragging : Bool = false 
+    
+    public init(size: CGSize, center: CGPoint, rotation: Float, shouldRevert: Bool = false, isParentDragging: Bool = false) {
+        self.size = size
+        self.center = center
+        self.rotation = rotation
+        self.shouldRevert = shouldRevert
+        self.isParentDragging = isParentDragging
+    }
     
     var origin : CGPoint {
         return CGPoint(x: center.x - (size.width/2), y: center.y - (size.height/2))

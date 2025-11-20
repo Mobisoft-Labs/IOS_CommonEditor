@@ -481,7 +481,7 @@ public class StickerInfo:BaseModel ,StickerModelProtocol,ImageProtocol{
     }
     
     
-    func setImageModel(image: ImageModel) {
+    public func setImageModel(image: ImageModel) {
 //        self.imageID = image.imageID
         self.imageType = image.imageType
         self.serverPath = image.serverPath
@@ -610,7 +610,7 @@ public class StickerInfo:BaseModel ,StickerModelProtocol,ImageProtocol{
            return imageModel
        }
     
-    static func createDefaultStickerInfo(parentModel:ParentModel,startTime:Float,Order:Int)->StickerInfo{
+    public static func createDefaultStickerInfo(parentModel:ParentModel,startTime:Float,Order:Int)->StickerInfo{
            let stickerInfo = StickerInfo()
            stickerInfo.baseFrame.size.width = parentModel.baseFrame.size.width/2
            stickerInfo.baseFrame.size.height = parentModel.baseFrame.size.height/2

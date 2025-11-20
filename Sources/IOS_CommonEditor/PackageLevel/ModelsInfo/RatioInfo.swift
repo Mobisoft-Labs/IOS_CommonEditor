@@ -8,26 +8,38 @@
 import Foundation
 
 public struct RatioInfo:RatioModelProtocol{
-    var id: Int = 0
+    public var id: Int = 0
     
-    var category: String = " "
+    public var category: String = " "
     
-    var categoryDescription: String = " "
+    public var categoryDescription: String = " "
     
-    var imageResId: String = " "
+    public var imageResId: String = " "
     
-    var ratioWidth: Float = 0.0
+    public var ratioWidth: Float = 0.0
     
-    var ratioHeight: Float = 0.0
+    public var ratioHeight: Float = 0.0
     
-    var outputWidth: Float = 0.0
+    public var outputWidth: Float = 0.0
     
-    var outputHeight: Float = 0.0
+    public var outputHeight: Float = 0.0
     
-    var isPremium: Int = 0
+    public var isPremium: Int = 0
     
     public var ratioSize : CGSize  {
         return CGSize(width: CGFloat(ratioWidth), height: CGFloat(ratioHeight))
+    }
+    
+    public init(id: Int = 0, category: String = " ", categoryDescription: String = " ", imageResId: String = " ", ratioWidth: Float = 0.0, ratioHeight: Float = 0.0, outputWidth: Float = 0.0, outputHeight: Float = 0.0, isPremium: Int = 0) {
+        self.id = id
+        self.category = category
+        self.categoryDescription = categoryDescription
+        self.imageResId = imageResId
+        self.ratioWidth = ratioWidth
+        self.ratioHeight = ratioHeight
+        self.outputWidth = outputWidth
+        self.outputHeight = outputHeight
+        self.isPremium = isPremium
     }
     
     mutating func setRatioModel(ratioInfo: DBRatioTableModel , refSize:CGSize, logger: DBLogger?) {
@@ -63,7 +75,8 @@ public struct RatioInfo:RatioModelProtocol{
         ratioModel.isPremium = self.isPremium
         return ratioModel
     }
-    func getRatioInfo(ratioInfo: DBRatioTableModel , refSize:CGSize, logger: PackageLogger?)->RatioInfo{
+    
+    public func getRatioInfo(ratioInfo: DBRatioTableModel , refSize:CGSize, logger: PackageLogger?)->RatioInfo{
         var ratio = RatioInfo()
         ratio.id = ratioInfo.id
         ratio.category = ratioInfo.category

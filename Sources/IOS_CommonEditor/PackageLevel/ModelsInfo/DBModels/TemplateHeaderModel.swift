@@ -9,7 +9,7 @@ import Foundation
 
 public struct CategoryModel: Codable, Identifiable,Hashable {
     public let id: String
-    let name: String
+    public let name: String
     let lastModified: String
     let thumbnailPath: String?
     let isReleased: String
@@ -65,12 +65,12 @@ struct CategoryFormField: Codable, Hashable{
 // MARK: - TemplateModel
 public struct TemplateHeaderModel: Codable, Identifiable ,Hashable{
     public let id: String
-    let thumbServerPath: String
-    let dataPath: String
-    let isPremium: String
-    let templateDisplayName:String?
-    let ratioWidth : String
-    let ratioHeight : String
+    public let thumbServerPath: String
+    public let dataPath: String
+    public let isPremium: String
+    public let templateDisplayName:String?
+    public let ratioWidth : String
+    public let ratioHeight : String
     
     enum CodingKeys: String, CodingKey {
         case id = "TEMPLATE_ID"
@@ -83,7 +83,7 @@ public struct TemplateHeaderModel: Codable, Identifiable ,Hashable{
 
     }
     static var myArray = [TemplateHeaderModel]()
-    static func getPlaceholders() -> [TemplateHeaderModel] {
+    public static func getPlaceholders() -> [TemplateHeaderModel] {
         if !myArray.isEmpty {
             return myArray
         }

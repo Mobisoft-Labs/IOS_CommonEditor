@@ -23,7 +23,7 @@ extension String{
     public func toFloat() -> CGFloat {
         return CGFloat(Double(self) ?? 0.0)
     }
-    func toInt()->Int{
+    public func toInt()->Int{
         return Int(self) ?? Int(0.0)
     }
     func colorFromUIntString() -> UIColor{
@@ -43,7 +43,7 @@ extension String{
     }
     
     
-    func convertAndroidColorStringToIOSColorString()->String{
+    public func convertAndroidColorStringToIOSColorString()->String{
         var color = self == "1.0" ? "-1.0" : self
         let intColor = Int(color.floatValue)
         //convert int color ios color Format
@@ -78,7 +78,7 @@ extension String{
 
 extension String{
     
-    func convertIOSToAndroidColor() -> String {
+    public func convertIOSToAndroidColor() -> String {
         guard let iOSColor = UInt32(self) else { return "0" }
         
         let R = (iOSColor >> 16) & 0xFF
@@ -397,7 +397,7 @@ let cropSize = CGSize(width: 800, height: 800)
      return refHeight * (aspectRatio.width / aspectRatio.height)
  }
 //color convert
-func convertAndroidToIOSColor(PrimaryColorAndroid: Int)-> String{
+public func convertAndroidToIOSColor(PrimaryColorAndroid: Int)-> String{
         
         let A:Int = ((PrimaryColorAndroid >> 24) & 0xFF)
         let R:Int = ((PrimaryColorAndroid >> 16) & 0xFF)

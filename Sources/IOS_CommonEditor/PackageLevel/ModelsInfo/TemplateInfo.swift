@@ -89,7 +89,7 @@ public class TemplateInfo : ObservableObject {
         
     }
     
-    static func createDefaultTemplateForImage(imagePath: String? = nil) -> TemplateInfo{
+    static public func createDefaultTemplateForImage(imagePath: String? = nil) -> TemplateInfo{
         let templateInfo = TemplateInfo()
         // db entry
         //template id

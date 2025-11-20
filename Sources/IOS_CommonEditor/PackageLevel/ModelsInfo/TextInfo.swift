@@ -36,6 +36,7 @@ public class TextInfo:BaseModel,TextModelProtocol{
         textInfo.text = self.text
         textInfo.fontName = self.fontName
         textInfo.textFont = self.textFont
+        textInfo.textType = self.textType
         textInfo.textColor = self.textColor
         textInfo.textGravity = self.textGravity
         textInfo.lineSpacing = self.lineSpacing
@@ -167,6 +168,7 @@ public class TextInfo:BaseModel,TextModelProtocol{
     var textId: Int = 0
     @Published public var fontName: String = "defaultfont.ttf"  //UIFont.systemFont(ofSize: 17).fontName
     @Published public var text: String = "Enter the text."
+    @Published public var textType: String = ""
     @Published public var textFont: UIFont =  .systemFont(ofSize: 14)
     @Published  var textColor: UIColor = .black
     @Published public var textGravity: HTextGravity = .Center
@@ -293,6 +295,7 @@ public class TextInfo:BaseModel,TextModelProtocol{
            curveProg = textModel.curveProg
          templateID = textModel.templateID
         fontName = textModel.textFont
+        textType = textModel.textType
         beginShadowOpacity = Float(textModel.shadowOpacity / 255)
         beginTextContentColor = BGColor(bgColor: textModel.textColor.convertIOSColorStringToUIColor())
         if bgType == 2{
@@ -353,6 +356,7 @@ public class TextInfo:BaseModel,TextModelProtocol{
                textId: textId,
                text: text,
                textFont: fontName/*textFont.fontName*/,
+               textType: textType,
                textColor: textColor.toUIntString(),
                textGravity: textGravity.rawValue,
                lineSpacing: (lineSpacing).toDouble(),

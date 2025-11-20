@@ -190,7 +190,7 @@ extension DBManager{
     
     
     
-    func getTemplateUsingServerID(serverID: Int) -> Int {
+    public func getTemplateUsingServerID(serverID: Int) -> Int {
         let query = "SELECT * FROM \(TABLE_TEMPLATE) WHERE \(SERVER_TEMPLATE_ID) = \(serverID);"
         
         guard let resultSet = try? runQuery(query, values: nil) else {
@@ -609,7 +609,7 @@ extension DBManager{
         
     }
     
-    func getTemplateListForCategoryDraftAndSaved(category1: String, category2: String) -> [DBTemplateModel] {
+    public func getTemplateListForCategoryDraftAndSaved(category1: String, category2: String) -> [DBTemplateModel] {
         var templateList = [DBTemplateModel]()
         let query = "SELECT * FROM \(TABLE_TEMPLATE) WHERE \(CATEGORY) IN (?, ?) AND \(SOFT_DELETE) = 1 ORDER BY \(UPDATED_AT) DESC;"
         let values = [category1, category2]
@@ -2162,7 +2162,7 @@ extension DBManager{
      }
      
      //Chnged By NK
-     func isTemplateDownloaded(serverId: Int) -> (isPremium: Int, isDownloaded: Bool) {
+     public func isTemplateDownloaded(serverId: Int) -> (isPremium: Int, isDownloaded: Bool) {
          let query = "SELECT \(IS_PREMIUM), \(IS_DETAILS_DOWNLOAD) FROM \(TABLE_TEMPLATE) WHERE \(SERVER_TEMPLATE_ID) = ?;"
          
          guard let resultSet = try? runQuery(query, values: [serverId]), resultSet.next() else {
@@ -2176,7 +2176,7 @@ extension DBManager{
      }
      
      
-     func updateIsPremiumStatus(serverId: Int, isPremium: Int) -> Bool {
+     public func updateIsPremiumStatus(serverId: Int, isPremium: Int) -> Bool {
          let query = "UPDATE \(TABLE_TEMPLATE) SET \(IS_PREMIUM) = ? WHERE \(SERVER_TEMPLATE_ID) = ?;"
          
          do {

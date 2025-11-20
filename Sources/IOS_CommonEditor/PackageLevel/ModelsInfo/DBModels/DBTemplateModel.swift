@@ -36,7 +36,7 @@ public struct DBTemplateModel: Identifiable, Hashable {
     public var isPremium: Int
     public var ratioId: Int
     public var sequence_Temp: Int
-    var templateId: Int
+    public var templateId: Int
     public var templateName: String
     public var thumbLocalPath: String
     public var thumbServerPath: String

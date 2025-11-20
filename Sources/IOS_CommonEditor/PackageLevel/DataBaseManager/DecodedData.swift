@@ -88,33 +88,63 @@ public struct AllTemplateData: Codable {
 
 // MARK: Template Data Decodable Model
 public struct ServerDBTemplate: Codable {
-    let templateID: String
-    let category: String?
-    let templateName: String?
-    let ratioID: String
-    let thumbServerPath: String
-    let thumbLocalPath: String?
-    let thumbTime: String
-    let totalDuration: String
-    let sequence: String
-    let isPremium: String
-    let categoryTemp: String
-    let serverTemplateID:Int?
-    let dataPath: String
-    let isReleased: String?
-    let colorPalleteId : String?
-    let fontSetId : String?
-    let eventData : String?
-    let eventTime : String?
-    let venue : String?
-    let name1 : String?
-    let name2 : String?
-    let rsvp : String?
-    let baseColor : String?
-    let layoutId : String?
-    let music: ServerMusicModel?
-    let pages: [ServerPageModel]?
-    var showWatermark : String?
+    public let templateID: String
+    public let category: String?
+    public let templateName: String?
+    public let ratioID: String
+    public let thumbServerPath: String
+    public let thumbLocalPath: String?
+    public let thumbTime: String
+    public let totalDuration: String
+    public let sequence: String
+    public let isPremium: String
+    public let categoryTemp: String
+    public let serverTemplateID:Int?
+    public let dataPath: String
+    public let isReleased: String?
+    public let colorPalleteId : String?
+    public let fontSetId : String?
+    public let eventData : String?
+    public let eventTime : String?
+    public let venue : String?
+    public let name1 : String?
+    public let name2 : String?
+    public let rsvp : String?
+    public let baseColor : String?
+    public let layoutId : String?
+    public let music: ServerMusicModel?
+    public let pages: [ServerPageModel]?
+    public var showWatermark : String?
+    
+    public init(templateID: String, category: String?, templateName: String?, ratioID: String, thumbServerPath: String, thumbLocalPath: String?, thumbTime: String, totalDuration: String, sequence: String, isPremium: String, categoryTemp: String, serverTemplateID: Int?, dataPath: String, isReleased: String?, colorPalleteId: String?, fontSetId: String?, eventData: String?, eventTime: String?, venue: String?, name1: String?, name2: String?, rsvp: String?, baseColor: String?, layoutId: String?, music: ServerMusicModel?, pages: [ServerPageModel]?, showWatermark: String? = nil) {
+        self.templateID = templateID
+        self.category = category
+        self.templateName = templateName
+        self.ratioID = ratioID
+        self.thumbServerPath = thumbServerPath
+        self.thumbLocalPath = thumbLocalPath
+        self.thumbTime = thumbTime
+        self.totalDuration = totalDuration
+        self.sequence = sequence
+        self.isPremium = isPremium
+        self.categoryTemp = categoryTemp
+        self.serverTemplateID = serverTemplateID
+        self.dataPath = dataPath
+        self.isReleased = isReleased
+        self.colorPalleteId = colorPalleteId
+        self.fontSetId = fontSetId
+        self.eventData = eventData
+        self.eventTime = eventTime
+        self.venue = venue
+        self.name1 = name1
+        self.name2 = name2
+        self.rsvp = rsvp
+        self.baseColor = baseColor
+        self.layoutId = layoutId
+        self.music = music
+        self.pages = pages
+        self.showWatermark = showWatermark
+    }
     
     enum CodingKeys: String, CodingKey {
         case templateID = "TEMPLATE_ID"
@@ -149,18 +179,18 @@ public struct ServerDBTemplate: Codable {
 }
 
 // MARK: Music Decodable Model
-struct ServerMusicModel: Codable {
-    let musicID: String
-    let musicType: String
-    let name: String
-    let musicPath: String
-    let parentID: String
-    let parentType: String
-    let startTimeOfAudio: String
-    let endTimeOfAudio: String
-    let startTime: String
-    let duration: String
-    let templateID: String
+public struct ServerMusicModel: Codable {
+    public let musicID: String
+    public let musicType: String
+    public let name: String
+    public let musicPath: String
+    public let parentID: String
+    public let parentType: String
+    public let startTimeOfAudio: String
+    public let endTimeOfAudio: String
+    public let startTime: String
+    public let duration: String
+    public let templateID: String
 
     enum CodingKeys: String, CodingKey {
         case musicID = "MUSIC_ID"
@@ -178,36 +208,36 @@ struct ServerMusicModel: Codable {
 }
 
 // MARK: Page Decodable Model
-struct ServerPageModel: Codable {
-    let modelID: String
-    let modelType: String
-    let dataID: String
-    let posX: String
-    let posY: String
-    let width: String
-    let height: String
-    let prevAvailableWidth: String
-    let prevAvailableHeight: String
-    let rotation: String
-    let modelOpacity: String
-    let modelFlipHorizontal: String
-    let modelFlipVertical: String
-    let lockStatus: String
-    let orderInParent: String
-    let parentID: String
-    let bgBlurProgress: String
-    let overlayDataID: String
-    let overlayOpacity: String
-    let startTime: String
-    let duration: String
-    let softDelete: String
-    var templateID: String
-    let hasMask: String?
-    let maskShape: String?
-    var image: ServerImageModel?
-    var overlayImage: ServerImageModel?
-    var children: [ServerBaseModel]?
-    var animation: ServerAnimationModel?
+public struct ServerPageModel: Codable {
+    public let modelID: String
+    public let modelType: String
+    public let dataID: String
+    public let posX: String
+    public let posY: String
+    public let width: String
+    public let height: String
+    public let prevAvailableWidth: String
+    public let prevAvailableHeight: String
+    public let rotation: String
+    public let modelOpacity: String
+    public let modelFlipHorizontal: String
+    public let modelFlipVertical: String
+    public let lockStatus: String
+    public let orderInParent: String
+    public let parentID: String
+    public let bgBlurProgress: String
+    public let overlayDataID: String
+    public let overlayOpacity: String
+    public let startTime: String
+    public let duration: String
+    public let softDelete: String
+    public var templateID: String
+    public let hasMask: String?
+    public let maskShape: String?
+    public var image: ServerImageModel?
+    public var overlayImage: ServerImageModel?
+    public var children: [ServerBaseModel]?
+    public var animation: ServerAnimationModel?
 
     enum CodingKeys: String, CodingKey {
         case modelID = "MODEL_ID"
@@ -275,23 +305,23 @@ struct ServerPageModel: Codable {
 }
 
 // MARK: Image Decodable Model
-struct ServerImageModel: Codable {
-    let imageID: String
-    let imageType: String
-    let serverPath: String
-    let localPath: String
-    let resID: String
-    let isEncrypted: String
-    let cropX: String
-    let cropY: String
-    let cropW: String
-    let cropH: String
-    let cropStyle: String
-    let tileMultiple: String
-    let colorInfo: String
-    let imageWidth: String
-    let imageHeight: String
-    var templateID: String
+public struct ServerImageModel: Codable {
+    public let imageID: String
+    public let imageType: String
+    public let serverPath: String
+    public let localPath: String
+    public let resID: String
+    public let isEncrypted: String
+    public let cropX: String
+    public let cropY: String
+    public let cropW: String
+    public let cropH: String
+    public let cropStyle: String
+    public let tileMultiple: String
+    public let colorInfo: String
+    public let imageWidth: String
+    public let imageHeight: String
+    public var templateID: String
 
     enum CodingKeys: String, CodingKey {
         case imageID = "IMAGE_ID"
@@ -315,36 +345,36 @@ struct ServerImageModel: Codable {
 
 // MARK: Base Model Decodable Model
 public struct ServerBaseModel: Codable {
-    let modelID: String
-    let modelType: String
-    let dataID: String
-    let posX: String
-    let posY: String
-    let width: String
-    let height: String
-    let prevAvailableWidth: String
-    let prevAvailableHeight: String
-    let rotation: String
-    let modelOpacity: String
-    let modelFlipHorizontal: String
-    let modelFlipVertical: String
-    let lockStatus: String
-    let orderInParent: String
-    let parentID: String
-    let bgBlurProgress: String
-    let overlayDataID: String
-    let overlayOpacity: String
-    let startTime: String
-    let duration: String
-    let softDelete: String
-    let hasMask: String?
-    let maskShape: String?
-    var templateID: String
-    var stickerInfo: ServerStickerModel?
-    var textInfo : ServerTextModel?
-    var animation: ServerAnimationModel?
-    var parent : ServerParentModel?
-    var children: [ServerBaseModel]?
+    public let modelID: String
+    public let modelType: String
+    public let dataID: String
+    public let posX: String
+    public let posY: String
+    public let width: String
+    public let height: String
+    public let prevAvailableWidth: String
+    public let prevAvailableHeight: String
+    public let rotation: String
+    public let modelOpacity: String
+    public let modelFlipHorizontal: String
+    public let modelFlipVertical: String
+    public let lockStatus: String
+    public let orderInParent: String
+    public let parentID: String
+    public let bgBlurProgress: String
+    public let overlayDataID: String
+    public let overlayOpacity: String
+    public let startTime: String
+    public let duration: String
+    public let softDelete: String
+    public let hasMask: String?
+    public let maskShape: String?
+    public var templateID: String
+    public var stickerInfo: ServerStickerModel?
+    public var textInfo : ServerTextModel?
+    public var animation: ServerAnimationModel?
+    public var parent : ServerParentModel?
+    public var children: [ServerBaseModel]?
 
     enum CodingKeys: String, CodingKey {
         case modelID = "MODEL_ID"
@@ -414,20 +444,20 @@ public struct ServerBaseModel: Codable {
 }
 
 // MARK: Sticker Info Decodable Model
-struct ServerStickerModel: Codable {
-    let stickerID: String
-    let imageID: String
-    let stickerType: String
-    let stickerFilterType: String
-    let stickerHue: String
-    let stickerColor: String
-    let xRotationProg: String
-    let yRotationProg: String
-    let zRotationProg: String
-    let templateID: String
-    var image: ServerImageModel?
-    let animation: ServerAnimationModel?
-    let stickerModelType : String?
+public struct ServerStickerModel: Codable {
+    public let stickerID: String
+    public let imageID: String
+    public let stickerType: String
+    public let stickerFilterType: String
+    public let stickerHue: String
+    public let stickerColor: String
+    public let xRotationProg: String
+    public let yRotationProg: String
+    public let zRotationProg: String
+    public let templateID: String
+    public var image: ServerImageModel?
+    public let animation: ServerAnimationModel?
+    public let stickerModelType : String?
     
 
 
@@ -450,16 +480,16 @@ struct ServerStickerModel: Codable {
 }
 
 // MARK: Animation Decodable Model
-struct ServerAnimationModel: Codable {
-    let animationID: String
-    let modelID: String
-    var inAnimationTemplateID: String
-    var inAnimationDuration: String
-    var loopAnimationTemplateID: String
-    var loopAnimationDuration: String
-    var outAnimationTemplateID: String
-    var outAnimationDuration: String
-    let templateID: String
+public struct ServerAnimationModel: Codable {
+    public let animationID: String
+    public let modelID: String
+    public var inAnimationTemplateID: String
+    public var inAnimationDuration: String
+    public var loopAnimationTemplateID: String
+    public var loopAnimationDuration: String
+    public var outAnimationTemplateID: String
+    public var outAnimationDuration: String
+    public let templateID: String
 
     enum CodingKeys: String, CodingKey {
         case animationID = "ANIMATION_ID"
@@ -477,36 +507,38 @@ struct ServerAnimationModel: Codable {
 
 
 // MARK: Text Info Decodable Model
-struct ServerTextModel: Codable {
-    let textID: String
-    let text: String?
-    let textFont: String
-    let textColor: String
-    let textGravity: String
-    let lineSpacing: String
-    let letterSpacing: String
-    let shadowColor: String
-    let shadowOpacity: String
-    let shadowRadius: String
-    let shadowDx: String
-    let shadowDy: String
-    let bgType: String
-    let bgDrawable: String
-    let bgColor: String
-    let bgAlpha: String
-    let internalWidthMargin: String
-    let internalHeightMargin: String
-    let xRotationProg: String
-    let yRotationProg: String
-    let zRotationProg: String
-    let curveProg: String
-    let templateID: String
+public struct ServerTextModel: Codable {
+    public let textID: String
+    public let text: String?
+    public let textFont: String
+    public let textType: String?
+    public let textColor: String
+    public let textGravity: String
+    public let lineSpacing: String
+    public let letterSpacing: String
+    public let shadowColor: String
+    public let shadowOpacity: String
+    public let shadowRadius: String
+    public let shadowDx: String
+    public let shadowDy: String
+    public let bgType: String
+    public let bgDrawable: String
+    public let bgColor: String
+    public let bgAlpha: String
+    public let internalWidthMargin: String
+    public let internalHeightMargin: String
+    public let xRotationProg: String
+    public let yRotationProg: String
+    public let zRotationProg: String
+    public let curveProg: String
+    public let templateID: String
     
 
     enum CodingKeys: String, CodingKey {
         case textID = "TEXT_ID"
         case text = "TEXT"
         case textFont = "TEXT_FONT"
+        case textType = "textType"
         case textColor = "TEXT_COLOR"
         case textGravity = "TEXT_GRAVITY"
         case lineSpacing = "LINE_SPACING"
@@ -532,34 +564,34 @@ struct ServerTextModel: Codable {
 
 
 // MARK: Parent Decodable Model
-struct ServerParentModel: Codable {
-    let modelID: String
-    let modelType: String
-    let dataID: String
-    let posX: String
-    let posY: String
-    let width: String
-    let height: String
-    let prevAvailableWidth: String
-    let prevAvailableHeight: String
-    let rotation: String
-    let modelOpacity: String
-    let modelFlipHorizontal: String
-    let modelFlipVertical: String
-    let lockStatus: String
-    let orderInParent: String
-    let parentID: String
-    let bgBlurProgress: String
-    let overlayDataID: String
-    let overlayOpacity: String
-    let startTime: String
-    let duration: String
-    let softDelete: String
-    let hasMask: String?
-    let maskShape: String?
-    let templateID: String
-    let children: [ServerBaseModel]?
-    let animation: ServerAnimationModel?
+public struct ServerParentModel: Codable {
+    public let modelID: String
+    public let modelType: String
+    public let dataID: String
+    public let posX: String
+    public let posY: String
+    public let width: String
+    public let height: String
+    public let prevAvailableWidth: String
+    public let prevAvailableHeight: String
+    public let rotation: String
+    public let modelOpacity: String
+    public let modelFlipHorizontal: String
+    public let modelFlipVertical: String
+    public let lockStatus: String
+    public let orderInParent: String
+    public let parentID: String
+    public let bgBlurProgress: String
+    public let overlayDataID: String
+    public let overlayOpacity: String
+    public let startTime: String
+    public let duration: String
+    public let softDelete: String
+    public let hasMask: String?
+    public let maskShape: String?
+    public let templateID: String
+    public let children: [ServerBaseModel]?
+    public let animation: ServerAnimationModel?
 
     enum CodingKeys: String, CodingKey {
         case modelID = "MODEL_ID"

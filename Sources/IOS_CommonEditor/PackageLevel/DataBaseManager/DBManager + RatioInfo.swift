@@ -10,7 +10,7 @@ import Foundation
 extension DBManager {
 
     // Insert query for RATIO_MODEL table
-    func insertRatioInfo(ratioInfo: RatioInfo) -> Int {
+    public func insertRatioInfo(ratioInfo: RatioInfo) -> Int {
         let query = "INSERT INTO RATIO_MODEL (CATEGORY, CATEGORY_DESCRIPTION, IMAGE_RES_ID, RATIO_WIDTH, RATIO_HEIGHT, OUTPUT_WIDTH, OUTPUT_HEIGHT, IS_PREMIUM) VALUES ('\(ratioInfo.category)', '\(ratioInfo.categoryDescription)', '\(ratioInfo.imageResId)', '\(ratioInfo.ratioWidth)', '\(ratioInfo.ratioHeight)', '\(ratioInfo.outputWidth)', '\(ratioInfo.outputHeight)', '\(ratioInfo.isPremium)')"
         return insertNewEntry(query: query)
     }

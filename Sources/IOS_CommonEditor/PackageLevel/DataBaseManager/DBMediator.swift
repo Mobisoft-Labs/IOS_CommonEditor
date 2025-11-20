@@ -224,7 +224,7 @@ public class DBMediator : DictCacheProtocol  {
     }
     
     
-    func insertStickerInfo(stickerInfoModel: StickerInfo,parentID:Int,templateID:Int,refSize:CGSize, newOrder: Int)->Int{
+    public func insertStickerInfo(stickerInfoModel: StickerInfo,parentID:Int,templateID:Int,refSize:CGSize, newOrder: Int)->Int{
 //        let imageModel = stickerInfoModel.getDBImageModel()
         let imageId = dbManager.replaceImageRowIfNeeded(image: stickerInfoModel.getDBImageModel())
 //        stickerInfoModel.imageID = imageId
@@ -334,7 +334,7 @@ public class DBMediator : DictCacheProtocol  {
     
     //MARK: - Update
     
-    func updateAnimationModel(animationModel:DBAnimationModel)->Int{
+    public func updateAnimationModel(animationModel:DBAnimationModel)->Int{
         return dbManager.replaceAnimationRowIfNeeded(animation: animationModel)
     }
     func updateStickerModel(stickerModel:DBStickerModel)->Int{
@@ -352,11 +352,11 @@ public class DBMediator : DictCacheProtocol  {
         return modelIndex
     }
     
-    func updateImageModel(imageModel:DBImageModel)->Int{
+    public func updateImageModel(imageModel:DBImageModel)->Int{
         let modelIndex = dbManager.replaceImageRowIfNeeded(image: imageModel)
         return modelIndex
     }
-    func updateMusicInfo(musicInfo:MusicInfo)->Int{
+    public func updateMusicInfo(musicInfo:MusicInfo)->Int{
         let modelIndex = dbManager.replaceMusicInfoRowIfNeeded(musicDbModel: musicInfo)
         return modelIndex
     }

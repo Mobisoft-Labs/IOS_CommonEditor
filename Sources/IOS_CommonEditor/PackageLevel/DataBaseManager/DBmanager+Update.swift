@@ -264,7 +264,7 @@ extension DBManager{
         }
     }
     
-    func updateTemplateIsDetailDownload(bool: Int, templateID:Int) throws {
+    public func updateTemplateIsDetailDownload(bool: Int, templateID:Int) throws {
         DBManager.logger?.printLog("In DesignDbHelper updateTemplateRow")
 
         let query = "UPDATE \(TABLE_TEMPLATE) SET \(IS_DETAILS_DOWNLOAD) = ? WHERE \(TEMPLATE_ID) = ?"
@@ -2368,7 +2368,7 @@ extension DBManager{
     
     
     //Created by Neeshu
-    func updateTemplateRow(template: DBTemplateModel, templateID : Int) -> Bool {
+    public func updateTemplateRow(template: DBTemplateModel, templateID : Int) -> Bool {
         let query = "UPDATE \(TABLE_TEMPLATE) " +
                     "SET \(TEMPLATE_NAME) = ?, " +
                     "\(CATEGORY) = ?, " +

@@ -189,6 +189,7 @@ public class DBManager : DBInterface{
     let TEXT_ID = "TEXT_ID"
     let TEXT = "TEXT"
     let TEXT_FONT = "TEXT_FONT"
+    let TEXT_TYPE = "TEXT_TYPE"
     let TEXT_COLOR = "TEXT_COLOR"
     let TEXT_GRAVITY = "TEXT_GRAVITY"
     let LINE_SPACING = "LINE_SPACING"
@@ -566,3 +567,199 @@ extension DBManager{
 //    }
 //}
 //
+
+extension DBManager{
+    
+    public func makeCopy(templateID: Int , toType : String ) -> Int {
+        var insertedRowId: Int = -1
+        NSLog("OpenGlTest In DesignDbHelper duplicateTemplate")
+        
+        // Fetch the template based on the templateID from the database
+        var originalTemplate = getTemplate(templateId: templateID)
+        let currentType = originalTemplate?.categoryTemp
+        
+        originalTemplate?.category = toType
+        originalTemplate?.templateEventStatus = "UNPUBLISHED"
+        //        originalTemplate?.categoryTemp = "DRAFT"
+        
+        if currentType == "SAVED"{
+            originalTemplate?.originalTemplate = templateID
+            
+        }else{
+            originalTemplate?.originalTemplate = 0
+            originalTemplate?.eventId = -1
+            // TODO: JM Discuss With Sharma - Done
+            originalTemplate?.userId = -1
+        }
+        
+        //        originalTemplate?.isDetailDownloaded = 0
+        guard let originalTemplate = originalTemplate else {
+            // Handle error or return if template not found
+            return -1
+        }
+        
+        // copy original model to new model
+        
+        var newModel = originalTemplate
+        
+        let newtempID = replaceTemplateRowIfNeeded(template: newModel)
+        
+        let createdAtDate = Date()
+        // Create a DateFormatter
+        let dateFormatter = DateFormatter()
+        
+        // Set the desired date format
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        
+        // Convert Date to String
+        let createdAtString = dateFormatter.string(from: createdAtDate)
+        
+        // Print the value
+        print("Created At: \(createdAtString)")
+        
+        _ = DBManager.shared.updateTemplateCreatedDate(templateId: newtempID, newValue: createdAtString)
+        
+        insertedRowId = newtempID
+        
+        var musicInfo = getMusicInfo(templateID: templateID)
+        musicInfo?.templateID = newtempID
+        if let musicInfo = musicInfo{
+            let newMusicID = replaceMusicInfoRowIfNeeded(musicDbModel: musicInfo)
+        }
+        
+        /*
+         if DRAFT OR SAVED IS COPIED, THEN NO WORRIES
+         ELSE TEMP TO MYDESIGN
+         */
+        if currentType == "DRAFT" ||  currentType == "SAVED" {
+            let filename = "thumbnail_template_\(originalTemplate.templateId).png"
+            
+            let filenameLocal = "thumbnail_template_\(newtempID).png"
+            do{
+                let fileManager = FileManager.default
+                
+                guard let myDesignsPath = DBManager.logger?.getMyDesignsPath() else{
+                    throw DBManager.logger!.documentsDirectoryNotFound()
+                }
+                
+                
+                let sourceURL = myDesignsPath.appendingPathComponent(filename)
+                
+                let destinationURL = myDesignsPath.appendingPathComponent(filenameLocal)
+                
+                if fileManager.fileExists(atPath: destinationURL.path) {
+                    print("File already exists at the destination.")
+                } else {
+                    // Copy the file
+                    try fileManager.copyItem(at: sourceURL, to: destinationURL)
+                    print("File copied successfully to \(destinationURL.path).")
+                }
+                
+            }catch{
+                print("Error copying file: \(error.localizedDescription)")
+            }
+        }else {
+            let filename = "thumbnail_template_\(originalTemplate.serverTemplateId).png"
+            
+            let filenameLocal = "thumbnail_template_\(newtempID).png"
+            do{
+                let fileManager = FileManager.default
+                
+                guard let templateThumbnails = DBManager.logger?.getThumnailPath() else{
+                    throw DBManager.logger!.documentsDirectoryNotFound()
+                }
+                
+                guard let myDesignsPath = DBManager.logger?.getMyDesignsPath() else{
+                    throw DBManager.logger!.documentsDirectoryNotFound()
+                }
+                
+                let sourceURL = templateThumbnails.appendingPathComponent(filename)
+                
+                let destinationURL = myDesignsPath.appendingPathComponent(filenameLocal)
+                
+                if fileManager.fileExists(atPath: destinationURL.path) {
+                    print("File already exists at the destination.")
+                } else {
+                    // Copy the file
+                    try fileManager.copyItem(at: sourceURL, to: destinationURL)
+                    print("File copied successfully to \(destinationURL.path).")
+                }
+                
+            }catch{
+                print("Error copying file: \(error.localizedDescription)")
+            }
+        }
+        
+        
+        
+        print("newID",newtempID)
+        
+        // get all pages for template
+        let pages = getActivePagesList(templateId: templateID)
+        // extract page on by one and for every page
+        for page in pages {
+            // extract page from base model table and chnage its template and parent id from new id
+            
+            // if background exist and type is image
+            // extract image model for temp id and chnage its parent ID with new temp ID
+            // if overlay exist for baseModel then extrect imageModel for that tempID and replace its parentID with new Temp ID
+            _ = duplicatePage(page: page, newtempID: newtempID)
+            
+        }
+        
+        
+        return insertedRowId
+    }
+    
+    public func updateTemplateTextEntries(templateId: Int, logoName: String, slogan: String) -> Bool {
+        let query = """
+            UPDATE \(TABLE_TEXT_MODEL)
+            SET \(TEXT) = CASE UPPER(\(TEXT_TYPE))
+                WHEN 'NAME' THEN ?
+                WHEN 'SLOGAN' THEN ?
+                ELSE \(TEXT)
+            END
+            WHERE \(TEMPLATE_ID) = ? AND UPPER(\(TEXT_TYPE)) IN ('NAME', 'SLOGAN')
+            """
+        let values: [Any] = [logoName, slogan, templateId]
+        do {
+            try updateQuery(query, values: values)
+            return true
+        } catch {
+            return false
+        }
+    }
+    
+    public func fetchTemplateTextDefaults(templateId: Int) -> (name: String?, slogan: String?) {
+        let query = """
+        SELECT \(TEXT), \(TEXT_TYPE)
+        FROM \(TABLE_TEXT_MODEL)
+        WHERE \(TemplateID) = ? AND UPPER(\(TEXT_TYPE)) IN ('NAME', 'SLOGAN')
+        """
+        guard let resultSet = try? runQuery(query, values: [templateId]) else {
+            return (nil, nil)
+        }
+
+        var name: String?
+        var slogan: String?
+
+        while resultSet.next() {
+            let type = (resultSet.string(forColumn: TEXT_TYPE) ?? "").uppercased()
+            let textValue = resultSet.string(forColumn: TEXT) ?? ""
+            switch type {
+            case "NAME":
+                if name == nil {
+                    name = textValue
+                }
+            case "SLOGAN":
+                if slogan == nil {
+                    slogan = textValue
+                }
+            default:
+                break
+            }
+        }
+
+        return (name, slogan)
+    }
+}
