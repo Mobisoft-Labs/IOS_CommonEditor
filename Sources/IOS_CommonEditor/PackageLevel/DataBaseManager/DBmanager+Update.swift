@@ -921,7 +921,7 @@ extension DBManager {
 
 // Methods for updating the properties of Template Table.
 extension DBManager {
-    func updateTemplateName(templateId: Int, newValue: String) -> Bool {
+    public func updateTemplateName(templateId: Int, newValue: String) -> Bool {
         let query = "UPDATE \(TABLE_TEMPLATE) SET \(TEMPLATE_NAME) = ? WHERE \(TEMPLATE_ID) = ?"
         let values: [Any] = [newValue, templateId]
         do {

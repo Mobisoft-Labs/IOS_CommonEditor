@@ -422,7 +422,7 @@ public class DBMediator : DictCacheProtocol  {
             resetDictionary()
         }
         let tempInfo = TemplateInfo()
-        guard let templateModel = dbManager.getTemplate(templateId: tempID) else{
+        guard var templateModel = dbManager.getTemplate(templateId: tempID) else{
             DBManager.logger?.printLog("template Model not found for templateID: \(tempID)")
             return nil
         }

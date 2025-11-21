@@ -17,7 +17,7 @@ public struct CategoryModel: Codable, Identifiable,Hashable {
     let buildCategory : String
     let formFields: [CategoryFormField]
 
-    init(id: String, name: String, lastModified: String, thumbnailPath: String?, isReleased: String, categoryDataPath: String, formFields: [CategoryFormField] , buildCategory:String) {
+    public init(id: String, name: String, lastModified: String, thumbnailPath: String?, isReleased: String, categoryDataPath: String, formFields: [CategoryFormField] , buildCategory:String) {
         self.id = id
         self.name = name
         self.lastModified = lastModified
@@ -46,7 +46,7 @@ extension Array where Element == CategoryModel {
     }
 }
 
-struct CategoryFormField: Codable, Hashable{
+public struct CategoryFormField: Codable, Hashable{
     let fieldID: Int
     let fieldDisplayName: String
     let templateValue: String?
