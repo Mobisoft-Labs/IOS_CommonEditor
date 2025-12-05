@@ -329,10 +329,11 @@ extension SceneComposable {
             
             return StickerChild
         }
+    
     func setImageAsSource(imageModel:ImageProtocol,info: TexturableChild,overlay:String = " ") async->TexturableChild{
         let localImageModel = imageModel.changeOrReplaceImage!
         let model = info
-        model.setMCropRect(cropRect: (localImageModel.imageModel.cropRect))
+//        model.setMCropRect(cropRect: (localImageModel.imageModel.cropRect))
         if localImageModel.imageModel.imageType == .COLOR{
             model.mContentType =  0.0
             
@@ -354,8 +355,10 @@ extension SceneComposable {
             if  localImageModel.imageModel.sourceType == .SERVER{
                 if let texture =  await textureCache.getTextureFromServer(imageName: localImageModel.imageModel.serverPath, id: imageModel.imageID,crop: CGRect(x: CGFloat(localImageModel.imageModel.cropRect.origin.x), y: CGFloat(localImageModel.imageModel.cropRect.origin.y), width: CGFloat(localImageModel.imageModel.cropRect.width), height: CGFloat(localImageModel.imageModel.cropRect.height)), flip: false, checkInCache: textureCache.checkInCache){
                     //8E0F20EA7ACB057A4B2EF33AA7579585
-                        model.setTexture(texture: texture)
-                        
+                    let rect = setCropRectForImage(info: texture, imageModel: localImageModel.imageModel)
+                    model.setMCropRect(cropRect: rect)
+                    model.setTexture(texture: texture)
+                    
                     
                 }
             
@@ -363,8 +366,9 @@ extension SceneComposable {
         }
         else if localImageModel.imageModel.sourceType == .DOCUMENT{
             if let texture =  await textureCache.getTextureFromLocal(imageName: (localImageModel.imageModel.localPath), id: info.id,crop: CGRect(x: CGFloat(localImageModel.imageModel.cropRect.origin.x), y: CGFloat((localImageModel.imageModel.cropRect.origin.y)), width: CGFloat((localImageModel.imageModel.cropRect.width)), height: CGFloat((localImageModel.imageModel.cropRect.height))), flip: false, checkInCache: textureCache.checkInCache){
-               
-                    model.setTexture(texture: texture)
+                let rect = setCropRectForImage(info: texture, imageModel: localImageModel.imageModel)
+                model.setMCropRect(cropRect: rect)
+                model.setTexture(texture: texture)
                
                 }
         }
@@ -372,9 +376,9 @@ extension SceneComposable {
 //                if imageModel.lo
                 if let lastPathComponent = localImageModel.imageModel.localPath.components(separatedBy: "/").last  {
                     if let texture =  await textureCache.getTextureFromBundle(imageName: lastPathComponent, id: info.id,crop: CGRect(x: CGFloat(localImageModel.imageModel.cropRect.origin.x), y: CGFloat(localImageModel.imageModel.cropRect.origin.y), width: CGFloat(localImageModel.imageModel.cropRect.width), height: CGFloat(localImageModel.imageModel.cropRect.height)), flip: false){
-                        
+                        let rect = setCropRectForImage(info: texture, imageModel: localImageModel.imageModel)
+                        model.setMCropRect(cropRect: rect)
                         model.setTexture(texture: texture)
-                        
                     }
                     
                 }
@@ -388,7 +392,16 @@ extension SceneComposable {
         return model
     }
     
-    
+    func setCropRectForImage(info: MTLTexture, imageModel : ImageModel) -> CGRect{
+        let width = info.width.toFloat()//cGImage.width.toCGFloat()
+        let height = info.height.toFloat()//cGImage.height.toCGFloat()
+        
+//        let rect = CGRect(x: imageModel.cropRect.minX*CGFloat(width), y: imageModel.cropRect.minY*CGFloat(height), width: imageModel.cropRect.width*CGFloat(width), height: imageModel.cropRect.height*CGFloat(height))
+        let rect = CGRect(x: imageModel.cropRect.minX, y: imageModel.cropRect.minY, width: imageModel.cropRect.width, height: imageModel.cropRect.height)
+        return rect
+//        info.setMCropRect(cropRect: rect)
+        
+    }
     
     
     func changedImageContent(model:  StickerChild,imageModel:ImageModel,isCropped:Bool) async{
@@ -524,9 +537,9 @@ extension SceneComposable {
             model.mContentType =  2.0
             let cropPoints = CGRect(x: 0, y: 0, width: 1, height: 1)
             if let texture =  await textureCache.getTextureBGFromBundle(imageName: wallpaper.content.localPath, id: info.id,crop: cropPoints, flip: false, size: info.size){
-                
+                let rect = setCropForBG(info: texture, cropPoints: cropPoints, size: info.size, isServer: false)
                 model.setTexture(texture: texture)
-                
+                model.setMCropRect(cropRect: rect)
             }
         }
         
@@ -536,13 +549,14 @@ extension SceneComposable {
             model.setTileCount(count: Float(tileCount) * 2)
             let cropPoints = CGRect(x: 0, y: 0, width: 1, height: 1)
             if let texture =  await textureCache.getTextureBGFromBundle(imageName: bgTexture.content.localPath, id: info.id,crop: cropPoints, flip: false, size: info.size){
-                
+                let rect = setCropForBG(info: texture, cropPoints: cropPoints, size: info.size, isServer: false)
                 model.setTileTexture(texture: texture)
-                
+                model.setMCropRect(cropRect: rect)
             }
             
           
             model.setGradientInfo(gradientInfo: GradientInfoMetal(startColor: SIMD3(1.0, 1.0, 1.0), endColor: SIMD3(1.0, 1.0, 1.0), gradientType: 1.0, radius: 1.0, angleInDegree: 1.0))
+            
         
         }
         
@@ -554,21 +568,22 @@ extension SceneComposable {
            
             if image.content.sourceType == .DOCUMENT{
                 if let texture =  await textureCache.getTextureBGFromServer(imageName: image.content.localPath, id: info.id,crop: cropPoints, flip: false,isCropped: isRatioChanged,size: info.size){
-                    
+                    let rect = setCropForBG(info: texture, cropPoints: cropPoints, size: info.size, isServer: true)
                     model.setTexture(texture: texture)
-                    
+                    model.setMCropRect(cropRect: rect)
                 }
             }else if image.content.sourceType == .SERVER{
                 if let texture =  await textureCache.getTextureBGFromServer(imageName: image.content.serverPath, id: info.id,crop: cropPoints, flip: false,isCropped: isRatioChanged,size: info.size){
-                    
+                    let rect = setCropForBG(info: texture, cropPoints: cropPoints, size: info.size, isServer: true)
                     model.setTexture(texture: texture)
-                    
+                    model.setMCropRect(cropRect: rect)
                 }
             }else{
                 if let texture =  await textureCache.getTextureBGFromBundle(imageName: image.content.localPath, id: info.id,crop: cropPoints, flip: false, size: info.size){
-                    
+                    let rect = setCropForBG(info: texture, cropPoints: cropPoints, size: info.size, isServer: false)
+
                     model.setTexture(texture: texture)
-                    
+                    model.setMCropRect(cropRect: rect)
                 }
             }
          
@@ -576,6 +591,32 @@ extension SceneComposable {
         
         
         return model
+    }
+    
+    func setCropForBG(info: MTLTexture, cropPoints : CGRect, size: CGSize, isServer: Bool) -> CGRect{
+        if isServer{
+            let width = info.width.toCGFloat()
+            let height = info.height.toCGFloat()
+            let aspectratio = CGSize(width: width, height:height)
+            var rect = CGRect(x: 0.0, y: 0.0, width: 1.0, height: 1.0)
+            rect = CGRect(x: cropPoints.minX*width, y: cropPoints.minY*height, width: cropPoints.width*width, height: cropPoints.height*height)
+            let width2 = rect.width
+            let height2 = rect.height
+            let aspectratio2 = CGSize(width: width2, height:height2)
+            let cropPoints = calculateCropPoint(imageSize: aspectratio, cropSize: size)
+            rect = CGRect(x: cropPoints.minX*cropPoints.width, y: cropPoints.minY*cropPoints.height, width: cropPoints.width, height: cropPoints.height)
+            return rect
+           
+        }else{
+            let width = info.width.toCGFloat()
+            let height = info.height.toCGFloat()
+            let aspectratio = CGSize(width: width, height:height)
+            let cropPoints = calculateCropPoint(imageSize: aspectratio, cropSize: size)
+            
+            let rect = CGRect(x: cropPoints.minX, y: cropPoints.minY, width: cropPoints.width, height: cropPoints.height)
+            
+            return rect
+        }
     }
     
 }

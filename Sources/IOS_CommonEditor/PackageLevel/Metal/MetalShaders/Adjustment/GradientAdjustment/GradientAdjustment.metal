@@ -67,32 +67,73 @@ kernel void GradientAdjustment(texture2d<float, access::read> inputTexture [[ te
         outputTexture.write(result, position);
     } else {
         
-        // Get the size of the destination texture
-        const auto destWidth = outputTexture.get_width();
-        const auto destHeight = outputTexture.get_height();
+//        // Get the size of the destination texture
+//        const auto destWidth = outputTexture.get_width();
+//        const auto destHeight = outputTexture.get_height();
+//
+//        // Get the size of the tile image texture
+//        const auto tileWidth = tileTexture.get_width();
+//        const auto tileHeight = tileTexture.get_height();
+//
+//        // Calculate the normalized texture coordinates (0.0 to 1.0) for the destination texture
+//        const float x = float(position.x) / float(destWidth);
+//        const float y = float(position.y) / float(destHeight);
+//        const float2 textureCoordinate = float2(x, y);
+//
+//        // Calculate the UV coordinates for tiling
+//        const float2 uv = textureCoordinate * float2(tileFrequency);
+//
+//        // Wrap UV coordinates to stay within the bounds of the tile image texture
+//        const float2 wrappedUV = fract(uv);
+//
+//        // Sampler configuration with linear filtering and repeat addressing
+//        constexpr sampler quadSampler(coord::normalized, address::repeat, filter::linear);
+//
+//        // Sample the tile image texture with the wrapped UV coordinates
+//        const float4 tileColor = tileTexture.sample(quadSampler, wrappedUV);
+//
+//        // Write the sampled color to the destination texture
+//        outputTexture.write(tileColor, position);
+        
+        float destWidth  = outputTexture.get_width();
+        float destHeight = outputTexture.get_height();
 
-        // Get the size of the tile image texture
-        const auto tileWidth = tileTexture.get_width();
-        const auto tileHeight = tileTexture.get_height();
+        float tileWidth  = tileTexture.get_width();
+        float tileHeight = tileTexture.get_height();
 
-        // Calculate the normalized texture coordinates (0.0 to 1.0) for the destination texture
-        const float x = float(position.x) / float(destWidth);
-        const float y = float(position.y) / float(destHeight);
-        const float2 textureCoordinate = float2(x, y);
+        // normalized uv
+        float2 uv = float2(
+            float(position.x) / destWidth,
+            (float(position.y) / destHeight) - 1.0
+        );
 
-        // Calculate the UV coordinates for tiling
-        const float2 uv = textureCoordinate * float2(tileFrequency);
+        // aspect ratios
+        float outputAspect = destWidth / destHeight;     // >1 wide, <1 tall
+        float tileAspect   = tileWidth / tileHeight;     // for square = 1.0
 
-        // Wrap UV coordinates to stay within the bounds of the tile image texture
-        const float2 wrappedUV = fract(uv);
+        float2 correctedUV = uv;
 
-        // Sampler configuration with linear filtering and repeat addressing
+        // --------------------------------------------------
+        // UNIVERSAL SQUARE-PRESERVE LOGIC
+        // --------------------------------------------------
+        if (outputAspect > 1.0) {
+            // Wide output (16:9)
+            correctedUV.x *= outputAspect;
+        } else if (outputAspect < 1.0) {
+            // Tall output (9:16)
+            correctedUV.y /= outputAspect;  // or *= (1/outputAspect)
+        }
+
+        // frequency
+        correctedUV *= tileFrequency;
+
+        // wrap
+        float2 wrappedUV = fract(correctedUV);
+
+        // sample
         constexpr sampler quadSampler(coord::normalized, address::repeat, filter::linear);
+        float4 tileColor = tileTexture.sample(quadSampler, wrappedUV);
 
-        // Sample the tile image texture with the wrapped UV coordinates
-        const float4 tileColor = tileTexture.sample(quadSampler, wrappedUV);
-
-        // Write the sampled color to the destination texture
         outputTexture.write(tileColor, position);
     }
 }

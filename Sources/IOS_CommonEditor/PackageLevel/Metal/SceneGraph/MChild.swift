@@ -553,9 +553,9 @@ class MChild :  Renderable{
     func setMCropRect(cropRect:CGRect){
         mCropRect = cropRect
         setCropRect(topLeft: float2(Float(cropRect.minX),Float(cropRect.minY)), topRight: float2(Float(cropRect.maxX),Float(cropRect.minY)), bottomLeft: float2(Float(cropRect.minX),Float(cropRect.maxY)), bottomRight: float2(Float(cropRect.maxX),Float(cropRect.maxY)))
-        if let geo = geometry as? QuadMesh {
-            
-        }
+//        if let geo = geometry as? QuadMesh {
+//            
+//        }
     }
     func setmOpacity(opacity: Float) {
         self.mOpacity = opacity

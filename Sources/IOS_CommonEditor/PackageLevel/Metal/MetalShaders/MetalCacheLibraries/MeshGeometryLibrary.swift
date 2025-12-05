@@ -114,6 +114,11 @@ public class QuadMesh : BaseMesh {
         /*topLEft*/  vertices[2].textCoords = topLeft
         /*topRight*/  vertices[3].textCoords = topRight
    
+        indices = [
+            0, 1, 2,
+            0,2,3
+        ]
+        
          buildBuffer()
     }
  

@@ -886,13 +886,13 @@ public class TextureCache {
         }
         
        
-                let width = cGImage.width.toCGFloat()
-                let height = cGImage.height.toCGFloat()
-                
-                let rect = CGRect(x: crop.minX*width, y: crop.minY*height, width: crop.width*width, height: crop.height*height)
-                let croppedCGImage: CGImage = cGImage.cropping(to: rect)!
+//                let width = cGImage.width.toCGFloat()
+//                let height = cGImage.height.toCGFloat()
+//                
+//                let rect = CGRect(x: crop.minX*width, y: crop.minY*height, width: crop.width*width, height: crop.height*height)
+//                let croppedCGImage: CGImage = cGImage.cropping(to: rect)!
             
-                let img = UIImage(cgImage: croppedCGImage)
+                let img = UIImage(cgImage: cGImage)//UIImage(cgImage: croppedCGImage)
                 if let newTexture = Conversion.loadTexture(image: img,flip:flip) {
 
                     logger.printLog("Adding In Cache \(imageName+crop.toString())")
@@ -908,13 +908,13 @@ public class TextureCache {
 //                let resizedImage = resizeImage(image: image, targetSize: fetchIdealSize)?.cgImage
                 if let cGImage = image.cgImage{
                     
-                    let width = cGImage.width.toCGFloat()
-                    let height = cGImage.height.toCGFloat()
+//                    let width = cGImage.width.toCGFloat()
+//                    let height = cGImage.height.toCGFloat()
+//                    
+//                    let rect = CGRect(x: crop.minX*width, y: crop.minY*height, width: crop.width*width, height: crop.height*height)
+//                    let croppedCGImage: CGImage = cGImage.cropping(to: rect)!
                     
-                    let rect = CGRect(x: crop.minX*width, y: crop.minY*height, width: crop.width*width, height: crop.height*height)
-                    let croppedCGImage: CGImage = cGImage.cropping(to: rect)!
-                    
-                    let img = UIImage(cgImage: croppedCGImage)
+                    let img = UIImage(cgImage: cGImage)//UIImage(cgImage: croppedCGImage)
                     if let newTexture = Conversion.loadTexture(image: img,flip:flip) {
                         
                         logger.printLog("Adding In Cache \(imageName+crop.toString())")
@@ -941,7 +941,6 @@ public class TextureCache {
             }
 
             if let cgImage = await resourceProvider.readDataFromFileQLFromDocument(fileName: imageName, maxSize: _fetchIdealSize) {
-//                if let cgImage = image?.cgImage{
                     let width = cgImage.width.toCGFloat()
                     let height = cgImage.height.toCGFloat()
                     
@@ -950,16 +949,12 @@ public class TextureCache {
                 
                     let img = UIImage(cgImage: croppedCGImage)
                     if let newTexture = Conversion.loadTexture(image: img,flip:flip) {
-//                        Task{
-//                            await addToCache(texture: newTexture, id: imageName+"\(id)")
-//                        }
+
                         logger.printLog("Adding In Cache \(imageName)")
 
                         addToCache(texture: newTexture, key: imageName+crop.toString())
                         return newTexture
                     }
-                    
-//                }
             }
             
             else {
@@ -1065,13 +1060,13 @@ public class TextureCache {
             if let cgImage = await resourceProvider.readDataFromFileQLFromAssets(fileName: imageName, maxSize: _fetchIdealSize) {
                
                 
-                    let width = cgImage.width.toCGFloat()
-                    let height = cgImage.height.toCGFloat()
-                    
-                    let rect = CGRect(x: crop.origin.x*width, y: crop.origin.y*height, width: crop.width*width, height: crop.height*height)
-                    let croppedCGImage: CGImage = cgImage.cropping(to: rect)!
+//                    let width = cgImage.width.toCGFloat()
+//                    let height = cgImage.height.toCGFloat()
+//                    
+//                    let rect = CGRect(x: crop.origin.x*width, y: crop.origin.y*height, width: crop.width*width, height: crop.height*height)
+//                    let croppedCGImage: CGImage = cgImage.cropping(to: rect)!
                 
-                    let img = UIImage(cgImage: croppedCGImage)
+                    let img = UIImage(cgImage: cgImage)//UIImage(cgImage: croppedCGImage)
                     if let newTexture = Conversion.loadTexture(image: img,flip:flip) {
                         
                         logger.printLog("Adding In Cache LOCAL \(imageName+crop.toString())")
@@ -1085,13 +1080,13 @@ public class TextureCache {
             } else if let cgImage = await resourceProvider.readDataFromFileQLFromLocalAssets(fileName: imageName, maxSize: _fetchIdealSize ) {
                 
                 
-                    let width = cgImage.width.toCGFloat()
-                    let height = cgImage.height.toCGFloat()
-                    
-                    let rect = CGRect(x: crop.minX*width, y: crop.minY*height, width: crop.width*width, height: crop.height*height)
-                    let croppedCGImage: CGImage = cgImage.cropping(to: rect)!
+//                    let width = cgImage.width.toCGFloat()
+//                    let height = cgImage.height.toCGFloat()
+//                    
+//                    let rect = CGRect(x: crop.minX*width, y: crop.minY*height, width: crop.width*width, height: crop.height*height)
+//                    let croppedCGImage: CGImage = cgImage.cropping(to: rect)!
                 
-                    let img = UIImage(cgImage: croppedCGImage)
+                    let img = UIImage(cgImage: cgImage)//UIImage(cgImage: croppedCGImage)
                     if let newTexture = Conversion.loadTexture(image: img,flip:flip) {
                        
                         logger.printLog("Adding In Cache LOCAL \(imageName+crop.toString())")
@@ -1109,13 +1104,13 @@ public class TextureCache {
                 if let img = img, let imageData = img.pngData(){
                     let resizedImage = resizeImage(image: img, targetSize: _fetchIdealSize)
                     if let cgImage = resizedImage?.cgImage{
-                        let width = cgImage.width.toCGFloat()
-                        let height = cgImage.height.toCGFloat()
+//                        let width = cgImage.width.toCGFloat()
+//                        let height = cgImage.height.toCGFloat()
+//                        
+//                        let rect = CGRect(x: crop.minX*width, y: crop.minY*height, width: crop.width*width, height: crop.height*height)
+//                        let croppedCGImage: CGImage = cgImage.cropping(to: rect)!
                         
-                        let rect = CGRect(x: crop.minX*width, y: crop.minY*height, width: crop.width*width, height: crop.height*height)
-                        let croppedCGImage: CGImage = cgImage.cropping(to: rect)!
-                        
-                        let img = UIImage(cgImage: croppedCGImage)
+                        let img = UIImage(cgImage: cgImage)//UIImage(cgImage: croppedCGImage)
                         if let newTexture = Conversion.loadTexture(image: img,flip:flip) {
 
                             return newTexture
@@ -1170,15 +1165,15 @@ extension TextureCache {
                 return nil
             }
             
-            let width = cGImage.width.toCGFloat()
-            let height = cGImage.height.toCGFloat()
-            let aspectratio = CGSize(width: width, height:height)
-            let cropPoints = calculateCropPoint(imageSize: aspectratio, cropSize: size)
+//            let width = cGImage.width.toCGFloat()
+//            let height = cGImage.height.toCGFloat()
+//            let aspectratio = CGSize(width: width, height:height)
+//            let cropPoints = calculateCropPoint(imageSize: aspectratio, cropSize: size)
+//            
+//            let rect = CGRect(x: cropPoints.minX*width, y: cropPoints.minY*height, width: cropPoints.width*width, height: cropPoints.height*height)
+//            let croppedCGImage: CGImage = cGImage.cropping(to: rect)!
             
-            let rect = CGRect(x: cropPoints.minX*width, y: cropPoints.minY*height, width: cropPoints.width*width, height: cropPoints.height*height)
-            let croppedCGImage: CGImage = cGImage.cropping(to: rect)!
-            
-            let img = UIImage(cgImage: croppedCGImage)
+            let img = UIImage(cgImage: cGImage)//UIImage(cgImage: croppedCGImage)
             if let newTexture = Conversion.loadTexture(image: img,flip:flip) {
                 logger.printLog("Adding In Cache \(localpath+crop.toString())")
                 
@@ -1191,16 +1186,16 @@ extension TextureCache {
             if let image =  UIImage(named:localpath) {
 
                 if let cGImage = image.cgImage{
-                    let width = cGImage.width.toCGFloat()
-                    let height = cGImage.height.toCGFloat()
-                    let aspectratio = CGSize(width: width, height:height)
-                    //           let siz =  getProportionalBGSize(currentRatio: ratioSize, oldSize: ratioSize )
-                    let cropPoints = calculateCropPoint(imageSize: aspectratio, cropSize: size)
+//                    let width = cGImage.width.toCGFloat()
+//                    let height = cGImage.height.toCGFloat()
+//                    let aspectratio = CGSize(width: width, height:height)
+//                    //           let siz =  getProportionalBGSize(currentRatio: ratioSize, oldSize: ratioSize )
+//                    let cropPoints = calculateCropPoint(imageSize: aspectratio, cropSize: size)
+//                    
+//                    let rect = CGRect(x: cropPoints.minX*width, y: cropPoints.minY*height, width: cropPoints.width*width, height: cropPoints.height*height)
+//                    let croppedCGImage: CGImage = cGImage.cropping(to: rect)!
                     
-                    let rect = CGRect(x: cropPoints.minX*width, y: cropPoints.minY*height, width: cropPoints.width*width, height: cropPoints.height*height)
-                    let croppedCGImage: CGImage = cGImage.cropping(to: rect)!
-                    
-                    let img = UIImage(cgImage: croppedCGImage)
+                    let img = UIImage(cgImage: cGImage)//UIImage(cgImage: croppedCGImage)
                     if let newTexture = Conversion.loadTexture(image: img,flip:flip) {
                         logger.printLog("Adding In Cache \(localpath+crop.toString())")
                         
@@ -1226,21 +1221,21 @@ func getTextureBGFromServer(imageName:String,id:Int,crop:CGRect = CGRect(x: 0.0,
            if let cgImage = await resourceProvider.readDataFromFileQLFromAssets(fileName: imageName, maxSize: _fetchIdealSize) {
 
 //                    if let cgImage = image?.cgImage{
-                   let width = cgImage.width.toCGFloat()
-                   let height = cgImage.height.toCGFloat()
-                   let aspectratio = CGSize(width: width, height:height)
-                   var rect = CGRect(x: 0.0, y: 0.0, width: 1.0, height: 1.0)
-                   rect = CGRect(x: crop.minX*width, y: crop.minY*height, width: crop.width*width, height: crop.height*height)
-                   let croppedCGImage1: CGImage = cgImage.cropping(to: rect)!
-                   let width2 = croppedCGImage1.width.toCGFloat()
-                   let height2 = croppedCGImage1.height.toCGFloat()
-                   let aspectratio2 = CGSize(width: width2, height:height2)
-                   let cropPoints = calculateCropPoint(imageSize: aspectratio2, cropSize: size)
-                       rect = CGRect(x: cropPoints.minX*width2, y: cropPoints.minY*height2, width: cropPoints.width*width2, height: cropPoints.height*height2)
+//                   let width = cgImage.width.toCGFloat()
+//                   let height = cgImage.height.toCGFloat()
+//                   let aspectratio = CGSize(width: width, height:height)
+//                   var rect = CGRect(x: 0.0, y: 0.0, width: 1.0, height: 1.0)
+//                   rect = CGRect(x: crop.minX*width, y: crop.minY*height, width: crop.width*width, height: crop.height*height)
+//                   let croppedCGImage1: CGImage = cgImage.cropping(to: rect)!
+//                   let width2 = croppedCGImage1.width.toCGFloat()
+//                   let height2 = croppedCGImage1.height.toCGFloat()
+//                   let aspectratio2 = CGSize(width: width2, height:height2)
+//                   let cropPoints = calculateCropPoint(imageSize: aspectratio2, cropSize: size)
+//                       rect = CGRect(x: cropPoints.minX*width2, y: cropPoints.minY*height2, width: cropPoints.width*width2, height: cropPoints.height*height2)
+//
+//                   let croppedCGImage: CGImage = croppedCGImage1.cropping(to: rect)!
 
-                   let croppedCGImage: CGImage = croppedCGImage1.cropping(to: rect)!
-
-                   let img = UIImage(cgImage: croppedCGImage)
+                   let img = UIImage(cgImage: cgImage)//UIImage(cgImage: croppedCGImage)
                    if let newTexture = Conversion.loadTexture(image: img,flip:flip) {
                        logger.printLog("Adding In Cache \(imageName)")
 
@@ -1252,21 +1247,21 @@ func getTextureBGFromServer(imageName:String,id:Int,crop:CGRect = CGRect(x: 0.0,
                
            }else if let cgImage = await resourceProvider.readDataFromFileQLFromLocalAssets(fileName: imageName, maxSize: _fetchIdealSize){
 
-                   let width = cgImage.width.toCGFloat()
-                   let height = cgImage.height.toCGFloat()
-                   let aspectratio = CGSize(width: width, height:height)
-                   var rect = CGRect(x: 0.0, y: 0.0, width: 1.0, height: 1.0)
-                   rect = CGRect(x: crop.minX*width, y: crop.minY*height, width: crop.width*width, height: crop.height*height)
-                   let croppedCGImage1: CGImage = cgImage.cropping(to: rect)!
-                   let width2 = croppedCGImage1.width.toCGFloat()
-                   let height2 = croppedCGImage1.height.toCGFloat()
-                   let aspectratio2 = CGSize(width: width2, height:height2)
-                   let cropPoints = calculateCropPoint(imageSize: aspectratio2, cropSize: size)
-                       rect = CGRect(x: cropPoints.minX*width2, y: cropPoints.minY*height2, width: cropPoints.width*width2, height: cropPoints.height*height2)
-               
-                   let croppedCGImage: CGImage = croppedCGImage1.cropping(to: rect)!
+//                   let width = cgImage.width.toCGFloat()
+//                   let height = cgImage.height.toCGFloat()
+//                   let aspectratio = CGSize(width: width, height:height)
+//                   var rect = CGRect(x: 0.0, y: 0.0, width: 1.0, height: 1.0)
+//                   rect = CGRect(x: crop.minX*width, y: crop.minY*height, width: crop.width*width, height: crop.height*height)
+//                   let croppedCGImage1: CGImage = cgImage.cropping(to: rect)!
+//                   let width2 = croppedCGImage1.width.toCGFloat()
+//                   let height2 = croppedCGImage1.height.toCGFloat()
+//                   let aspectratio2 = CGSize(width: width2, height:height2)
+//                   let cropPoints = calculateCropPoint(imageSize: aspectratio2, cropSize: size)
+//                       rect = CGRect(x: cropPoints.minX*width2, y: cropPoints.minY*height2, width: cropPoints.width*width2, height: cropPoints.height*height2)
+//               
+//                   let croppedCGImage: CGImage = croppedCGImage1.cropping(to: rect)!
 
-                   let img = UIImage(cgImage: croppedCGImage)
+                   let img = UIImage(cgImage: cgImage)//UIImage(cgImage: croppedCGImage)
                    if let newTexture = Conversion.loadTexture(image: img,flip:flip) {
                        logger.printLog("Adding In Cache \(imageName)")
 
@@ -1284,13 +1279,13 @@ func getTextureBGFromServer(imageName:String,id:Int,crop:CGRect = CGRect(x: 0.0,
                           let idealSize = computeIdealMaxResizeDimension(for: serverImage, cropRect: crop)
                            let resizedImage = resizeImage(image: serverImage, targetSize:idealSize )
                            if let cgImage = resizedImage?.cgImage{
-                               let width = cgImage.width.toCGFloat()
-                               let height = cgImage.height.toCGFloat()
+//                               let width = cgImage.width.toCGFloat()
+//                               let height = cgImage.height.toCGFloat()
+//                               
+//                               let rect = CGRect(x: crop.minX*width, y: crop.minY*height, width: crop.width*width, height: crop.height*height)
+//                               let croppedCGImage: CGImage = cgImage.cropping(to: rect)!
                                
-                               let rect = CGRect(x: crop.minX*width, y: crop.minY*height, width: crop.width*width, height: crop.height*height)
-                               let croppedCGImage: CGImage = cgImage.cropping(to: rect)!
-                               
-                               let img = UIImage(cgImage: croppedCGImage)
+                               let img = UIImage(cgImage: cgImage)//UIImage(cgImage: croppedCGImage)
                                if let newTexture = Conversion.loadTexture(image: img,flip:flip) {
                                    addToCache(texture: newTexture, key: imageName+crop.toString())
                                    
@@ -1309,13 +1304,13 @@ func getTextureBGFromServer(imageName:String,id:Int,crop:CGRect = CGRect(x: 0.0,
                        if let img = img{
                            let resizedImage = resizeImage(image: img, targetSize: _fetchIdealSize)
                            if let cgImage = resizedImage?.cgImage{
-                               let width = cgImage.width.toCGFloat()
-                               let height = cgImage.height.toCGFloat()
+//                               let width = cgImage.width.toCGFloat()
+//                               let height = cgImage.height.toCGFloat()
+//                               
+//                               let rect = CGRect(x: crop.minX*width, y: crop.minY*height, width: crop.width*width, height: crop.height*height)
+//                               let croppedCGImage: CGImage = cgImage.cropping(to: rect)!
                                
-                               let rect = CGRect(x: crop.minX*width, y: crop.minY*height, width: crop.width*width, height: crop.height*height)
-                               let croppedCGImage: CGImage = cgImage.cropping(to: rect)!
-                               
-                               let img = UIImage(cgImage: croppedCGImage)
+                               let img = UIImage(cgImage: cgImage)//UIImage(cgImage: croppedCGImage)
                                if let newTexture = Conversion.loadTexture(image: img,flip:flip) {
                                    
                                    return newTexture
@@ -1333,13 +1328,13 @@ func getTextureBGFromServer(imageName:String,id:Int,crop:CGRect = CGRect(x: 0.0,
                    if let img = img{
                        let resizedImage = resizeImage(image: img, targetSize: _fetchIdealSize)
                        if let cgImage = resizedImage?.cgImage{
-                           let width = cgImage.width.toCGFloat()
-                           let height = cgImage.height.toCGFloat()
+//                           let width = cgImage.width.toCGFloat()
+//                           let height = cgImage.height.toCGFloat()
+//                           
+//                           let rect = CGRect(x: crop.minX*width, y: crop.minY*height, width: crop.width*width, height: crop.height*height)
+//                           let croppedCGImage: CGImage = cgImage.cropping(to: rect)!
                            
-                           let rect = CGRect(x: crop.minX*width, y: crop.minY*height, width: crop.width*width, height: crop.height*height)
-                           let croppedCGImage: CGImage = cgImage.cropping(to: rect)!
-                           
-                           let img = UIImage(cgImage: croppedCGImage)
+                           let img = UIImage(cgImage: cgImage)//UIImage(cgImage: croppedCGImage)
                            if let newTexture = Conversion.loadTexture(image: img,flip:flip) {
 
                                return newTexture

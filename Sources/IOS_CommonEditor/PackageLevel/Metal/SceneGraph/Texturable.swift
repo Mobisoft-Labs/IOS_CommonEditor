@@ -356,20 +356,20 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
     
     func setTexture(texture: MTLTexture) {
         
-        let cropWidth = CGFloat(texture.width)
-        let cropHeight = CGFloat(texture.height)
-        let aspectRatio = CGSize(width: cropWidth, height: cropHeight)
-        
-        if cropWidth/cropHeight != size.width/size.height{
-            let newSize = getProportionalSize(currentRatio: aspectRatio, oldSize: size)
-            
-            if newSize != size {
-//                print("NEEDED ASPECT CALC")
-                setmSize(width: newSize.width, height: newSize.height)
-            }
-            
-            
-        }
+//        let cropWidth = CGFloat(texture.width)
+//        let cropHeight = CGFloat(texture.height)
+//        let aspectRatio = CGSize(width: cropWidth, height: cropHeight)
+//        
+//        if cropWidth/cropHeight != size.width/size.height{
+//            let newSize = getProportionalSize(currentRatio: aspectRatio, oldSize: size)
+//            
+//            if newSize != size {
+////                print("NEEDED ASPECT CALC")
+//                setmSize(width: newSize.width, height: newSize.height)
+//            }
+//            
+//            
+//        }
         if pipelineType != .ImageRender {
             switchTo(type: .ImageRender)
         }
