@@ -253,6 +253,23 @@ open class DBInterface : NSObject {
         return 0
     }
     
+    func insertNewEntry(query: String, arguments: [Any]) -> Int {
+        var result: Int?
+        if dbIsOpen {
+            semaphore.wait()
+            
+            if database.executeUpdate(query, withArgumentsIn: arguments) {
+                result = Int(database.lastInsertRowId)
+                semaphore.signal()
+                return result!
+            }
+            semaphore.signal()
+                return 0
+        }
+        
+        return 0
+    }
+    
     
     /// intserts new entry to database and return newly generated row ID
     func insertMultipleNewEntry(queries : [String])->Bool {

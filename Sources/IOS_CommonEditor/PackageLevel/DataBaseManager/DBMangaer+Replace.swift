@@ -108,14 +108,59 @@ extension DBManager{
     }
     
 
+//    public func replaceTextModelIfNeeded(textDbModel: DBTextModel) -> Int {
+//        var insertedRowId: Int = -1
+//   
+//        let query = "REPLACE INTO \(TABLE_TEXT_MODEL) (\(TEXT), \(TEXT_FONT), \(TEXT_COLOR), \(TEXT_GRAVITY), \(LINE_SPACING), \(LETTER_SPACING), \(SHADOW_COLOR), \(SHADOW_OPACITY), \(SHADOW_RADIUS), \(SHADOW_Dx), \(SHADOW_Dy), \(BG_TYPE), \(BG_DRAWABLE), \(BG_COLOR), \(BG_ALPHA), \(INTERNAL_HEIGHT_MARGIN), \(INTERNAL_WIDTH_MARGIN), \(X_ROATATION_PROG), \(Y_ROATATION_PROG), \(Z_ROATATION_PROG), \(CURVE_PROG),\(TEMPLATE_ID)) VALUES ('\(textDbModel.text)', '\(textDbModel.textFont)', '\(textDbModel.textColor)', '\(textDbModel.textGravity)', \(textDbModel.lineSpacing), \(textDbModel.letterSpacing), '\(textDbModel.shadowColor)', \(textDbModel.shadowOpacity), \(textDbModel.shadowRadius), \(textDbModel.shadowDx), \(textDbModel.shadowDy), '\(textDbModel.bgType)', '\(textDbModel.bgDrawable)', '\(textDbModel.bgColor)', \(textDbModel.bgAlpha), \(textDbModel.internalHeightMargin), \(textDbModel.internalWidthMargin), \(textDbModel.xRotationProg), \(textDbModel.yRotationProg), \(textDbModel.zRotationProg), \(textDbModel.curveProg),\(textDbModel.templateID))"
+//        
+//            insertedRowId = insertNewEntry(query: query)
+//               
+//
+//        return Int(insertedRowId)
+//    }
+    
     public func replaceTextModelIfNeeded(textDbModel: DBTextModel) -> Int {
         var insertedRowId: Int = -1
-   
-        let query = "REPLACE INTO \(TABLE_TEXT_MODEL) (\(TEXT), \(TEXT_FONT), \(TEXT_COLOR), \(TEXT_GRAVITY), \(LINE_SPACING), \(LETTER_SPACING), \(SHADOW_COLOR), \(SHADOW_OPACITY), \(SHADOW_RADIUS), \(SHADOW_Dx), \(SHADOW_Dy), \(BG_TYPE), \(BG_DRAWABLE), \(BG_COLOR), \(BG_ALPHA), \(INTERNAL_HEIGHT_MARGIN), \(INTERNAL_WIDTH_MARGIN), \(X_ROATATION_PROG), \(Y_ROATATION_PROG), \(Z_ROATATION_PROG), \(CURVE_PROG),\(TEMPLATE_ID)) VALUES ('\(textDbModel.text)', '\(textDbModel.textFont)', '\(textDbModel.textColor)', '\(textDbModel.textGravity)', \(textDbModel.lineSpacing), \(textDbModel.letterSpacing), '\(textDbModel.shadowColor)', \(textDbModel.shadowOpacity), \(textDbModel.shadowRadius), \(textDbModel.shadowDx), \(textDbModel.shadowDy), '\(textDbModel.bgType)', '\(textDbModel.bgDrawable)', '\(textDbModel.bgColor)', \(textDbModel.bgAlpha), \(textDbModel.internalHeightMargin), \(textDbModel.internalWidthMargin), \(textDbModel.xRotationProg), \(textDbModel.yRotationProg), \(textDbModel.zRotationProg), \(textDbModel.curveProg),\(textDbModel.templateID))"
         
-            insertedRowId = insertNewEntry(query: query)
-               
+        let query = """
+                REPLACE INTO \(TABLE_TEXT_MODEL)
+                (\(TEXT), \(TEXT_FONT), \(TEXT_COLOR), \(TEXT_GRAVITY),
+                 \(LINE_SPACING), \(LETTER_SPACING), \(SHADOW_COLOR), \(SHADOW_OPACITY),
+                 \(SHADOW_RADIUS), \(SHADOW_Dx), \(SHADOW_Dy),
+                 \(BG_TYPE), \(BG_DRAWABLE), \(BG_COLOR), \(BG_ALPHA),
+                 \(INTERNAL_HEIGHT_MARGIN), \(INTERNAL_WIDTH_MARGIN),
+                 \(X_ROATATION_PROG), \(Y_ROATATION_PROG), \(Z_ROATATION_PROG),
+                 \(CURVE_PROG), \(TEMPLATE_ID))
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """
 
+            let args: [Any] = [
+                textDbModel.text,
+                textDbModel.textFont,
+                textDbModel.textColor,
+                textDbModel.textGravity,
+                textDbModel.lineSpacing,
+                textDbModel.letterSpacing,
+                textDbModel.shadowColor,
+                textDbModel.shadowOpacity,
+                textDbModel.shadowRadius,
+                textDbModel.shadowDx,
+                textDbModel.shadowDy,
+                textDbModel.bgType,
+                textDbModel.bgDrawable,
+                textDbModel.bgColor,
+                textDbModel.bgAlpha,
+                textDbModel.internalHeightMargin,
+                textDbModel.internalWidthMargin,
+                textDbModel.xRotationProg,
+                textDbModel.yRotationProg,
+                textDbModel.zRotationProg,
+                textDbModel.curveProg,
+                textDbModel.templateID
+            ]
+
+        insertedRowId = insertNewEntry(query: query, arguments: args)
+        
         return Int(insertedRowId)
     }
 
