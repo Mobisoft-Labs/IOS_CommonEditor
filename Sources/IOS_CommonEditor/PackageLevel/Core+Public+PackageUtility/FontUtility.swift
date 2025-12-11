@@ -12,7 +12,14 @@ import UIKit
 extension FontDM{
     static public func getRealFont(nameOfFont :String, engineConfig: EngineConfiguration?) -> String {
         var path:String?
-        if let tpath = Bundle.main.path(forResource: nameOfFont, ofType: nil) {
+        
+        let baseName = (nameOfFont as NSString).deletingPathExtension
+        
+        if let tpath = Bundle.main.path(forResource: "\(baseName).ttf", ofType: nil) {
+            path = tpath
+        }else if let tpath = Bundle.main.path(forResource: "\(baseName).otf", ofType: nil){
+            path = tpath
+        }else if let tpath = Bundle.main.path(forResource: "\(baseName).TTF", ofType: nil){
             path = tpath
         }else if let fPath = engineConfig?.loadFontFromDocumentsDirectory(fontName: nameOfFont){
             path = fPath

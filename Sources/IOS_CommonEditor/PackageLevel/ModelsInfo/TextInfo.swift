@@ -272,7 +272,7 @@ public class TextInfo:BaseModel,TextModelProtocol{
 
     func setTextModel(textModel: DBTextModel, engineConfig: EngineConfiguration?) {
            textId = textModel.textId
-           text = textModel.text
+        text = textModel.text.fixBulletEncoding()
         textFont = UIFont(name: FontDM.getRealFont(nameOfFont: textModel.textFont, engineConfig: engineConfig) , size: fontSize) ?? .systemFont(ofSize: 14)
         textColor =  textModel.textColor.convertIOSColorStringToUIColor()
         textGravity = HTextGravity(rawValue:  textModel.textGravity) ?? .Center
@@ -1066,4 +1066,11 @@ extension TextInfo{
    */
 
 
+    
+extension String {
+    func fixBulletEncoding() -> String {
+        return self.replacingOccurrences(of: "â€¢", with: "•")
+            .replacingOccurrences(of: "â¢", with: "•") // some servers use this variant
+    }
+}
     
