@@ -39,8 +39,10 @@ extension SceneComposable {
         text.bgColor = .clear
         text.width = Float(rootSize.width) * 0.3
         text.height = Float(rootSize.width) * 0.1
-        text.posX = Float(rootSize.width)  - (Float(rootSize.width) * 0.21)
-        text.posY = Float(rootSize.height) - (Float(rootSize.width) * 0.06)
+//        text.posX = Float(rootSize.width)  - (Float(rootSize.width) * 0.21)
+//        text.posY = Float(rootSize.height) - (Float(rootSize.width) * 0.06)
+        text.posX = Float(rootSize.width)  - (text.width/2) // (Float(rootSize.width) * 0.21)
+        text.posY = Float(rootSize.height) - (text.height/2) //(Float(rootSize.width) * 0.06)
         
            
         let textChild = MWatermark(model: text)

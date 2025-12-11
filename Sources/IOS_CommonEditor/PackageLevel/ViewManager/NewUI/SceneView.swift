@@ -157,11 +157,16 @@ extension SceneView {
             self.bringSubviewToFront(subscriptionView!)
         }
             
-            let width = Double(currentPageView.size.width) * 0.2
-            let height = Double(currentPageView.size.width) * 0.1
-            let posX = Double(currentPageView.size.width)  - (Double(currentPageView.size.width) * 0.11)
-            let posY = Double(currentPageView.size.height) - (Double(currentPageView.size.width) * 0.06)
+//            let width = Double(currentPageView.size.width) * 0.2
+//            let height = Double(currentPageView.size.width) * 0.1
+//            let posX = Double(currentPageView.size.width)  - (Double(currentPageView.size.width) * 0.11)
+//            let posY = Double(currentPageView.size.height) - (Double(currentPageView.size.width) * 0.06)
             
+        let width = Double(currentPageView.size.width) * 0.25
+        let height = Double(currentPageView.size.width) * 0.1
+        let posX = Double(currentPageView.size.width)  - ( width/2) //(Double(currentPageView.size.width) * 0.21)
+    let posY = Double(currentPageView.size.height) -  ( height/2) //(Double(currentPageView.size.width) * 0.06)
+        
             subscriptionView?.frame.size = CGSize(width: width, height: height)
             let newCenter = currentPageView.convert(CGPoint(x: posX, y: posY), to: self)
             subscriptionView?.center = newCenter
