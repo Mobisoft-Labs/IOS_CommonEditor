@@ -609,6 +609,21 @@ extension DBManager{
         
     }
     
+    public func getTemplateCategory(templateId: Int) -> String{
+        let query = "SELECT \(CATEGORY) FROM \(TABLE_TEMPLATE) WHERE \(TEMPLATE_ID) = \(templateId);"
+        guard let resultSet = try? runQuery(query, values: nil) else {
+            return ""
+        }
+
+        if resultSet.next() {
+            let id = resultSet.string(forColumn: CATEGORY) ?? ""
+            return id
+        }
+
+        return ""
+    }
+
+    
     public func getTemplateListForCategoryDraftAndSaved(category1: String, category2: String) -> [DBTemplateModel] {
         var templateList = [DBTemplateModel]()
         let query = "SELECT * FROM \(TABLE_TEMPLATE) WHERE \(CATEGORY) IN (?, ?) AND \(SOFT_DELETE) = 1 ORDER BY \(UPDATED_AT) DESC;"
