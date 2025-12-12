@@ -402,7 +402,11 @@ public class SceneManager  : NSObject, SceneComposable , TemplateObserversProtoc
             //        child.context?.rootSize = metalDisplay!.bounds.size
             currentPage = currentScene!.childern.first
         currentScene?._currentTime = templateInfo.thumbTime
-        currentScene?._renderingMode = .Animating
+        if templateInfo.outputType == .Image{
+            currentScene?._renderingMode = .Edit
+        }else{
+            currentScene?._renderingMode = .Animating
+        }
            // thumbTime = templateInfo.thumbTime
             //redrawForThumbnail()
 //        

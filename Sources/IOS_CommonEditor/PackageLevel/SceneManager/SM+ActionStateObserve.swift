@@ -216,9 +216,11 @@ extension SceneManager {
             
             if type == .Image {
                 currentScene?._shouldOverrideCurrentTime = true
+                currentScene?._renderingMode = .Edit
             
             }else {
                 currentScene?._shouldOverrideCurrentTime = false
+                currentScene?._renderingMode = .Animating
             }
             
             redraw()
