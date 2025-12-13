@@ -475,8 +475,10 @@ public class DBMediator : DictCacheProtocol  {
         //add base model in backgroundInfo
 //        bgInfo.setBaseModel(baseModel: pageModel, refSize: parentSize)
         
-        if let imageModel = dbManager.getImage(imageId: pageInfo.dataId){
+        if var imageModel = dbManager.getImage(imageId: pageInfo.dataId){
             //add Image Model in background info
+            imageModel.cropX = imageModel.cropX - imageModel.cropW / 2
+            imageModel.cropY = imageModel.cropY - imageModel.cropH / 2
             pageInfo.setImageModel(image: imageModel)
         }
         

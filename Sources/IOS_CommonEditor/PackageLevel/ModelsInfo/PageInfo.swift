@@ -323,8 +323,8 @@ public class PageInfo:ParentModel,ImageProtocol, Equatable  {
         //        self.cropY = (image.cropY).toFloat()
         //        self.cropW = (image.cropW).toFloat()
         //        self.cropH = (image.cropH).toFloat()
-        self.cropRect.origin.x = image.cropX - (image.cropW / 2)//image.cropX
-        self.cropRect.origin.y = image.cropY - (image.cropH / 2)//image.cropY
+        self.cropRect.origin.x = image.cropX
+        self.cropRect.origin.y = image.cropY
         if image.cropW == 0.0{
             self.cropRect.size.width = 1
             self.cropRect.size.height = 1
