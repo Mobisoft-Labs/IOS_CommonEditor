@@ -78,7 +78,7 @@ extension DBManager{
             template.createdAt = resultSet.string(forColumn: CREATED_AT) ?? ""
             template.updatedAt = resultSet.string(forColumn: UPDATED_AT) ?? ""
             template.showWatermark = Int(resultSet.int(forColumn: SHOW_WATERMARK))
-
+            template.outputType = OutputType(rawValue: resultSet.string(forColumn: OUTPUT_TYPE) ?? "Image") ?? .Image
             return template
         }
         
@@ -128,7 +128,7 @@ extension DBManager{
             template.eventTemplateJson = resultSet.string(forColumn: EVENT_TEMPLATE_JSON) ?? ""
             template.createdAt = resultSet.string(forColumn: CREATED_AT) ?? ""
             template.updatedAt = resultSet.string(forColumn: UPDATED_AT) ?? ""
-            
+            template.outputType = OutputType(rawValue: resultSet.string(forColumn: OUTPUT_TYPE) ?? "Image") ?? .Image
             return template
         }
         
@@ -245,7 +245,7 @@ extension DBManager{
                 template.userId = Int(resultSet.int(forColumn: USER_ID) )
                 template.eventStartDate = resultSet.string(forColumn: EVENT_START_DATE) ?? ""
                 template.showWatermark = Int(resultSet.int(forColumn: SHOW_WATERMARK))
-
+                template.outputType = OutputType(rawValue: resultSet.string(forColumn: OUTPUT_TYPE) ?? "Image") ?? .Image
                 templateList.append(template)
             }
             
@@ -286,7 +286,7 @@ extension DBManager{
                 template.userId = Int(resultSet.int(forColumn: USER_ID) )
                 template.eventStartDate = resultSet.string(forColumn: EVENT_START_DATE) ?? ""
                 template.showWatermark = Int(resultSet.int(forColumn: SHOW_WATERMARK))
-
+                template.outputType = OutputType(rawValue: resultSet.string(forColumn: OUTPUT_TYPE) ?? "Image") ?? .Image
                 templateList.append(template)
             }
             
@@ -333,7 +333,7 @@ extension DBManager{
                 template.userId = Int(resultSet.int(forColumn: USER_ID) )
                 template.eventStartDate = resultSet.string(forColumn: EVENT_START_DATE) ?? ""
                 template.showWatermark = Int(resultSet.int(forColumn: SHOW_WATERMARK))
-
+                template.outputType = OutputType(rawValue: resultSet.string(forColumn: OUTPUT_TYPE) ?? "Image") ?? .Image
                 templateList.append(template)
             }
             
@@ -374,7 +374,7 @@ extension DBManager{
                 template.userId = Int(resultSet.int(forColumn: USER_ID) )
                 template.eventStartDate = resultSet.string(forColumn: EVENT_START_DATE) ?? ""
                 template.showWatermark = Int(resultSet.int(forColumn: SHOW_WATERMARK))
-
+                template.outputType = OutputType(rawValue: resultSet.string(forColumn: OUTPUT_TYPE) ?? "Image") ?? .Image
                 templateList.append(template)
             }
             
@@ -421,7 +421,7 @@ extension DBManager{
             template.userId = Int(resultSet.int(forColumn: USER_ID) )
             template.eventStartDate = resultSet.string(forColumn: EVENT_START_DATE) ?? ""
             template.showWatermark = Int(resultSet.int(forColumn: SHOW_WATERMARK))
-
+            template.outputType = OutputType(rawValue: resultSet.string(forColumn: OUTPUT_TYPE) ?? "Image") ?? .Image
             templateList.append(template)
         }
         
@@ -467,7 +467,7 @@ extension DBManager{
             template.userId = Int(resultSet.int(forColumn: USER_ID) )
             template.eventStartDate = resultSet.string(forColumn: EVENT_START_DATE) ?? ""
             template.showWatermark = Int(resultSet.int(forColumn: SHOW_WATERMARK))
-
+            template.outputType = OutputType(rawValue: resultSet.string(forColumn: OUTPUT_TYPE) ?? "Image") ?? .Image
             templateList.append(template)
         }
         
@@ -512,7 +512,7 @@ extension DBManager{
             template.userId = Int(resultSet.int(forColumn: USER_ID) )
             template.eventStartDate = resultSet.string(forColumn: EVENT_START_DATE) ?? ""
             template.showWatermark = Int(resultSet.int(forColumn: SHOW_WATERMARK))
-
+            template.outputType = OutputType(rawValue: resultSet.string(forColumn: OUTPUT_TYPE) ?? "Image") ?? .Image 
             templateList.append(template)
         }
         
@@ -994,7 +994,7 @@ extension DBManager{
         return getPageList(query: query, values: [templateId,"PAGE"])
     }
 
-    func getSoftDeletedPagesList() -> [DBBaseModel] {
+    public func getSoftDeletedPagesList() -> [DBBaseModel] {
         let query = "SELECT * FROM \(TABLE_BASEMODEL) WHERE \(SOFT_DELETE) = 1 AND \(MODEL_TYPE) = ? ORDER BY \(MODEL_ID) ASC;"
         return getPageList(query: query, values: ["PAGE"])
     }
@@ -1073,7 +1073,7 @@ extension DBManager{
 //        return getImageModel(query: query, values: [parentModelId])
 //    }
 
-    func getPageOverlayImage(pageModelId: Int) -> DBImageModel? {
+    public func getPageOverlayImage(pageModelId: Int) -> DBImageModel? {
         let query = "SELECT * FROM \(TABLE_BASEMODEL), \(TABLE_IMAGE) WHERE \(TABLE_IMAGE).\(IMAGE_ID) = \(TABLE_BASEMODEL).\(OVERLAY_DATA_ID) AND \(TABLE_BASEMODEL).\(MODEL_ID) = ?;"
         return getImageModel(query: query, values: [pageModelId])
     }
@@ -1145,7 +1145,7 @@ extension DBManager{
         return image
     }
 
-    func getImage(imageId: Int) -> DBImageModel? {
+    public func getImage(imageId: Int) -> DBImageModel? {
         let query = "SELECT * FROM \(TABLE_IMAGE) WHERE \(IMAGE_ID) = \(imageId) ;"
         var image: DBImageModel? = nil
 
@@ -1181,7 +1181,7 @@ extension DBManager{
         return image
     }
 
-    func getImagePathCount(imageId: Int, imagePath: String) -> Int {
+    public func getImagePathCount(imageId: Int, imagePath: String) -> Int {
         let query = "SELECT COUNT(IMAGE_TYPE) FROM \(TABLE_IMAGE) WHERE \(LOCAL_PATH) LIKE '\(imagePath)%' AND \(IMAGE_ID) != \(imageId);"
         guard let resultSet = try? runQuery(query, values: nil) else {
             return 0
@@ -1263,7 +1263,7 @@ extension DBManager{
             return templateIds
     }
 
-    func checkIfFileUsed(fileName: String) -> Int{
+    public func checkIfFileUsed(fileName: String) -> Int{
         let query = "SELECT COUNT(LOCAL_PATH) FROM \(TABLE_IMAGE) WHERE \(LOCAL_PATH) = '\(fileName)';"
         guard let resultSet = try? runQuery(query, values: nil) else {
             return 0
@@ -1274,7 +1274,7 @@ extension DBManager{
         return 0
     }
     
-    func checkIfMusicUsed(fileName: String) -> Int{
+    public func checkIfMusicUsed(fileName: String) -> Int{
         let query = "SELECT COUNT(MUSIC_PATH) FROM \(TABLE_MUSICINFO) WHERE \(MUSIC_PATH) = '\(fileName)';"
         guard let resultSet = try? runQuery(query, values: nil) else {
             return 0
@@ -1329,7 +1329,7 @@ extension DBManager{
 //        return nil
 //    }
 //
-    func getChildAndParentModelListOfParent(parentId: Int) -> [DBBaseModel] {
+    public func getChildAndParentModelListOfParent(parentId: Int) -> [DBBaseModel] {
         var baseModels = [DBBaseModel]()
         let query = "SELECT * FROM \(TABLE_BASEMODEL) WHERE \(PARENT_ID) = \(parentId) AND \(SOFT_DELETE) = 0 AND \(MODEL_TYPE) != 'PAGE' ORDER BY \(ORDER_IN_PARENT) ASC;"
         guard let resultSet = try? runQuery(query, values: nil) else {
@@ -1343,7 +1343,7 @@ extension DBManager{
         return baseModels
     }
 //
-    func getSoftDeletedChildAndParentModelList() -> [DBBaseModel] {
+    public func getSoftDeletedChildAndParentModelList() -> [DBBaseModel] {
         var baseModels = [DBBaseModel]()
         let query = "SELECT * FROM \(TABLE_BASEMODEL) WHERE \(SOFT_DELETE) = 1 AND \(MODEL_TYPE) != 'PAGE' ORDER BY \(MODEL_ID) ASC;"
         guard let resultSet = try? runQuery(query, values: nil) else {
@@ -1482,7 +1482,7 @@ extension DBManager{
         return baseModel
     }
     
-    func getStickerModel(stickerId: Int) -> DBStickerModel? {
+    public func getStickerModel(stickerId: Int) -> DBStickerModel? {
         var stickerDbModel: DBStickerModel?
 
         let query = "SELECT * FROM \(TABLE_STICKER) WHERE \(STICKER_ID) = ?"
@@ -1598,7 +1598,7 @@ extension DBManager{
         return textModelArray
     }
 
-    func getTextModel(textId: Int) -> DBTextModel? {
+    public func getTextModel(textId: Int) -> DBTextModel? {
         var textDbModel: DBTextModel?
 
         let query = "SELECT * FROM \(TABLE_TEXT_MODEL) WHERE \(TEXT_ID) = \(textId)"

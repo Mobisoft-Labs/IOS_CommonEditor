@@ -249,6 +249,7 @@ public class TemplateInfo : ObservableObject {
         self.baseColor = newModel.baseColor
         self.layoutId = newModel.layoutId
         self.showWatermark = newModel.showWatermark
+        self.outputType = newModel.outputType
     }
     
     func addPageInfo(pageInfo:PageInfo){
@@ -278,6 +279,7 @@ public class TemplateInfo : ObservableObject {
         templateModel.baseColor = self.baseColor
         templateModel.layoutId = self.layoutId
         templateModel.showWatermark = self.showWatermark
+        templateModel.outputType = self.outputType
         return templateModel
     }
     func setTemplateInfo(from serverTemplateModelHeader: ServerDBTemplateHeader) {

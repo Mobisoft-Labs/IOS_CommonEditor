@@ -38,13 +38,13 @@ extension DBManager{
     }
 
        // Delete Image row
-       func deleteImage(imageId: Int) -> Bool {
+       public func deleteImage(imageId: Int) -> Bool {
            return executeDeleteQuery(forTable: TABLE_IMAGE, whereColumn: IMAGE_ID, withValue: imageId)
        }
 
     
        // Delete BaseModel row
-       func deleteBaseModel(modelId: Int) -> Bool {
+       public func deleteBaseModel(modelId: Int) -> Bool {
            return executeDeleteQuery(forTable: TABLE_BASEMODEL, whereColumn: MODEL_ID, withValue: modelId)
        }
 
@@ -70,7 +70,7 @@ extension DBManager{
        }
 
        // Delete TextModel row
-       func deleteTextModel(textId: Int) -> Bool {
+       public func deleteTextModel(textId: Int) -> Bool {
            return executeDeleteQuery(forTable: TABLE_TEXT_MODEL, whereColumn: TEMPLATE_ID, withValue: textId)
        }
 
@@ -80,7 +80,7 @@ extension DBManager{
 //       }
 
        // Delete Animation row
-       func deleteAnimation(modelId: Int) -> Bool {
+       public func deleteAnimation(modelId: Int) -> Bool {
            return executeDeleteQuery(forTable: TABLE_ANIMATION, whereColumn: TEMPLATE_ID, withValue: modelId)
        }
 

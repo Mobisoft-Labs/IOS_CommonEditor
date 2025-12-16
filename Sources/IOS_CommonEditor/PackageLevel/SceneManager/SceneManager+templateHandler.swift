@@ -66,7 +66,7 @@ extension SceneManager{
          let durationChangeProportion = newDuration/oldDuration
  //        let changeInDuration = (durationChange*100)/oldDuration
          model.mDuration = newDuration
-         //_ = DBManager.shared.updateDuration(modelId: model.modelId, newValue: newDuration)
+//         _ = DBManager.shared.updateDuration(modelId: model.modelId, newValue: newDuration)
          if let parent = model as? MParent{
              for child in parent.childern{
                  let childDuration = (child.mDuration * durationChangeProportion)

@@ -373,6 +373,12 @@ extension MetalEngine {
             templateHandler.currentTemplateInfo?.thumbTime = time
         }.store(in: &actionStateCancellables)
         
+        templateHandler.currentTemplateInfo?.$outputType.dropFirst().sink { [weak self] type in
+            guard let self = self else { return }
+            if !isDBDisabled{
+                _ = DBManager.shared.updateTemplateOutputType(templateId: templateHandler.currentTemplateInfo!.templateId, outputType: type.rawValue)
+            }
+        }.store(in: &actionStateCancellables)
         
         templateHandler.currentActionState.$addNewpage.dropFirst().sink { [weak self] addNewPage in
             guard let self = self else { return }
@@ -634,7 +640,7 @@ extension MetalEngine {
             print("duration: \(newMusicModel.duration)")
             // update th.currentMusic = musicModel
             var musicInfo = MusicInfo()
-            musicInfo.name = newMusicModel.musicName
+            musicInfo.name = newMusicModel.displayName
             musicInfo.musicPath = newMusicModel.localPath
             musicInfo.duration = newMusicModel.duration
             musicInfo.musicType = newMusicModel.musicType

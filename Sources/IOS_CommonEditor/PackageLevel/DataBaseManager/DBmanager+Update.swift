@@ -22,6 +22,16 @@ extension DBManager{
         }
     }
     
+    func updateTemplateOutputType(templateId : Int , outputType : String){
+        let query = "UPDATE \(TABLE_TEMPLATE) SET \(OUTPUT_TYPE) = ? WHERE \(TEMPLATE_ID) = ?"
+        let values: [Any] = [outputType, templateId]
+        do {
+            try updateQuery(query, values: values)
+        } catch {
+            print("Failed to update thumb time in db.")
+        }
+    }
+    
     public func updateTemplateValues(templateId : Int , thumbTime : Double , totalDuration : Double , createdAt: String , updatedAt : String ){
 //        let query = "UPDATE \(TABLE_TEMPLATE) SET \(UPDATED_AT) = ? WHERE \(TEMPLATE_ID) = ?"
 

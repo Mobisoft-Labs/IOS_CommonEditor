@@ -118,7 +118,7 @@ class AudioPlayerForMusicView: NSObject, ObservableObject, AVAudioPlayerDelegate
                     print("Error playing audio from Bundle: \(error.localizedDescription)")
                 }
             }else{
-                if let filePath = music?.musicPath, let fileURL = engineConfig?.getMuicPath()?.appending(component: filePath), FileManager.default.fileExists(atPath: fileURL.path()){
+                if let filePath = music?.musicPath, let decodedFileName = filePath.removingPercentEncoding, let fileURL = engineConfig?.getMuicPath()?.appending(component: decodedFileName), FileManager.default.fileExists(atPath: fileURL.path){
                     // Play audio from the file URL
                     do {
                         audioPlayer = try AVAudioPlayer(contentsOf: fileURL)
@@ -136,7 +136,7 @@ class AudioPlayerForMusicView: NSObject, ObservableObject, AVAudioPlayerDelegate
                     } catch {
                         print("Error playing audio from file URL: \(error.localizedDescription)")
                     }
-                }else if let localPath = music?.musicPath, let localFileURL = engineConfig?.getLocalMusicPath()?.appending(component: localPath), FileManager.default.fileExists(atPath: localFileURL.path()){
+                }else if let localPath = music?.musicPath, let decodedFileName = localPath.removingPercentEncoding, let localFileURL =  engineConfig?.getLocalMusicPath()?.appending(component: decodedFileName), FileManager.default.fileExists(atPath: localFileURL.path){
                     do {
                         audioPlayer = try AVAudioPlayer(contentsOf: localFileURL)
                         audioPlayer?.delegate = self
