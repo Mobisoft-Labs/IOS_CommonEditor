@@ -106,7 +106,7 @@ class IOSMetalRecorder {
         let filePath = settings.audioFileURL
         
         if let fileUrl = URL(string: filePath),
-           FileManager.default.fileExists(atPath: fileUrl.path) {
+           FileManager.default.fileExists(atPath: filePath) {
             inputURL = fileUrl
         }else{
             var audioFileName = settings.audioFileURL.replacingOccurrences(of: "music/", with: "").replacingOccurrences(of: ".mp3", with: "")
