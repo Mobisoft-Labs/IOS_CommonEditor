@@ -40,7 +40,7 @@ extension Renderable {
     
     
     var canRender : Bool {
-        if shouldOverrideCurrentTime{
+        if shouldOverrideCurrentTime && !mIsSoftDeleted && mIsVisible{
             return true
         }else if (currentTime >= mStartTime && currentTime <= (mStartTime+mDuration))  && !mIsSoftDeleted && mIsVisible {
             if let parent = self as? MParent{
