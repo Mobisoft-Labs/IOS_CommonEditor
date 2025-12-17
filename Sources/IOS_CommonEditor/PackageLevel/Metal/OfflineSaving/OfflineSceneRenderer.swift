@@ -199,7 +199,8 @@ public class OfflineSceneRenderer : SceneComposable  {
         offlineRenderState?(.InProgress(50))
 
         fileHandler.deleteImageURL()
-        guard let url = fileHandler.createImageURL(name: exportSettings.name, ext: exportSettings.exportImageFormat.ext) else {
+        let folderKey = exportSettings.folderKey
+        guard let url = fileHandler.createImageURL(name: folderKey, ext: exportSettings.exportImageFormat.ext) else {
             logger.printLog("Unable To create Image URL")
             offlineRenderState?(.Failed(error: .custom(message: "Image Creation Failed")))
             return
