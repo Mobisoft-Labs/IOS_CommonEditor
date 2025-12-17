@@ -244,6 +244,11 @@ public class OfflineSceneRenderer : SceneComposable  {
         exportSettings.videoLength = templateInfo.totalDuration
        currentScene = MScene(templateInfo: templateInfo)
         currentScene?._canRenderWatermark = !isUserSubscribed
+        if exportSettings.exportType == .Photo{
+            currentScene?._shouldOverrideCurrentTime = true
+        }else{
+            currentScene?._shouldOverrideCurrentTime = false
+        }
        
         for page in templateInfo.pageInfo {
             if cancelPreparing {
