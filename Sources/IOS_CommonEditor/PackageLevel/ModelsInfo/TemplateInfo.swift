@@ -148,8 +148,6 @@ public class TemplateInfo : ObservableObject {
             imageModel.imageHeight = 300
             imageModel.sourceTYPE = SOURCETYPE.DOCUMENT.rawValue
             imageModel.imageType = ImageSourceType.IMAGE.rawValue
-            imageModel.cropX = imageModel.cropX + imageModel.cropW / 2
-            imageModel.cropY = imageModel.cropY + imageModel.cropH / 2
             pageInfo.setImageModel(image: imageModel)
 //            imageModel.sourceType = .DOCUMENT
         }
