@@ -121,6 +121,8 @@ extension MetalEngine {
                if let userImage = bgContent as? BGUserImage{
                    pageModel.imageType = .STORAGEIMAGE
                    pageModel.localPath = userImage.content.localPath
+                   pageModel.cropX = pageModel.cropX + pageModel.cropW / 2
+                   pageModel.cropY = pageModel.cropY + pageModel.cropH / 2
                    DBManager.shared.updateImageModel(from: userImage.content, imageID: pageModel.dataId)
                }
                if let color = bgContent as? BGColor{
