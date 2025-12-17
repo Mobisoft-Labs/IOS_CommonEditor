@@ -104,9 +104,8 @@ class IOSMetalRecorder {
         rwAudioSerializationQueue = DispatchQueue(label: rwAudioSerializationQueueDescription)
         assert(rwAudioSerializationQueue != nil, "Failed to initialize Dispatch Queue")
         let filePath = settings.audioFileURL
-        
-        if let fileUrl = URL(string: filePath),
-           FileManager.default.fileExists(atPath: filePath) {
+        let fileUrl = URL(fileURLWithPath: filePath)
+        if FileManager.default.fileExists(atPath: filePath) {
             inputURL = fileUrl
         }else{
             var audioFileName = settings.audioFileURL.replacingOccurrences(of: "music/", with: "").replacingOccurrences(of: ".mp3", with: "")
