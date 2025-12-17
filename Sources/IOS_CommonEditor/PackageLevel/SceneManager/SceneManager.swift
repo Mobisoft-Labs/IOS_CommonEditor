@@ -404,8 +404,10 @@ public class SceneManager  : NSObject, SceneComposable , TemplateObserversProtoc
         currentScene?._currentTime = templateInfo.thumbTime
         if templateInfo.outputType == .Image{
             currentScene?._renderingMode = .Edit
+            currentScene?._shouldOverrideCurrentTime = true
         }else{
             currentScene?._renderingMode = .Animating
+            currentScene?._shouldOverrideCurrentTime = false
         }
            // thumbTime = templateInfo.thumbTime
             //redrawForThumbnail()
