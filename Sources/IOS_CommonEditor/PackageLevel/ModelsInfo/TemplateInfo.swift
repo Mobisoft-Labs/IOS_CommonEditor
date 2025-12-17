@@ -188,7 +188,7 @@ public class TemplateInfo : ObservableObject {
     }
     
     public var category: String = ""
-    var categoryTemp: String = ""
+    public var categoryTemp: String = ""
     public var isPremium: Int = 0
     public var ratioId: Int = 1
     var sequence_Temp: Int = 0
