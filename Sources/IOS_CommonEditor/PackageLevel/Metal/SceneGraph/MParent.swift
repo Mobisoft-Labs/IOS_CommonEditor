@@ -380,36 +380,60 @@ extension MParent{
 
 extension MParent {
     func changeOrder(child:MChild,oldOrder:Int,newOrder:Int) {
-        guard oldOrder != newOrder else {
-               print("No change in order.")
-               return
-           }
+//        guard oldOrder != newOrder else {
+//               print("No change in order.")
+//               return
+//           }
+//
+//      
+//                // If moving up in the order (from higher index to lower index)
+//                   if oldOrder > newOrder {
+//                       // Move the child from old position to the new position
+//                      addChild(child, at: newOrder)
+//                       print("scene addChild",newOrder+1)
+//                       
+//                       child.mOrder = newOrder
+//                      // removeChild(at: oldOrder+1)
+//                       removeChild(at: oldOrder)
+//                       increaseChildOrderInParent(order: newOrder+1, at: oldOrder)
+//                   }
+//                   // If moving down in the order (from lower index to higher index)
+//                   else if oldOrder < newOrder {
+//                       // Move the child from old position to the new position
+//                       addChild(child, at: newOrder + 1)
+//                     
+//                       print("scene addChild",newOrder)
+//                       child.mOrder = newOrder
+//                       removeChild(at: oldOrder)
+//
+//                  
+//                       decreaseChildOrderInParent(order: oldOrder, at: newOrder-1)
+//                   }
+        guard oldOrder != newOrder else { return }
+        guard oldOrder >= 0, newOrder >= 0, oldOrder < childern.count, newOrder < childern.count else {
+            print("MParent.changeOrder: bounds check failed old:\(oldOrder) new:\(newOrder) count:\(childern.count)")
+            return
+        }
 
-      
-                // If moving up in the order (from higher index to lower index)
-                   if oldOrder > newOrder {
-                       // Move the child from old position to the new position
-                      addChild(child, at: newOrder)
-                       print("scene addChild",newOrder+1)
-                       
-                       child.mOrder = newOrder
-                      // removeChild(at: oldOrder+1)
-                       removeChild(at: oldOrder)
-                       increaseChildOrderInParent(order: newOrder+1, at: oldOrder)
-                   }
-                   // If moving down in the order (from lower index to higher index)
-                   else if oldOrder < newOrder {
-                       // Move the child from old position to the new position
-                       addChild(child, at: newOrder + 1)
-                     
-                       print("scene addChild",newOrder)
-                       child.mOrder = newOrder
-                       removeChild(at: oldOrder)
+        let moved = childern.remove(at: oldOrder)
+        childern.insert(moved, at: newOrder)
 
-                  
-                       decreaseChildOrderInParent(order: oldOrder, at: newOrder-1)
-                   }
+        for (idx, child) in childern.enumerated() {
+            child.mOrder = idx
+        }
+#if DEBUG
+        assertOrderIntegrity(context: "changeOrder")
+#endif
     }
     
+#if DEBUG
+    func assertOrderIntegrity(context: String) {
+        for (idx, child) in childern.enumerated() {
+            if child.mOrder != idx {
+                print("[OrderIntegrity] mismatch in MParent at \(context): childId=\(child.id) mOrder=\(child.mOrder) idx=\(idx)")
+            }
+        }
+    }
+#endif
   
 }

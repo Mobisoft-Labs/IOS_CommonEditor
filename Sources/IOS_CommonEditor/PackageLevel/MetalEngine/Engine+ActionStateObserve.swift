@@ -465,7 +465,8 @@ extension MetalEngine {
                         if oldParent.modelId == newParent.modelId{
                             logger.printLog("NKG Old Parent Id is Same as New Parent Id \(newParent.modelId)");
                            
-                            oldParent.changeOrder(child: childModel, oldOrder: oldChildValue.orderInParent - 1, newOrder: newChildValue.orderInParent)
+//                            oldParent.changeOrder(child: childModel, oldOrder: oldChildValue.orderInParent - 1, newOrder: newChildValue.orderInParent)
+                            oldParent.changeOrder(child: childModel, oldOrder: oldChildValue.orderInParent, newOrder: newChildValue.orderInParent)
                             
                             logger.printLog("order In change done")
                         }// end oldParent and newParent is same

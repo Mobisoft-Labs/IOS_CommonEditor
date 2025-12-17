@@ -223,7 +223,7 @@ public struct ServerPageModel: Codable {
     public let modelFlipHorizontal: String
     public let modelFlipVertical: String
     public let lockStatus: String
-    public let orderInParent: String
+    public var orderInParent: String
     public let parentID: String
     public let bgBlurProgress: String
     public let overlayDataID: String
@@ -359,7 +359,7 @@ public struct ServerBaseModel: Codable {
     public let modelFlipHorizontal: String
     public let modelFlipVertical: String
     public let lockStatus: String
-    public let orderInParent: String
+    public var orderInParent: String
     public let parentID: String
     public let bgBlurProgress: String
     public let overlayDataID: String

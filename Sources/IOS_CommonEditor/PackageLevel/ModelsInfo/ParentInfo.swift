@@ -153,11 +153,11 @@ public class ParentModel : BaseModel {
               return
           }
 
-        for i in index...children.count-1  {
-              children[i+1].orderInParent = children[i].orderInParent + 1
-//              let child = children[i+1].modelId
-             _ = DBManager.shared.updateOrderInParent(modelId: children[i+1].modelId, newValue: children[i+1].orderInParent)
-          }
+        // This helper is unsafe as-written (i+1 can overflow); prefer changeOrder. Keep it safe for legacy callers.
+        for i in index..<children.count {
+            children[i].orderInParent = i
+            _ = DBManager.shared.updateOrderInParent(modelId: children[i].modelId, newValue: children[i].orderInParent)
+        }
       }
     
     
@@ -337,33 +337,62 @@ extension ParentModel {
     }
     
     func changeOrder(child:BaseModel,oldOrder:Int,newOrder:Int) {
-        guard oldOrder != newOrder else {
-               print("No change in order.")
-               return
-           }
+//        guard oldOrder != newOrder else {
+//               print("No change in order.")
+//               return
+//           }
+//        
+//                // If moving up in the order (from higher index to lower index)
+//                   if oldOrder > newOrder {
+//                       // Move the child from old position to the new position
+//                       addChild(child, at: newOrder)
+//                       print("scene addChild",newOrder+1)
+//                       
+//                       child.orderInParent = newOrder
+//                       removeChild(at: oldOrder+1)
+//                       increaseOrderFromIndex(newOrder+1, to: oldOrder)
+//                     
+//                   }
+//                   // If moving down in the order (from lower index to higher index)
+//                   else if oldOrder < newOrder {
+//                       // Move the child from old position to the new position
+//                       addChild(child, at: newOrder + 1)
+//                     
+//                       print("scene addChild",newOrder)
+//                       child.orderInParent = newOrder
+//                       removeChild(at: oldOrder)
+//                       decreaseOrderFromIndex(oldOrder, to: newOrder-1)
+//
+//                  
+//                   }
         
-                // If moving up in the order (from higher index to lower index)
-                   if oldOrder > newOrder {
-                       // Move the child from old position to the new position
-                       addChild(child, at: newOrder)
-                       print("scene addChild",newOrder+1)
-                       
-                       child.orderInParent = newOrder
-                       removeChild(at: oldOrder+1)
-                       increaseOrderFromIndex(newOrder+1, to: oldOrder)
-                     
-                   }
-                   // If moving down in the order (from lower index to higher index)
-                   else if oldOrder < newOrder {
-                       // Move the child from old position to the new position
-                       addChild(child, at: newOrder + 1)
-                     
-                       print("scene addChild",newOrder)
-                       child.orderInParent = newOrder
-                       removeChild(at: oldOrder)
-                       decreaseOrderFromIndex(oldOrder, to: newOrder-1)
+        guard oldOrder != newOrder else { return }
+        guard oldOrder >= 0, newOrder >= 0, oldOrder < children.count, newOrder < children.count else {
+            print("changeOrder: bounds check failed old:\(oldOrder) new:\(newOrder) count:\(children.count)")
+            return
+        }
 
-                  
-                   }
+        // Remove and insert in the new position using current indices
+        let moved = children.remove(at: oldOrder)
+        children.insert(moved, at: newOrder)
+
+        // Rewrite orders to match array indices and persist
+        for (idx, child) in children.enumerated() {
+            child.orderInParent = idx
+            _ = DBManager.shared.updateOrderInParent(modelId: child.modelId, newValue: idx)
+        }
+#if DEBUG
+        assertOrderIntegrity(context: "changeOrder")
+#endif
     }
+    
+#if DEBUG
+    func assertOrderIntegrity(context: String) {
+        for (idx, child) in children.enumerated() {
+            if child.orderInParent != idx {
+                print("[OrderIntegrity] mismatch in ParentModel at \(context): childId=\(child.modelId) order=\(child.orderInParent) idx=\(idx)")
+            }
+        }
+    }
+#endif
 }
