@@ -241,7 +241,9 @@ public class OfflineSceneRenderer : SceneComposable  {
             offlineRenderState?(.Failed(error: .custom(message: "Template Info failed To Fetch ")))
             return
         }
-        exportSettings.videoLength = templateInfo.totalDuration
+        DispatchQueue.main.async{
+            exportSettings.videoLength = templateInfo.totalDuration
+        }
        currentScene = MScene(templateInfo: templateInfo)
         currentScene?._canRenderWatermark = !isUserSubscribed
         if exportSettings.exportType == .Photo{
