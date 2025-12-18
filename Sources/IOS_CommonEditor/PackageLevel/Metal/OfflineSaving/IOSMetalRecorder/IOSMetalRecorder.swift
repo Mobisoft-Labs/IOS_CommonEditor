@@ -149,9 +149,9 @@ class IOSMetalRecorder {
     
     func setupAudioReadWriter( asset: AVAsset)->Bool{
        
-        if asset.duration.seconds <= 0 {
-            return true
-        }
+//        if asset.duration.seconds <= 0 {
+//            return true
+//        }
         
         var assetAudioTrack:AVAssetTrack? = nil
         let audioTracks = asset.tracks(withMediaType: AVMediaType.audio)
@@ -232,8 +232,8 @@ class IOSMetalRecorder {
         
         _ = setUpVideoReaderWriter(size: size)
         // AUDIO
-        _ =  setupAudioReadWriter(asset: self.asset)
-        
+        let didSetupAurdioWriter =  setupAudioReadWriter(asset: self.asset)
+        logger.printLog("didSetupAurdioWriter \(didSetupAurdioWriter)")
         
         
         assetWriter.shouldOptimizeForNetworkUse = true
