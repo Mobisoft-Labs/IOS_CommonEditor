@@ -149,9 +149,9 @@ class IOSMetalRecorder {
     
     func setupAudioReadWriter( asset: AVAsset)->Bool{
        
-//        if asset.duration.seconds <= 0 {
-//            return true
-//        }
+        if asset.duration.seconds <= 0 {
+            return true
+        }
         
         var assetAudioTrack:AVAssetTrack? = nil
         let audioTracks = asset.tracks(withMediaType: AVMediaType.audio)
@@ -171,9 +171,16 @@ class IOSMetalRecorder {
             assert(assetReaderAudioOutput != nil, "Failed to initialize AVAssetReaderTrackOutout")
             //assetReader.add(assetReaderAudioOutput)
             
-            var channelLayout = AudioChannelLayout()
-            memset(&channelLayout, 0, MemoryLayout<AudioChannelLayout>.size * 2);
-            channelLayout.mChannelLayoutTag = kAudioChannelLayoutTag_Stereo;
+//            var channelLayout = AudioChannelLayout()
+//            memset(&channelLayout, 0, MemoryLayout<AudioChannelLayout>.size * 2);
+//            channelLayout.mChannelLayoutTag = kAudioChannelLayoutTag_Stereo;
+            
+            var channelLayout = AudioChannelLayout(
+                mChannelLayoutTag: kAudioChannelLayoutTag_Stereo,
+                mChannelBitmap: AudioChannelBitmap(),
+                mNumberChannelDescriptions: 0, mChannelDescriptions: AudioChannelDescription()
+            )
+
             
             let outputSettings:[String : Any] = [
                 AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
