@@ -241,7 +241,7 @@ public class OfflineSceneRenderer : SceneComposable  {
             offlineRenderState?(.Failed(error: .custom(message: "Template Info failed To Fetch ")))
             return
         }
-        DispatchQueue.main.async{
+        DispatchQueue.main.async{ [self] in
             exportSettings.videoLength = templateInfo.totalDuration
         }
        currentScene = MScene(templateInfo: templateInfo)
