@@ -9,7 +9,7 @@ import Foundation
 import Metal
 import simd
 import UIKit
-import SwiftUICore
+import SwiftUI
 
 struct GradientInfoMetal{
     var startColor:SIMD3<Float>
