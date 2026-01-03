@@ -446,6 +446,8 @@ func createTransparentImage(size: CGSize, scale: CGFloat = UIScreen.main.scale) 
 extension TextInfo {
     /// Neeshu Use this method
     func createImage(thumbUpdate : Bool = false , keepSameFont:Bool = false , text:String,properties:TextProperties,refSize:CGSize,maxWidth: CGFloat,maxHeight:CGFloat, contentScaleFactor : CGFloat, logger: PackageLogger?) -> UIImage?{
+        let userLanguage = Locale.userLanguageIdentifier
+        
         if refSize.width == 0.0 || refSize.height == 0.0 {
             logger?.logError("Text RefSize Zero \(text) , returning Empty Image")
             return createTransparentImage(size: CGSize(width: 10 , height: 10))
@@ -459,6 +461,7 @@ extension TextInfo {
         let newScaledWidth = refSize.width * contentScaleFactor
         let newScaledHeight = refSize.height * contentScaleFactor
         let scaledRefSize = CGSize(width: newScaledWidth, height: newScaledHeight)
+        logger?.logInfo("Create Text Image Info Started : user language -> \(userLanguage), original Text -> \(text), ref width -> \(refSize.width), ref height -> \(refSize.height)")
        let values =  drawTextAsImage(keepFontSizeFix: keepSameFont, text: text, boundingBox: CGRect(origin: .zero, size: scaledRefSize), textProperties: properties, logger: logger)
         let image = values!.0!
         if !thumbUpdate{
