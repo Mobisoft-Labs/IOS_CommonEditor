@@ -695,7 +695,7 @@ extension MetalEngine {
     func loadCanvas(refSize:CGSize) {
         guard let editorView = editorView else { return }
         editorView.prepareCanvasView(size: refSize)
-        editorView.canvasView.backgroundColor = .systemBackground
+        editorView.canvasView.backgroundColor = engineConfig.canvasViewBGColor//.systemBackground
         editorView.prepareMetalView(size: refSize)
     }
     func turnOnMetalDisplay() {
