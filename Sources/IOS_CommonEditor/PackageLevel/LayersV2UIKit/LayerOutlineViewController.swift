@@ -11,6 +11,7 @@ final class LayerOutlineViewController: UIViewController {
     private var dataSource: UICollectionViewDiffableDataSource<Int, Int>!
     private(set) var reducer: LayerReducer
     private let logger: PackageLogger?
+    weak var adapter: LayerOutlineAdapter?
     private let onSelect: ((LayerNode) -> Void)?
     private let onToggleLock: ((Int) -> Void)?
     private let onToggleHide: ((Int) -> Void)?
@@ -296,6 +297,13 @@ extension LayerOutlineViewController: UICollectionViewDragDelegate, UICollection
         // Let the collection view animate the drop.
         let dropIndexPath = IndexPath(item: targetIndex, section: 0)
         coordinator.drop(item.dragItem, toItemAt: dropIndexPath)
+
+        // Refresh from TemplateHandler to reflect committed order
+        if let adapter = adapter {
+            adapter.refreshFromTemplate()
+            reducer = adapter.currentReducer
+            applySnapshot()
+        }
     }
 
     private func reorderWithinParent(parentId: Int, sourceId: Int, targetOrder: Int) {

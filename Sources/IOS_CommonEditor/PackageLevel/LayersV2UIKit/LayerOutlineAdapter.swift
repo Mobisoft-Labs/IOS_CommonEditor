@@ -18,6 +18,10 @@ public final class LayerOutlineAdapter : NSObject{
     private var reducer: LayerReducer
     private var controller: LayerOutlineViewController!
 
+    public var currentReducer: LayerReducer {
+        reducer
+    }
+
     public init?(templateHandler: TemplateHandler, logger: PackageLogger? = nil) {
         guard let page = templateHandler.currentPageModel else { return nil }
         let tree = LayerTreeBuilder.build(from: page)
@@ -26,6 +30,7 @@ public final class LayerOutlineAdapter : NSObject{
         self.logger = logger
         super.init()
         self.controller = buildController()
+        self.controller.adapter = self
     }
 
     /// Returns the view controller for presentation or embedding.
@@ -65,6 +70,9 @@ public final class LayerOutlineAdapter : NSObject{
         }
         // Emit action for undo/redo and engine listeners
         templateHandler.performGroupAction(moveModel: moveModel)
+        // Normalize orders for both old and new parents
+        let parentIds = Set(moveModel.oldMM.map { $0.parentID } + moveModel.newMM.map { $0.parentID })
+        parentIds.forEach { normalizeOrders(forParent: $0) }
         refreshFromTemplate()
     }
 
@@ -134,5 +142,10 @@ public final class LayerOutlineAdapter : NSObject{
                 self?.reorderWithinParent(parentId: parentId, fromOrder: from, toOrder: to)
             }
         )
+    }
+
+    /// Convenience to refresh from handler and notify controller.
+    public func refreshAndReload() {
+        refreshFromTemplate()
     }
 }
