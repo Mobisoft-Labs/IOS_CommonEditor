@@ -397,6 +397,16 @@ extension MetalEngine {
             guard let self = self else { return }
             
             guard let moveModel = value else {return}
+            
+            func logOrders(_ parent: ParentModel, label: String) {
+                let childDesc = parent.children
+                    .map { "\($0.modelId):\($0.orderInParent)\($0.softDelete ? "D":"ND")" }
+                    .joined(separator: ",")
+                let activeDesc = parent.activeChildren
+                    .map { "\($0.modelId):\($0.orderInParent)" }
+                    .joined(separator: ",")
+                logger.printLog("[MoveOrder] \(label) parent=\(parent.modelId) children[\(parent.children.count)]=[\(childDesc)] active[\(parent.activeChildren.count)]=[\(activeDesc)]")
+            }
                         
             
             // we are checking if any parent needs to be unDelete
@@ -443,6 +453,10 @@ extension MetalEngine {
                        let newParent = templateHandler.getModel(modelId: newChildValue.parentID) as? ParentModel,
                        let childModel = templateHandler.getModel(modelId: oldChildValue.modelID){
                         
+                        logOrders(oldParent, label: "pre old")
+                        if oldParent.modelId != newParent.modelId {
+                            logOrders(newParent, label: "pre new")
+                        }
                         // updateDB
                         let size =  newParent.baseFrame.size
                         // update parentID,order and basemodel in DB
@@ -525,7 +539,10 @@ extension MetalEngine {
                             
                         }// if old and new parent is not same
                         
-                        
+                        logOrders(oldParent, label: "post old")
+                        if oldParent.modelId != newParent.modelId {
+                            logOrders(newParent, label: "post new")
+                        }
                         
                     }// end of get old new and child from model
                     

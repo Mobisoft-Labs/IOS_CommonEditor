@@ -345,11 +345,13 @@ public class LayersViewModel2 : ObservableObject{
         guard let destinationParentId = destinationParentNode, var destinationParent = findNodeByID(destinationParentId)  as? ParentModel else {
             return
         }
+        logOrder(parent: destinationParent, context: "pre-move destination parentId=\(destinationParentId) insertAt=\(order) sourceId=\(sourceNode.modelId)")
         
         // Check if Source node has a parent
         guard var sourceParentNode = findNodeByID(sourceNode.parentId) as? ParentModel else {
             return
         }
+        logOrder(parent: sourceParentNode, context: "pre-move source parentId=\(sourceParentNode.modelId) sourceId=\(sourceNode.modelId)")
 
         if destinationParent.modelId == sourceParentNode.modelId {
             
@@ -358,6 +360,10 @@ public class LayersViewModel2 : ObservableObject{
             moveNodeInDifferentParent(sourceParentNode: &sourceParentNode, destinationParentNode: &destinationParent, sourceNode: sourceNode, order: order)
         }
 
+        logOrder(parent: destinationParent, context: "post-move destination parentId=\(destinationParent.modelId)")
+        if destinationParent.modelId != sourceParentNode.modelId {
+            logOrder(parent: sourceParentNode, context: "post-move source parentId=\(sourceParentNode.modelId)")
+        }
         // Update the flattened tree if needed
         updateFlatternTree()
     }
@@ -468,6 +474,21 @@ public class LayersViewModel2 : ObservableObject{
         }
 
         return indexPaths
+    }
+    
+    private func logOrder(parent: ParentModel, context: String) {
+        let childDesc = parent.children
+            .map {"\($0.modelId):\($0.orderInParent)\($0.softDelete ? "D" : "ND")" }
+            .joined(separator: ",")
+        let activeDesc = parent.activeChildren
+            .map { "\($0.modelId):\($0.orderInParent)" }
+            .joined(separator: ",")
+        let message = "[LayersOrder] \(context) children[\(parent.children.count)]=[\(childDesc)] active[\(parent.activeChildren.count)]=[\(activeDesc)]"
+        if let logger = logger {
+            logger.printLog(message)
+        } else {
+            print(message)
+        }
     }
 }
 
