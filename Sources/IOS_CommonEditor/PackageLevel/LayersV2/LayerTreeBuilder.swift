@@ -26,7 +26,8 @@ public enum LayerTreeBuilder {
                 isHidden: model.isHidden,
                 isExpanded: (model as? ParentModel)?.isExpanded ?? false,
                 isSelected: model.isLayerAtive,
-                type: model.modelType
+                type: model.modelType,
+                thumbImage: model.thumbImage
             )
             nodes[model.modelId] = node
             if let parent = model as? ParentModel {

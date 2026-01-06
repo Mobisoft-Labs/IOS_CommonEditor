@@ -7,8 +7,13 @@
 //
 
 import Foundation
+import UIKit
 
 public struct LayerNode: Equatable {
+    public static func == (lhs: LayerNode, rhs: LayerNode) -> Bool {
+        lhs.id == rhs.id
+    }
+    
     public var id: Int
     public var parentId: Int
     public var orderInParent: Int
@@ -20,6 +25,7 @@ public struct LayerNode: Equatable {
     public var isExpanded: Bool
     public var isSelected: Bool
     public var type: ContentType
+    public var thumbImage: UIImage?
 
     public init(
         id: Int,
@@ -32,7 +38,8 @@ public struct LayerNode: Equatable {
         isHidden: Bool = false,
         isExpanded: Bool = false,
         isSelected: Bool = false,
-        type: ContentType
+        type: ContentType,
+        thumbImage: UIImage? = nil
     ) {
         self.id = id
         self.parentId = parentId
@@ -45,6 +52,7 @@ public struct LayerNode: Equatable {
         self.isExpanded = isExpanded
         self.isSelected = isSelected
         self.type = type
+        self.thumbImage = thumbImage
     }
 }
 

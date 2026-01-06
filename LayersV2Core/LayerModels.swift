@@ -12,6 +12,7 @@ public struct LayerNode: Equatable {
     public var isExpanded: Bool
     public var isSelected: Bool
     public var type: ContentType
+    public var thumbImage: Data?
 
     public init(
         id: Int,
@@ -24,7 +25,8 @@ public struct LayerNode: Equatable {
         isHidden: Bool = false,
         isExpanded: Bool = false,
         isSelected: Bool = false,
-        type: ContentType
+        type: ContentType,
+        thumbImage: Data? = nil
     ) {
         self.id = id
         self.parentId = parentId
@@ -37,6 +39,7 @@ public struct LayerNode: Equatable {
         self.isExpanded = isExpanded
         self.isSelected = isSelected
         self.type = type
+        self.thumbImage = thumbImage
     }
 }
 
