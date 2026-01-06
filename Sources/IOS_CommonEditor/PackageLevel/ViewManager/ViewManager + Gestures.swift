@@ -302,7 +302,7 @@ extension ViewManager{
             // if canvas is identity.
             if editView!.bounds == editView!.canvasView.frame && (templateHandler.currentTemplateInfo?.pageInfo.count)! > 1{
                 if gesture.state == .began{
-                    editView!.canvasView.backgroundColor = .white
+                    editView!.canvasView.backgroundColor = vmConfig.canvasViewBGColor//.white
 //                    editView.backgroundColor = .clear
                     // Hide Scene View
                     editView!.canvasView.mtkScene?.isHidden = true
