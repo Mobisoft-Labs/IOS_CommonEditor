@@ -99,7 +99,23 @@ import UIKit
 
     func reload(with reducer: LayerReducer) {
         self.reducer = reducer
+        guard isViewLoaded else { return }
         applySnapshot()
+    }
+
+    func refreshSnapshot() {
+        guard isViewLoaded else { return }
+        applySnapshot()
+    }
+
+    func reconfigureItems(_ ids: [Int]) {
+        guard isViewLoaded, dataSource != nil else { return }
+        var snapshot = dataSource.snapshot()
+        let existing = Set(snapshot.itemIdentifiers)
+        let safeIds = ids.filter { existing.contains($0) }
+        guard !safeIds.isEmpty else { return }
+        snapshot.reconfigureItems(safeIds)
+        dataSource.apply(snapshot, animatingDifferences: false)
     }
 
     func updateDragLogic(config: LayerOutlineDragLogicConfig) {
@@ -207,16 +223,16 @@ import UIKit
             cell.configure(
                 with: node,
                 onToggleExpand: { [weak self] in
+                    self?.selectIfNeeded(nodeId: node.id)
                     self?.toggleExpand(nodeId: node.id)
                 },
+                onSelectTick: { [weak self] in
+                    self?.selectIfNeeded(nodeId: node.id)
+                    self?.onClose?()
+                },
                 onToggleLock: { [weak self] in
+                    self?.selectIfNeeded(nodeId: node.id)
                     self?.onToggleLock?(node.id)
-                },
-                onToggleHide: { [weak self] in
-                    self?.onToggleHide?(node.id)
-                },
-                onDeleteRestore: { [weak self] in
-                    self?.onDeleteRestore?(node.id, node.softDelete)
                 }
             )
             return cell
@@ -224,6 +240,7 @@ import UIKit
     }
 
     private func applySnapshot() {
+        guard dataSource != nil else { return }
         var snapshot = NSDiffableDataSourceSnapshot<Int, Int>()
         snapshot.appendSections([0])
         let rows = reducer.tree.flattened(includeSoftDeleted: true)
@@ -234,6 +251,15 @@ import UIKit
 
     private func toggleExpand(nodeId: Int) {
         reducer.toggleExpanded(id: nodeId)
+        applySnapshot()
+    }
+
+    private func selectIfNeeded(nodeId: Int) {
+        guard let node = reducer.tree.nodes[nodeId], !node.isSelected else { return }
+        reducer.select(id: nodeId)
+        if let selected = reducer.tree.nodes[nodeId] {
+            onSelect?(selected)
+        }
         applySnapshot()
     }
 
@@ -357,6 +383,11 @@ extension LayerOutlineViewController {
             let touch = gesture.location(in: collectionView)
             if let cell = collectionView.cellForItem(at: indexPath) {
                 collectionView.panGestureRecognizer.isEnabled = false
+                if node.type == .Parent || node.type == .Page, node.isExpanded {
+                    // Legacy: collapse expanded parent before dragging.
+                    reducer.toggleExpanded(id: node.id)
+                    applySnapshot()
+                }
                 dragTouchOffset = CGPoint(x: touch.x - cell.center.x, y: touch.y - cell.center.y)
                 let snapshot = cell.snapshotView(afterScreenUpdates: false) ?? UIView(frame: cell.frame)
                 snapshot.frame = cell.frame
@@ -455,6 +486,11 @@ extension LayerOutlineViewController {
             cleanupDrag()
             return
         }
+        if target.id == sourceId {
+            log("finishDrag: drop on self, cancel")
+            cleanupDrag()
+            return
+        }
 
         let parentId: Int
         let targetOrder: Int
@@ -472,6 +508,12 @@ extension LayerOutlineViewController {
 
         let sameParent = sourceNode.parentId == parentId
         let currentOrder = reducer.tree.activeChildren(of: sourceNode.parentId).firstIndex(where: { $0.id == sourceId }) ?? 0
+
+        if sameParent && currentOrder == targetOrder {
+            log("finishDrag: no-op move, cancel")
+            cleanupDrag()
+            return
+        }
 
         log("perform drop source=\(sourceId) parent=\(parentId) order=\(targetOrder) sameParent=\(sameParent)")
         dragTargetIndexPath = nil
@@ -570,7 +612,19 @@ extension LayerOutlineViewController {
     }
 
     private func dropTarget(at location: CGPoint) -> (node: LayerNode?, intoParent: Bool, insertAbove: Bool) {
-        guard let indexPath = collectionView.indexPathForItem(at: location),
+        var targetIndexPath = collectionView.indexPathForItem(at: location)
+        if targetIndexPath == nil {
+            // Legacy: scan upward to find a drop target.
+            var y = location.y
+            while y > 0 {
+                if let idx = collectionView.indexPathForItem(at: CGPoint(x: location.x, y: y)) {
+                    targetIndexPath = idx
+                    break
+                }
+                y -= 4
+            }
+        }
+        guard let indexPath = targetIndexPath,
               let nodeId = dataSource.itemIdentifier(for: indexPath),
               let node = reducer.tree.nodes[nodeId],
               let attrs = collectionView.layoutAttributesForItem(at: indexPath) else {
@@ -579,6 +633,23 @@ extension LayerOutlineViewController {
         }
         let localPoint = CGPoint(x: location.x - attrs.frame.minX, y: location.y - attrs.frame.minY)
         let indent = CGFloat(node.depth) * 16.0
+        let rows = reducer.tree.flattened(includeSoftDeleted: true)
+        let currentIndex = indexPath.item
+        let lowerNode = currentIndex + 1 < rows.count ? rows[currentIndex + 1] : nil
+        let midY = attrs.frame.height / 2
+
+        // Legacy: if lower cell is deeper and drag is in bottom half, drop into parent.
+        if localPoint.y >= midY, let lower = lowerNode, lower.depth > node.depth {
+            return (node, true, false)
+        }
+        // Legacy: empty parent can accept drop into itself when drag is to the right.
+        if (node.type == .Parent || node.type == .Page),
+           reducer.tree.activeChildren(of: node.id).isEmpty,
+           localPoint.y >= midY,
+           localPoint.x > 40 {
+            return (node, true, false)
+        }
+
         let placement = dragLogic.dropPlacement(localPoint: localPoint,
                                                height: attrs.frame.height,
                                                nodeType: node.type,
@@ -594,6 +665,8 @@ extension LayerOutlineViewController {
         }
         let info = dropTarget(at: location)
         var y = attrs.frame.minY
+        var x = attrs.frame.minX
+        var width = attrs.frame.width
         if info.intoParent {
             y = attrs.frame.maxY - 4
         } else if info.insertAbove {
@@ -601,13 +674,23 @@ extension LayerOutlineViewController {
         } else {
             y = attrs.frame.maxY
         }
-        dropIndicator.frame = CGRect(x: attrs.frame.minX, y: y - 1, width: attrs.frame.width, height: 2)
+        // Legacy: if lower depth is less than current, align to parent boundary.
+        let rows = reducer.tree.flattened(includeSoftDeleted: true)
+        if indexPath.item + 1 < rows.count {
+            let current = rows[indexPath.item]
+            let lower = rows[indexPath.item + 1]
+            if lower.depth < current.depth {
+                x = attrs.frame.minX
+                width = attrs.frame.width
+            }
+        }
+        dropIndicator.frame = CGRect(x: x, y: y - 1, width: width, height: 2)
         dropIndicator.alpha = 1.0
 
         let stripHeight: CGFloat = 18
-        dropHereView.frame = CGRect(x: attrs.frame.minX + 8,
+        dropHereView.frame = CGRect(x: x + 8,
                                     y: y - stripHeight / 2,
-                                    width: attrs.frame.width - 16,
+                                    width: width - 16,
                                     height: stripHeight)
         dropHereView.alpha = 1.0
     }
@@ -626,7 +709,7 @@ extension LayerOutlineViewController {
             stopAutoScroll()
             return
         }
-        let inset = dragLogic.config.autoScrollEdgeInset
+        let inset = dragSnapshot.map { max(dragLogic.config.autoScrollEdgeInset, min($0.frame.width, $0.frame.height) / 4) } ?? dragLogic.config.autoScrollEdgeInset
         let bounds = collectionView.bounds
         var deltaY: CGFloat = 0
         var deltaX: CGFloat = 0
@@ -705,7 +788,9 @@ extension LayerOutlineViewController {
             offset.y = min(max(0, current.y + appliedDeltaY), maxOffsetY)
             self.log("autoScroll tick offsetX=\(String(format: "%.1f", offset.x)) offsetY=\(String(format: "%.1f", offset.y))")
             self.collectionView.setContentOffset(offset, animated: false)
-            self.dragSnapshot?.center.x += appliedDeltaX
+            if self.dragLogic.config.moveSnapshotXDuringAutoScroll {
+                self.dragSnapshot?.center.x += appliedDeltaX
+            }
 
             // Legacy only moves snapshot on Y during auto-scroll.
             self.dragSnapshot?.center.y += appliedDeltaY
@@ -730,6 +815,14 @@ extension LayerOutlineViewController {
         let localX = location.x - attrs.frame.minX
         let localY = location.y - attrs.frame.minY
         let indent = CGFloat(node.depth) * 16.0
+        let midX = attrs.frame.width / 2
+        let midY = attrs.frame.height / 2
+
+        let selectedAncestors = Set(ancestorIds(of: selectedNodeIdFromTemplate()))
+        if selectedAncestors.contains(node.id) {
+            // Legacy: skip hover expand/collapse on selected ancestor branch.
+            return
+        }
 
         // Collapse any auto-expanded parents that are no longer in the hovered branch.
         let hoverBranch = Set(ancestorIds(of: node.id))
@@ -741,20 +834,22 @@ extension LayerOutlineViewController {
         }
 
         if node.type == .Parent || node.type == .Page {
-            if dragLogic.shouldAutoExpand(nodeType: node.type, localX: localX, indent: indent) {
-                scheduleHoverExpand(parentId: node.id)
-            } else {
-                cancelHoverExpand()
-                if hoverAutoExpandedParents.contains(node.id),
-                   dragLogic.shouldCollapseForIndent(localX: localX, indent: indent) {
-                    log("hover collapse: left indent for parent=\(node.id)")
+            if node.isExpanded {
+                // Legacy collapse regions: top half OR bottom-left quadrant.
+                let inTopHalf = localY >= 0 && localY < midY
+                let inBottomLeft = localY >= midY && localY <= attrs.frame.height && localX >= 0 && localX <= midX
+                if inTopHalf || inBottomLeft {
+                    log("hover collapse: legacy region parent=\(node.id)")
                     collapseAutoExpanded(parentId: node.id)
                 }
-            }
-            if hoverAutoExpandedParents.contains(node.id),
-               dragLogic.shouldCollapseForVerticalExit(localY: localY, height: attrs.frame.height) {
-                log("hover collapse: vertical exit parent=\(node.id)")
-                collapseAutoExpanded(parentId: node.id)
+            } else {
+                // Legacy expand region: bottom-right quadrant.
+                let inBottomRight = localY >= midY && localY <= attrs.frame.height && localX >= midX && localX <= attrs.frame.width
+                if inBottomRight && dragLogic.shouldAutoExpand(nodeType: node.type, localX: localX, indent: indent) {
+                    scheduleHoverExpand(parentId: node.id)
+                } else {
+                    cancelHoverExpand()
+                }
             }
         } else {
             cancelHoverExpand()
@@ -767,7 +862,17 @@ extension LayerOutlineViewController {
         cancelHoverExpand()
         hoverPendingParentId = parentId
         log("hover expand scheduled parent=\(parentId)")
-        hoverExpandTimer = Timer.scheduledTimer(withTimeInterval: 0.35, repeats: false) { [weak self] _ in
+        if dragLogic.config.hoverExpandDelay <= 0 {
+            hoverPendingParentId = nil
+            if let currentNode = reducer.tree.nodes[parentId], !currentNode.isExpanded {
+                reducer.toggleExpanded(id: parentId)
+                hoverAutoExpandedParents.insert(parentId)
+                applySnapshot()
+                log("hover expand applied parent=\(parentId)")
+            }
+            return
+        }
+        hoverExpandTimer = Timer.scheduledTimer(withTimeInterval: dragLogic.config.hoverExpandDelay, repeats: false) { [weak self] _ in
             guard let self else { return }
             self.hoverPendingParentId = nil
             if let currentNode = self.reducer.tree.nodes[parentId], !currentNode.isExpanded {
@@ -826,6 +931,10 @@ extension LayerOutlineViewController {
             current = reducer.tree.nodes[pid]?.parentId
         }
         return ids
+    }
+
+    private func selectedNodeIdFromTemplate() -> Int {
+        adapter?.currentModelId() ?? reducer.tree.nodes.values.first(where: { $0.isSelected })?.id ?? -1
     }
 
     private func logHoverContext(parentId: Int, nodeId: Int, location: CGPoint) {

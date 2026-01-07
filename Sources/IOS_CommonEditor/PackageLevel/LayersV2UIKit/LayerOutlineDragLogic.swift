@@ -10,7 +10,7 @@ import UIKit
 
 public struct LayerOutlineDragLogicConfig {
     /// When true, allows hover auto-expand on parents/pages.
-    var autoExpandEnabled: Bool = false
+    var autoExpandEnabled: Bool = true
     /// When true, auto-collapses a parent if pointer moves below its row bounds.
     var autoCollapseOnDownwardExit: Bool = false
     /// Top/bottom zone ratios for drop placement.
@@ -24,6 +24,10 @@ public struct LayerOutlineDragLogicConfig {
     var autoScrollInterval: TimeInterval = 0.01
     /// Extra bottom inset to keep the last rows touchable.
     var bottomInset: CGFloat = 120
+    /// Legacy: snapshot only moves vertically during auto-scroll.
+    var moveSnapshotXDuringAutoScroll: Bool = true
+    /// Legacy: hover expand has no delay (0 = immediate).
+    var hoverExpandDelay: TimeInterval = 0
 }
 
 public enum LayerOutlineDragViewPosition {

@@ -117,6 +117,13 @@ public struct LayerReducer {
         }
     }
 
+    // Lightweight node update for UI reconfigure without rebuilding the tree.
+    public mutating func updateNode(id: Int, _ block: (inout LayerNode) -> Void) {
+        guard var node = tree.nodes[id] else { return }
+        block(&node)
+        tree.nodes[id] = node
+    }
+
     // MARK: - Helpers
 
     private mutating func removeFromParent(id: Int, parentId: Int) {

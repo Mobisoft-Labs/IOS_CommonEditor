@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Combine
 
 public struct LayersV2Feature {
     /// Toggle to turn on the new Layers v2 outline. Defaults to off to avoid impacting existing UI.
@@ -18,6 +19,8 @@ public final class LayerOutlineAdapter : NSObject{
     private let layersConfig: LayersConfiguration?
     private var reducer: LayerReducer
     private var controller: LayerOutlineViewController!
+    private var cancellables = Set<AnyCancellable>()
+    private var modelCancellables: [Int: Set<AnyCancellable>] = [:]
 
     public var currentReducer: LayerReducer {
         reducer
@@ -33,6 +36,8 @@ public final class LayerOutlineAdapter : NSObject{
         super.init()
         self.controller = buildController()
         self.controller.adapter = self
+        observeTemplateUpdates()
+        observeModelChanges()
     }
 
     /// Returns the view controller for presentation or embedding.
@@ -61,6 +66,7 @@ public final class LayerOutlineAdapter : NSObject{
         }
         reducer = LayerReducer(tree: tree)
         controller.reload(with: reducer)
+        observeModelChanges()
     }
 
     /// Apply a reorder/move/delete/undelete request and refresh UI.
@@ -155,11 +161,6 @@ public final class LayerOutlineAdapter : NSObject{
                 _ = DBManager.shared.updateLockStatus(modelId: id, newValue: model.lockStatus.toString())
                 templateHandler?.currentActionState.updateThumb = true
             },
-            onToggleHide: { [weak templateHandler] id in
-                guard let model = templateHandler?.getModel(modelId: id) else { return }
-                model.isHidden.toggle()
-                templateHandler?.currentActionState.updateThumb = true
-            },
             onDeleteRestore: { [weak self, weak templateHandler] id, wasDeleted in
                 guard let self, let templateHandler = templateHandler, let model = templateHandler.getModel(modelId: id) else { return }
                 model.softDelete = !wasDeleted
@@ -193,6 +194,99 @@ public final class LayerOutlineAdapter : NSObject{
                                        position: LayerOutlineDragViewPosition,
                                        hitTestPosition: LayerOutlineDragHitTestPosition) {
         controller.updateDragPresentation(animation: animation, position: position, hitTestPosition: hitTestPosition)
+    }
+
+    public func currentModelId() -> Int {
+        templateHandler.currentModel?.modelId ?? -1
+    }
+
+    private func observeTemplateUpdates() {
+        templateHandler.currentActionState.$thumbUpdateId
+            .removeDuplicates()
+            .sink { [weak self] id in
+                guard let self else { return }
+                if id != 0 {
+                    self.refreshFromTemplate()
+                }
+            }
+            .store(in: &cancellables)
+    }
+
+    private func observeModelChanges() {
+        modelCancellables.removeAll()
+        guard let page = templateHandler.currentPageModel else { return }
+        walk(model: page) { [weak self] model in
+            guard let self else { return }
+            var set = Set<AnyCancellable>()
+
+            model.$isLayerAtive
+                .removeDuplicates()
+                .sink { [weak self] isActive in
+                    self?.updateNode(modelId: model.modelId) { node in
+                        node.isSelected = isActive
+                    }
+                    if isActive {
+                        self?.controller.reconfigureItems([model.modelId])
+                    }
+                }
+                .store(in: &set)
+
+            model.$lockStatus
+                .removeDuplicates()
+                .sink { [weak self] isLocked in
+                    self?.updateNode(modelId: model.modelId) { node in
+                        node.isLocked = isLocked
+                    }
+                    self?.controller.reconfigureItems([model.modelId])
+                }
+                .store(in: &set)
+
+            model.$isHidden
+                .removeDuplicates()
+                .sink { [weak self] isHidden in
+                    self?.updateNode(modelId: model.modelId) { node in
+                        node.isHidden = isHidden
+                    }
+                    self?.controller.reconfigureItems([model.modelId])
+                }
+                .store(in: &set)
+
+            model.$thumbImage
+                .sink { [weak self] image in
+                    self?.updateNode(modelId: model.modelId) { node in
+                        node.thumbImage = image
+                    }
+                    self?.controller.reconfigureItems([model.modelId])
+                }
+                .store(in: &set)
+
+            if let parent = model as? ParentModel {
+                parent.$isExpanded
+                    .removeDuplicates()
+                    .sink { [weak self] isExpanded in
+                        self?.updateNode(modelId: parent.modelId) { node in
+                            node.isExpanded = isExpanded
+                        }
+                        self?.controller.refreshSnapshot()
+                    }
+                    .store(in: &set)
+            }
+
+            modelCancellables[model.modelId] = set
+        }
+    }
+
+    private func updateNode(modelId: Int, _ block: (inout LayerNode) -> Void) {
+        reducer.updateNode(id: modelId, block)
+    }
+
+    private func walk(model: BaseModel, visit: (BaseModel) -> Void) {
+        visit(model)
+        if let parent = model as? ParentModel {
+            for child in parent.children {
+                walk(model: child, visit: visit)
+            }
+        }
     }
 
     /// Convenience to refresh from handler and notify controller.

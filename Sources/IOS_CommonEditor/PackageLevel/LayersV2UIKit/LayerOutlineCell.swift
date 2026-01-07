@@ -7,9 +7,8 @@ import UIKit
 
 final class LayerOutlineCell: UICollectionViewListCell {
     var onToggleExpand: (() -> Void)?
+    var onSelectTick: (() -> Void)?
     var onToggleLock: (() -> Void)?
-    var onToggleHide: (() -> Void)?
-    var onDeleteRestore: (() -> Void)?
 
     private let expandButton = UIButton(type: .system)
     private let thumbImageView = UIImageView()
@@ -20,6 +19,9 @@ final class LayerOutlineCell: UICollectionViewListCell {
     private var leadingConstraint: NSLayoutConstraint?
     private let colorDot = UIView()
     private let dragHandle = UIImageView(image: UIImage(systemName: "line.horizontal.3"))
+    private let selectButton = UIButton(type: .system)
+    private var expandWidthConstraint: NSLayoutConstraint?
+    private var thumbLeadingConstraint: NSLayoutConstraint?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -41,7 +43,8 @@ final class LayerOutlineCell: UICollectionViewListCell {
         expandButton.tintColor = .tertiaryLabel
         expandButton.setImage(UIImage(systemName: "chevron.right"), for: .normal)
         expandButton.addTarget(self, action: #selector(expandTapped), for: .touchUpInside)
-        expandButton.widthAnchor.constraint(equalToConstant: 20).isActive = true
+        expandWidthConstraint = expandButton.widthAnchor.constraint(equalToConstant: 20)
+        expandWidthConstraint?.isActive = true
 
         thumbImageView.contentMode = .scaleAspectFill
         thumbImageView.layer.cornerRadius = 4
@@ -67,16 +70,18 @@ final class LayerOutlineCell: UICollectionViewListCell {
         textStack.axis = .vertical
         textStack.spacing = 2
 
+        selectButton.setImage(UIImage(systemName: "circle"), for: .normal)
+        selectButton.addTarget(self, action: #selector(selectTapped), for: .touchUpInside)
+        selectButton.widthAnchor.constraint(equalToConstant: 32).isActive = true
+        selectButton.heightAnchor.constraint(equalToConstant: 32).isActive = true
+
         let lockButton = makeTrailingButton(systemName: "lock.fill", action: #selector(lockTapped))
-        let hideButton = makeTrailingButton(systemName: "eye.slash", action: #selector(hideTapped))
-        let deleteButton = makeTrailingButton(systemName: "trash", action: #selector(deleteTapped))
 
         trailingStack.axis = .horizontal
         trailingStack.spacing = 8
         trailingStack.addArrangedSubview(dragHandle)
+        trailingStack.addArrangedSubview(selectButton)
         trailingStack.addArrangedSubview(lockButton)
-        trailingStack.addArrangedSubview(hideButton)
-        trailingStack.addArrangedSubview(deleteButton)
 
         rootStack.axis = .horizontal
         rootStack.alignment = .center
@@ -96,6 +101,9 @@ final class LayerOutlineCell: UICollectionViewListCell {
             rootStack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -6),
             rootStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12)
         ])
+        // Extra thumb shift parity: we adjust the thumb's leading when expand is hidden.
+        thumbLeadingConstraint = thumbImageView.leadingAnchor.constraint(equalTo: expandButton.trailingAnchor, constant: 5)
+        thumbLeadingConstraint?.isActive = true
         // Bottom separator for clearer boundaries
         let separator = UIView()
         separator.backgroundColor = UIColor.separator.withAlphaComponent(0.3)
@@ -111,13 +119,11 @@ final class LayerOutlineCell: UICollectionViewListCell {
 
     func configure(with node: LayerNode,
                    onToggleExpand: (() -> Void)?,
-                   onToggleLock: (() -> Void)?,
-                   onToggleHide: (() -> Void)?,
-                   onDeleteRestore: (() -> Void)?) {
+                   onSelectTick: (() -> Void)?,
+                   onToggleLock: (() -> Void)?) {
         self.onToggleExpand = onToggleExpand
+        self.onSelectTick = onSelectTick
         self.onToggleLock = onToggleLock
-        self.onToggleHide = onToggleHide
-        self.onDeleteRestore = onDeleteRestore
 
         titleLabel.text = "#\(node.id) \(node.type)"
         subtitleLabel.text = node.softDelete ? "Deleted" : "Order \(node.orderInParent)"
@@ -126,6 +132,8 @@ final class LayerOutlineCell: UICollectionViewListCell {
         contentView.layer.borderWidth = node.isSelected ? 1.0 : 0.6
         contentView.layer.borderColor = (node.isSelected ? UIColor.tintColor : UIColor.separator.withAlphaComponent(0.4)).cgColor
         contentView.backgroundColor = UIColor.secondarySystemBackground.withAlphaComponent(node.softDelete ? 0.4 : 0.7)
+        selectButton.setImage(UIImage(systemName: node.isSelected ? "checkmark.circle.fill" : "circle"), for: .normal)
+        selectButton.tintColor = node.isSelected ? .systemBlue : .secondaryLabel
 
         if let thumb = node.thumbImage {
             thumbImageView.image = thumb
@@ -140,17 +148,28 @@ final class LayerOutlineCell: UICollectionViewListCell {
         expandButton.setImage(UIImage(systemName: node.isExpanded ? "chevron.down" : "chevron.right"), for: .normal)
         expandButton.isEnabled = !node.isLocked
         expandButton.alpha = node.isLocked ? 0.4 : 1.0
+        if node.isLocked {
+            expandButton.isHidden = true
+            expandWidthConstraint?.constant = 0
+        } else {
+            expandWidthConstraint?.constant = (node.type == .Page || node.type == .Parent) ? 20 : 0
+        }
+        // Legacy: non-parents shift thumbnail left by removing spacing after expand button.
+        if node.type == .Page || node.type == .Parent {
+            rootStack.setCustomSpacing(8, after: expandButton)
+            thumbLeadingConstraint?.constant = 5
+        } else {
+            rootStack.setCustomSpacing(0, after: expandButton)
+            // Legacy uses a negative shift when no expand button.
+            thumbLeadingConstraint?.constant = -40
+        }
         leadingConstraint?.constant = 12 + CGFloat(node.depth) * 16
         colorDot.backgroundColor = color(for: node)
         // Button colors and states
         trailingStack.arrangedSubviews.forEach { $0.isHidden = false }
         trailingStack.arrangedSubviews.compactMap { $0 as? UIButton }.forEach { btn in
-            if btn.currentImage == UIImage(systemName: "trash") {
-                btn.tintColor = node.softDelete ? .systemGreen : .systemRed
-            } else {
-                btn.tintColor = node.softDelete ? .tertiaryLabel : .secondaryLabel
-                btn.isEnabled = !node.softDelete
-            }
+            btn.tintColor = node.softDelete ? .tertiaryLabel : .secondaryLabel
+            btn.isEnabled = !node.softDelete
         }
         dragHandle.isHidden = false
         dragHandle.alpha = node.softDelete ? 0.3 : 1.0
@@ -182,8 +201,8 @@ final class LayerOutlineCell: UICollectionViewListCell {
         button.imageView?.contentMode = .scaleAspectFit
         button.tintColor = .secondaryLabel
         button.addTarget(self, action: action, for: .touchUpInside)
-        button.widthAnchor.constraint(equalToConstant: 24).isActive = true
-        button.heightAnchor.constraint(equalToConstant: 24).isActive = true
+        button.widthAnchor.constraint(equalToConstant: 32).isActive = true
+        button.heightAnchor.constraint(equalToConstant: 32).isActive = true
         return button
     }
 
@@ -191,15 +210,12 @@ final class LayerOutlineCell: UICollectionViewListCell {
         onToggleExpand?()
     }
 
+    @objc private func selectTapped() {
+        onSelectTick?()
+    }
+
     @objc private func lockTapped() {
         onToggleLock?()
     }
 
-    @objc private func hideTapped() {
-        onToggleHide?()
-    }
-
-    @objc private func deleteTapped() {
-        onDeleteRestore?()
-    }
 }
