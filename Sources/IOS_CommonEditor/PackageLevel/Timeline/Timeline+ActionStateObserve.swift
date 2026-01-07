@@ -55,22 +55,22 @@ extension TimelineView {
         
         templateHandler.currentActionState.$shouldRefreshOnAddComponent.dropFirst().sink { [weak self] value in
             guard let self = self else { return }
-            if value == true{
-                updateRulingParentViewWithDurationAndStartTime(duration: Double(templateHandler.currentSuperModel!.baseTimeline.duration), startTime: Double(templateHandler.currentSuperModel!.baseTimeline.startTime))
-                if let parentModel = tlManager.templateHandler?.currentModel as? ParentModel{
-                    if parentModel.editState{
-                        baseTime = CGFloat(parentModel.baseTimeline.startTime + (tlManager.templateHandler?.currentPageModel?.baseTimeline.startTime ?? 0))
-                        setCollectionView()
-                    }
-                }
-                self.scroller.collectionView.updateFrames()
-                if let currentModel = self.tlManager.templateHandler?.currentModel{
-                    if let index = self.scroller.collectionView.rulingModel?.activeChildren.firstIndex(where: { $0.modelId == currentModel.modelId }) {
-                        self.scroller.collectionView.scrollToItem(at: IndexPath(item: index, section: 0), at: .centeredVertically, animated: true)
-                        
-                    }
-                }
-            }
+//            if value == true{
+//                updateRulingParentViewWithDurationAndStartTime(duration: Double(templateHandler.currentSuperModel!.baseTimeline.duration), startTime: Double(templateHandler.currentSuperModel!.baseTimeline.startTime))
+//                if let parentModel = tlManager.templateHandler?.currentModel as? ParentModel{
+//                    if parentModel.editState{
+//                        baseTime = CGFloat(parentModel.baseTimeline.startTime + (tlManager.templateHandler?.currentPageModel?.baseTimeline.startTime ?? 0))
+//                        setCollectionView()
+//                    }
+//                }
+//                self.scroller.collectionView.updateFrames()
+//                if let currentModel = self.tlManager.templateHandler?.currentModel{
+//                    if let index = self.scroller.collectionView.rulingModel?.activeChildren.firstIndex(where: { $0.modelId == currentModel.modelId }) {
+//                        self.scroller.collectionView.scrollToItem(at: IndexPath(item: index, section: 0), at: .centeredVertically, animated: true)
+//                        
+//                    }
+//                }
+//            }
         }.store(in: &actionStateCancellables)
         
         

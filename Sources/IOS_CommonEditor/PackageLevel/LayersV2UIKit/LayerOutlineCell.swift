@@ -32,8 +32,11 @@ final class LayerOutlineCell: UICollectionViewListCell {
     }
 
     private func setupViews() {
+        
         backgroundConfiguration = .clear()
         contentView.backgroundColor = .clear
+        contentView.layer.cornerRadius = 8
+        contentView.clipsToBounds = true
 
         expandButton.tintColor = .tertiaryLabel
         expandButton.setImage(UIImage(systemName: "chevron.right"), for: .normal)
@@ -93,6 +96,17 @@ final class LayerOutlineCell: UICollectionViewListCell {
             rootStack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -6),
             rootStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12)
         ])
+        // Bottom separator for clearer boundaries
+        let separator = UIView()
+        separator.backgroundColor = UIColor.separator.withAlphaComponent(0.3)
+        separator.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(separator)
+        NSLayoutConstraint.activate([
+            separator.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
+            separator.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
+            separator.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            separator.heightAnchor.constraint(equalToConstant: 0.5)
+        ])
     }
 
     func configure(with node: LayerNode,
@@ -109,8 +123,9 @@ final class LayerOutlineCell: UICollectionViewListCell {
         subtitleLabel.text = node.softDelete ? "Deleted" : "Order \(node.orderInParent)"
         titleLabel.textColor = node.softDelete ? .secondaryLabel : .label
         subtitleLabel.textColor = node.softDelete ? .tertiaryLabel : .secondaryLabel
-        contentView.layer.borderWidth = node.isSelected ? 1.0 : 0
-        contentView.layer.borderColor = node.isSelected ? UIColor.tintColor.cgColor : UIColor.clear.cgColor
+        contentView.layer.borderWidth = node.isSelected ? 1.0 : 0.6
+        contentView.layer.borderColor = (node.isSelected ? UIColor.tintColor : UIColor.separator.withAlphaComponent(0.4)).cgColor
+        contentView.backgroundColor = UIColor.secondarySystemBackground.withAlphaComponent(node.softDelete ? 0.4 : 0.7)
 
         if let thumb = node.thumbImage {
             thumbImageView.image = thumb
@@ -164,6 +179,7 @@ final class LayerOutlineCell: UICollectionViewListCell {
     private func makeTrailingButton(systemName: String, action: Selector) -> UIButton {
         let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: systemName), for: .normal)
+        button.imageView?.contentMode = .scaleAspectFit
         button.tintColor = .secondaryLabel
         button.addTarget(self, action: action, for: .touchUpInside)
         button.widthAnchor.constraint(equalToConstant: 24).isActive = true

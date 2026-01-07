@@ -60,7 +60,7 @@ public class MetalEngine : ObservableObject, TemplateObserversProtocol , ActionS
     var sceneConfig: SceneConfiguration
     var resourceProvider: TextureResourceProvider
     var engineConfig: EngineConfiguration
-    var layerConfig: LayersConfiguration
+   public var layerConfig: LayersConfiguration
     var vmConfig: ViewManagerConfiguration
 //    @Published var showDrop : Drop? = nil
     

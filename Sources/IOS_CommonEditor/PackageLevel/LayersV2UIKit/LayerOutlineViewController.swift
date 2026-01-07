@@ -6,7 +6,7 @@
 import UIKit
 
 /// A standalone Layers v2 outline powered by LayerReducer. Not wired to existing layers UI yet.
-final class LayerOutlineViewController: UIViewController {
+ class LayerOutlineViewController: UIViewController {
     private var collectionView: UICollectionView!
     private var dataSource: UICollectionViewDiffableDataSource<Int, Int>!
     private(set) var reducer: LayerReducer
@@ -16,27 +16,69 @@ final class LayerOutlineViewController: UIViewController {
     private let onToggleLock: ((Int) -> Void)?
     private let onToggleHide: ((Int) -> Void)?
     private let onDeleteRestore: ((Int, Bool) -> Void)?
-    private let onMove: ((Int, Int, Int) -> Void)?
+    private let onMove: ((Int, Int, Int, Int, Bool) -> Void)?
     private let onReorder: ((Int, Int, Int) -> Void)?
+    private let onClose: (() -> Void)?
+    private var hoverExpandTimer: Timer?
+    private var hoverPendingParentId: Int?
+    private var hoverAutoExpandedParents: Set<Int> = []
+    private var dragSnapshot: UIView?
+    private var dragSourceIndexPath: IndexPath?
+    private var dragSourceId: Int?
+    private var dragTouchOffset: CGPoint = .zero
+    private var dropIndicator = UIView()
+    private var dragTargetIndexPath: IndexPath?
+    private var feedbackGenerator: UIImpactFeedbackGenerator?
+    private var dragLogic = LayerOutlineDragLogic()
+    private var dragAnimationConfig = LayerOutlineDragAnimationConfig()
+    private var dragViewPosition: LayerOutlineDragViewPosition = .centerOfDragView
+    private var dragHitTestPosition: LayerOutlineDragHitTestPosition = .userTouch
+    private var autoScrollTimer: Timer?
+    private var autoScrollDeltaY: CGFloat = 0
+    private var autoScrollDeltaX: CGFloat = 0
+    private var dropHereView = UIView()
+    private var dropHereLabel = UILabel()
+    private var longPressGesture: UILongPressGestureRecognizer?
+    private var dragPanGesture: UIPanGestureRecognizer?
+    private var isScrollingVertically = true
+    private var isScrollingHorizontally = true
+    private var lockedOffsetX: CGFloat = 0
+    private var lockedOffsetY: CGFloat = 0
+    private enum ScrollAxis {
+        case none
+        case vertical
+        case horizontal
+    }
+    private var currentScrollAxis: ScrollAxis = .none
 
     init(
         reducer: LayerReducer,
         logger: PackageLogger? = nil,
+        dragLogicConfig: LayerOutlineDragLogicConfig = .init(),
+        dragAnimationConfig: LayerOutlineDragAnimationConfig = .init(),
+        dragViewPosition: LayerOutlineDragViewPosition = .centerOfDragView,
+        dragHitTestPosition: LayerOutlineDragHitTestPosition = .userTouch,
         onSelect: ((LayerNode) -> Void)? = nil,
         onToggleLock: ((Int) -> Void)? = nil,
         onToggleHide: ((Int) -> Void)? = nil,
         onDeleteRestore: ((Int, Bool) -> Void)? = nil,
-        onMove: ((Int, Int, Int) -> Void)? = nil,
-        onReorder: ((Int, Int, Int) -> Void)? = nil
+        onMove: ((Int, Int, Int, Int, Bool) -> Void)? = nil,
+        onReorder: ((Int, Int, Int) -> Void)? = nil,
+        onClose: (() -> Void)? = nil
     ) {
         self.reducer = reducer
         self.logger = logger
+        self.dragLogic = LayerOutlineDragLogic(config: dragLogicConfig)
+        self.dragAnimationConfig = dragAnimationConfig
+        self.dragViewPosition = dragViewPosition
+        self.dragHitTestPosition = dragHitTestPosition
         self.onSelect = onSelect
         self.onToggleLock = onToggleLock
         self.onToggleHide = onToggleHide
         self.onDeleteRestore = onDeleteRestore
         self.onMove = onMove
         self.onReorder = onReorder
+        self.onClose = onClose
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -46,7 +88,7 @@ final class LayerOutlineViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = UIColor.black.withAlphaComponent(0.4)
+        view.backgroundColor = UIColor.black.withAlphaComponent(0.7)
         setupHeader()
         configureCollectionView()
         configureDataSource()
@@ -60,55 +102,65 @@ final class LayerOutlineViewController: UIViewController {
         applySnapshot()
     }
 
+    func updateDragLogic(config: LayerOutlineDragLogicConfig) {
+        dragLogic = LayerOutlineDragLogic(config: config)
+        collectionView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: dragLogic.config.bottomInset, right: 0)
+    }
+
+    func updateDragPresentation(animation: LayerOutlineDragAnimationConfig, position: LayerOutlineDragViewPosition) {
+        dragAnimationConfig = animation
+        dragViewPosition = position
+    }
+
+    func updateDragPresentation(animation: LayerOutlineDragAnimationConfig,
+                                position: LayerOutlineDragViewPosition,
+                                hitTestPosition: LayerOutlineDragHitTestPosition) {
+        dragAnimationConfig = animation
+        dragViewPosition = position
+        dragHitTestPosition = hitTestPosition
+    }
+
     // MARK: - Private
 
     private func configureCollectionView() {
-        var layoutConfig = UICollectionLayoutListConfiguration(appearance: .plain)
-        layoutConfig.showsSeparators = true
-        layoutConfig.leadingSwipeActionsConfigurationProvider = nil
-        layoutConfig.trailingSwipeActionsConfigurationProvider = { [weak self] indexPath in
-            guard let self = self, let nodeId = self.dataSource.itemIdentifier(for: indexPath), let node = self.reducer.tree.nodes[nodeId] else { return nil }
-
-            let delete = UIContextualAction(style: .destructive, title: node.softDelete ? "Undelete" : "Delete") { _, _, completion in
-                if node.softDelete {
-                    self.reducer.undelete(id: node.id)
-                } else {
-                    self.reducer.delete(id: node.id)
-                }
-                self.logOrders(parentId: node.parentId, label: "swipe-delete")
-                self.applySnapshot()
-                completion(true)
-            }
-            delete.backgroundColor = node.softDelete ? .systemGreen : .systemRed
-
-            let lock = UIContextualAction(style: .normal, title: node.isLocked ? "Unlock" : "Lock") { _, _, completion in
-                self.reducer.toggleLock(id: node.id)
-                self.logOrders(parentId: node.parentId, label: "swipe-lock")
-                self.applySnapshot()
-                completion(true)
-            }
-            lock.backgroundColor = .systemBlue
-
-            let hide = UIContextualAction(style: .normal, title: node.isHidden ? "Show" : "Hide") { _, _, completion in
-                self.reducer.toggleHidden(id: node.id)
-                self.logOrders(parentId: node.parentId, label: "swipe-hide")
-                self.applySnapshot()
-                completion(true)
-            }
-            hide.backgroundColor = .systemGray
-
-            return UISwipeActionsConfiguration(actions: [delete, lock, hide])
-        }
-        collectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewCompositionalLayout.list(using: layoutConfig))
+        let layout = StackedVerticalFlowLayoutV2()
+        layout.stackedDelegate = self
+        collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.register(LayerOutlineCell.self, forCellWithReuseIdentifier: "cell")
         collectionView.delegate = self
-        collectionView.dragDelegate = self
-        collectionView.dropDelegate = self
-        collectionView.dragInteractionEnabled = true
+        collectionView.dragInteractionEnabled = false
         collectionView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         collectionView.backgroundColor = .clear
+        collectionView.alwaysBounceVertical = false
+        collectionView.alwaysBounceHorizontal = false
+        collectionView.isDirectionalLockEnabled = true
+        collectionView.showsHorizontalScrollIndicator = true
+        collectionView.showsVerticalScrollIndicator = true
+        addDragGestures()
+
+        dropIndicator.backgroundColor = .systemBlue
+        dropIndicator.alpha = 0.0
+        collectionView.addSubview(dropIndicator)
+
+        dropHereView.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.15)
+        dropHereView.layer.cornerRadius = 6
+        dropHereView.alpha = 0.0
+        dropHereView.isUserInteractionEnabled = false
+        dropHereLabel.text = "Drop Here"
+        dropHereLabel.font = .systemFont(ofSize: 12, weight: .semibold)
+        dropHereLabel.textColor = .systemBlue
+        dropHereLabel.translatesAutoresizingMaskIntoConstraints = false
+        dropHereView.addSubview(dropHereLabel)
+        NSLayoutConstraint.activate([
+            dropHereLabel.centerXAnchor.constraint(equalTo: dropHereView.centerXAnchor),
+            dropHereLabel.centerYAnchor.constraint(equalTo: dropHereView.centerYAnchor)
+        ])
+        collectionView.addSubview(dropHereView)
+
         view.addSubview(collectionView)
         collectionView.frame = view.bounds
+        collectionView.frame.origin.y = 44
+        collectionView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: dragLogic.config.bottomInset, right: 0)
     }
 
     private func setupHeader() {
@@ -137,11 +189,12 @@ final class LayerOutlineViewController: UIViewController {
             bar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 8),
             bar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
             bar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
+            bar.heightAnchor.constraint(equalToConstant: 36)
         ])
     }
 
     @objc private func closeTapped() {
-        dismiss(animated: true)
+        onClose?()
     }
 
     private func configureDataSource() {
@@ -176,6 +229,7 @@ final class LayerOutlineViewController: UIViewController {
         let rows = reducer.tree.flattened(includeSoftDeleted: true)
         snapshot.appendItems(rows.map { $0.id }, toSection: 0)
         dataSource.apply(snapshot, animatingDifferences: true)
+        collectionView.collectionViewLayout.invalidateLayout()
     }
 
     private func toggleExpand(nodeId: Int) {
@@ -187,6 +241,12 @@ final class LayerOutlineViewController: UIViewController {
         let active = reducer.tree.activeChildren(of: parentId).map { "\($0.id):\($0.orderInParent)" }.joined(separator: ",")
         let all = reducer.tree.allChildren(of: parentId).map { "\($0.id):\($0.orderInParent)\($0.softDelete ? "D" :"DN")" }.joined(separator: ",")
         logger?.printLog("[LayersV2UI] \(label) parent=\(parentId) active[\(active)] all[\(all)]")
+    }
+}
+
+extension LayerOutlineViewController: StackedCollectionViewDelegateV2 {
+    func flattenedNodes() -> [LayerNode] {
+        return reducer.tree.flattened(includeSoftDeleted: true)
     }
 }
 
@@ -203,133 +263,582 @@ extension LayerOutlineViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {}
 
     func collectionView(_ collectionView: UICollectionView, contextMenuConfigurationForItemAt indexPath: IndexPath, point: CGPoint) -> UIContextMenuConfiguration? {
-        guard let id = dataSource.itemIdentifier(for: indexPath), let node = reducer.tree.nodes[id] else { return nil }
-        return UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
-            guard let self else { return nil }
-            let lock = UIAction(title: node.isLocked ? "Unlock" : "Lock", image: UIImage(systemName: "lock")) { _ in
-                self.reducer.toggleLock(id: id)
-                self.applySnapshot()
+        // Disable default long-press context menu; we use custom gestures.
+        return nil
+    }
+
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        let verticalOffset = scrollView.contentOffset.y
+        let horizontalOffset = scrollView.contentOffset.x
+
+        let maxXLimit = max(0, scrollView.contentSize.width - scrollView.bounds.width)
+        let maxYLimit = max(0, scrollView.contentSize.height - scrollView.bounds.height + scrollView.contentInset.bottom)
+
+        if horizontalOffset > maxXLimit {
+            scrollView.setContentOffset(CGPoint(x: maxXLimit, y: scrollView.contentOffset.y), animated: false)
+        }
+        if horizontalOffset < 0 {
+            scrollView.setContentOffset(CGPoint(x: 0, y: scrollView.contentOffset.y), animated: false)
+        }
+        if verticalOffset < 0 {
+            scrollView.setContentOffset(CGPoint(x: scrollView.contentOffset.x, y: 0), animated: false)
+        }
+        if verticalOffset > maxYLimit {
+            scrollView.setContentOffset(CGPoint(x: scrollView.contentOffset.x, y: maxYLimit), animated: false)
+        }
+
+        if abs(verticalOffset) > abs(horizontalOffset) {
+            isScrollingVertically = true
+            isScrollingHorizontally = false
+        } else if abs(horizontalOffset) > abs(verticalOffset) {
+            isScrollingVertically = false
+            isScrollingHorizontally = true
+        }
+        // Axis-dependent lock without bounce
+        if isScrollingVertically {
+            if currentScrollAxis != .vertical {
+                lockedOffsetX = scrollView.contentOffset.x
+                currentScrollAxis = .vertical
             }
-            let hide = UIAction(title: node.isHidden ? "Show" : "Hide", image: UIImage(systemName: "eye.slash")) { _ in
-                self.reducer.toggleHidden(id: id)
-                self.applySnapshot()
+            if scrollView.contentOffset.x != lockedOffsetX {
+                scrollView.contentOffset.x = lockedOffsetX
             }
-            let delete = UIAction(title: node.softDelete ? "Undelete" : "Delete", image: UIImage(systemName: "trash"), attributes: .destructive) { _ in
-                if node.softDelete {
-                    self.reducer.undelete(id: id)
-                } else {
-                    self.reducer.delete(id: id)
-                }
-                self.applySnapshot()
+        } else if isScrollingHorizontally {
+            if currentScrollAxis != .horizontal {
+                lockedOffsetY = scrollView.contentOffset.y
+                currentScrollAxis = .horizontal
             }
-            return UIMenu(title: "", children: [lock, hide, delete])
+            if scrollView.contentOffset.y != lockedOffsetY {
+                scrollView.contentOffset.y = lockedOffsetY
+            }
         }
     }
 }
 
-// MARK: - Drag & Drop
+extension LayerOutlineViewController: UIGestureRecognizerDelegate {
+    func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+        if gestureRecognizer === dragPanGesture {
+            return dragSnapshot != nil
+        }
+        return true
+    }
+}
 
-extension LayerOutlineViewController: UICollectionViewDragDelegate, UICollectionViewDropDelegate {
-    func collectionView(_ collectionView: UICollectionView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
-        guard let id = dataSource.itemIdentifier(for: indexPath), let node = reducer.tree.nodes[id], !node.softDelete else { return [] }
-        let itemProvider = NSItemProvider(object: "\(id)" as NSString)
-        let dragItem = UIDragItem(itemProvider: itemProvider)
-        dragItem.localObject = id
-        return [dragItem]
+// MARK: - Custom Drag (legacy-style)
+
+extension LayerOutlineViewController {
+    private func addDragGestures() {
+        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
+        longPress.minimumPressDuration = 0.15
+        let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
+        pan.maximumNumberOfTouches = 1
+        pan.minimumNumberOfTouches = 1
+        longPress.delegate = self
+        pan.delegate = self
+        collectionView.addGestureRecognizer(longPress)
+        collectionView.addGestureRecognizer(pan)
+        pan.require(toFail: collectionView.panGestureRecognizer)
+        longPressGesture = longPress
+        dragPanGesture = pan
     }
 
-    func collectionView(_ collectionView: UICollectionView, dropSessionDidUpdate session: UIDropSession, withDestinationIndexPath destinationIndexPath: IndexPath?) -> UICollectionViewDropProposal {
-        guard session.localDragSession != nil else {
-            return UICollectionViewDropProposal(operation: .forbidden)
-        }
-        guard let indexPath = destinationIndexPath else {
-            return UICollectionViewDropProposal(operation: .move)
-        }
-        let rows = reducer.tree.flattened(includeSoftDeleted: true)
-        guard indexPath.item < rows.count else { return UICollectionViewDropProposal(operation: .cancel) }
-        let targetNode = rows[indexPath.item]
-        if let draggingId = session.localDragSession?.items.first?.localObject as? Int {
-            if isDescendant(candidate: targetNode.id, of: draggingId) || targetNode.id == draggingId {
-                return UICollectionViewDropProposal(operation: .forbidden)
+    @objc private func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
+        switch gesture.state {
+        case .began:
+            guard let indexPath = collectionView.indexPathForItem(at: gesture.location(in: collectionView)),
+                  let id = dataSource.itemIdentifier(for: indexPath),
+                  let node = reducer.tree.nodes[id],
+                  !node.softDelete else { return }
+            log("longPress began id=\(id)")
+            feedbackGenerator = UIImpactFeedbackGenerator(style: .medium)
+            feedbackGenerator?.prepare()
+            dragSourceIndexPath = indexPath
+            dragSourceId = id
+            let touch = gesture.location(in: collectionView)
+            if let cell = collectionView.cellForItem(at: indexPath) {
+                collectionView.panGestureRecognizer.isEnabled = false
+                dragTouchOffset = CGPoint(x: touch.x - cell.center.x, y: touch.y - cell.center.y)
+                let snapshot = cell.snapshotView(afterScreenUpdates: false) ?? UIView(frame: cell.frame)
+                snapshot.frame = cell.frame
+                snapshot.layer.cornerRadius = 6
+                snapshot.layer.masksToBounds = true
+                snapshot.layer.borderWidth = dragAnimationConfig.liftBorderWidth
+                snapshot.layer.borderColor = dragAnimationConfig.liftBorderColor
+                snapshot.alpha = 0.9
+                snapshot.layer.shadowColor = UIColor.black.cgColor
+                snapshot.layer.shadowRadius = dragAnimationConfig.liftShadowRadius
+                snapshot.layer.shadowOpacity = dragAnimationConfig.liftShadowOpacity
+                snapshot.layer.shadowOffset = dragAnimationConfig.liftShadowOffset
+                collectionView.addSubview(snapshot)
+                dragSnapshot = snapshot
+                UIView.animate(withDuration: dragAnimationConfig.liftDuration,
+                               delay: 0,
+                               usingSpringWithDamping: dragAnimationConfig.liftDamping,
+                               initialSpringVelocity: dragAnimationConfig.liftVelocity,
+                               options: [.curveEaseInOut],
+                               animations: {
+                    snapshot.transform = CGAffineTransform(scaleX: self.dragAnimationConfig.liftScale, y: self.dragAnimationConfig.liftScale)
+                    snapshot.alpha = self.dragAnimationConfig.liftAlpha
+                })
+                feedbackGenerator?.impactOccurred()
+                cell.isHidden = true
             }
-            if let draggingNode = reducer.tree.nodes[draggingId], draggingNode.isLocked {
-                return UICollectionViewDropProposal(operation: .forbidden)
-            }
+            collectionView.isScrollEnabled = false
+        case .changed:
+            updateDragPosition(gesture)
+        case .ended, .cancelled, .failed:
+            log("longPress end/cancel")
+            finishDrag(at: gesture.location(in: collectionView))
+        default:
+            break
         }
-        return UICollectionViewDropProposal(operation: .move, intent: .insertAtDestinationIndexPath)
     }
 
-    func collectionView(_ collectionView: UICollectionView, performDropWith coordinator: UICollectionViewDropCoordinator) {
-        guard coordinator.session.localDragSession != nil else { return }
-        guard let item = coordinator.items.first,
-              let sourceId = item.dragItem.localObject as? Int else { return }
+    @objc private func handlePan(_ gesture: UIPanGestureRecognizer) {
+        switch gesture.state {
+        case .changed:
+            updateDragPosition(gesture)
+        case .ended, .cancelled, .failed:
+            log("pan end/cancel")
+            finishDrag(at: gesture.location(in: collectionView))
+        default:
+            break
+        }
+    }
+
+    private func updateDragPosition(_ gesture: UIGestureRecognizer) {
+        guard let snapshot = dragSnapshot else {
+            log("drag update: no snapshot, skipping")
+            return
+        }
+        let touchLocation = gesture.location(in: collectionView)
+        let dragCenterPoint = dragCenter(for: touchLocation)
+        snapshot.center = dragCenterPoint
+        let hitLocation = dragHitTestLocation(touchLocation: touchLocation, dragCenter: dragCenterPoint)
+        updateAutoScroll(at: touchLocation)
+        
+        // Hover expand using point-based indent check
+        if let indexPath = collectionView.indexPathForItem(at: hitLocation),
+           let nodeId = dataSource.itemIdentifier(for: indexPath),
+           let node = reducer.tree.nodes[nodeId] {
+            log("drag over id=\(node.id)")
+            updateHoverState(location: hitLocation, node: node, indexPath: indexPath)
+            showDropIndicator(at: indexPath, location: hitLocation)
+        } else {
+            log("drag over: no valid indexPath/node, collapsing hover")
+            cancelHoverExpand()
+            collapseAllAutoExpanded()
+            hideDropIndicator()
+        }
+    }
+
+    private func finishDrag(at location: CGPoint) {
+        let dragCenterPoint = dragCenter(for: location)
+        let hitLocation = dragHitTestLocation(touchLocation: location, dragCenter: dragCenterPoint)
+        guard let sourceId = dragSourceId,
+              let sourceNode = reducer.tree.nodes[sourceId] else {
+            log("finishDrag: missing source, abort")
+            cleanupDrag()
+            return
+        }
 
         let rows = reducer.tree.flattened(includeSoftDeleted: true)
-        guard !rows.isEmpty else { return }
+        guard !rows.isEmpty else {
+            log("finishDrag: no rows, abort")
+            cleanupDrag()
+            return
+        }
 
-        // Figure out drop target
-        let destinationIndexPath = coordinator.destinationIndexPath ?? IndexPath(item: rows.count - 1, section: 0)
-        let targetIndex = min(max(0, destinationIndexPath.item), rows.count - 1)
-        let targetNode = rows[targetIndex]
+        let targetInfo = dropTarget(at: hitLocation)
+        guard let target = targetInfo.node else {
+            log("finishDrag: no target, abort")
+            cleanupDrag()
+            return
+        }
 
-        // If dropping on a parent/page, move into it at end; else use its parent.
-        let dropIntoParent = (targetNode.type == .Parent || targetNode.type == .Page)
         let parentId: Int
         let targetOrder: Int
+        let dropIntoParent = targetInfo.intoParent
+
         if dropIntoParent {
-            parentId = targetNode.id
+            parentId = target.id
             targetOrder = reducer.tree.activeChildren(of: parentId).count
         } else {
-            parentId = targetNode.parentId
+            parentId = target.parentId
             let active = reducer.tree.activeChildren(of: parentId)
-            targetOrder = active.firstIndex(where: { $0.id == targetNode.id }) ?? active.count
+            let targetIndex = active.firstIndex(where: { $0.id == target.id }) ?? active.count
+            targetOrder = targetInfo.insertAbove ? targetIndex : targetIndex + 1
         }
 
-        let sourceNode = reducer.tree.nodes[sourceId]
-        if sourceNode?.parentId == parentId {
-            // Same parent reorder
-            reorderWithinParent(parentId: parentId, sourceId: sourceId, targetOrder: targetOrder)
+        let sameParent = sourceNode.parentId == parentId
+        let currentOrder = reducer.tree.activeChildren(of: sourceNode.parentId).firstIndex(where: { $0.id == sourceId }) ?? 0
+
+        log("perform drop source=\(sourceId) parent=\(parentId) order=\(targetOrder) sameParent=\(sameParent)")
+        dragTargetIndexPath = nil
+        onMove?(sourceId, parentId, targetOrder, currentOrder, sameParent)
+        adapter?.refreshFromTemplate()
+        reducer = adapter?.currentReducer ?? reducer
+        // Keep destination parent open in UI.
+        if let parent = reducer.tree.nodes[parentId], !parent.isExpanded {
+            reducer.toggleExpanded(id: parentId)
+        }
+        applySnapshot()
+        // Scroll back to the moved node so the view doesn’t jump to top.
+        let flattened = reducer.tree.flattened(includeSoftDeleted: true)
+        if let newIndex = flattened.firstIndex(where: { $0.id == sourceId }) {
+            let idx = IndexPath(item: newIndex, section: 0)
+            dragTargetIndexPath = idx
+            collectionView.scrollToItem(at: idx, at: .centeredVertically, animated: false)
+        }
+        animateDropIfNeeded()
+    }
+
+    private func animateDropIfNeeded() {
+        guard let snapshot = dragSnapshot else {
+            cleanupDrag()
+            return
+        }
+        guard let targetIndex = dragTargetIndexPath,
+              let attrs = collectionView.layoutAttributesForItem(at: targetIndex) else {
+            cleanupDrag()
+            return
+        }
+        UIView.animate(withDuration: dragAnimationConfig.dropDuration,
+                       delay: 0,
+                       options: [.curveEaseInOut],
+                       animations: {
+            snapshot.transform = .identity
+            snapshot.frame = attrs.frame
+            snapshot.alpha = self.dragAnimationConfig.dropAlpha
+        }, completion: { _ in
+            self.cleanupDrag()
+        }
+        )
+    }
+
+    private func dragCenter(for location: CGPoint) -> CGPoint {
+        switch dragViewPosition {
+        case .userTouch:
+            return location
+        case .centerOfDragView:
+            return CGPoint(x: location.x - dragTouchOffset.x, y: location.y - dragTouchOffset.y)
+        case .offset(let offset):
+            return CGPoint(x: location.x + offset.x, y: location.y + offset.y)
+        case .origin(let origin):
+            if let snapshot = dragSnapshot {
+                return CGPoint(x: origin.x + snapshot.bounds.width / 2, y: origin.y + snapshot.bounds.height / 2)
+            }
+            return origin
+        case .originFromTouch(let originOffset):
+            if let snapshot = dragSnapshot {
+                let origin = CGPoint(x: location.x + originOffset.x, y: location.y + originOffset.y)
+                return CGPoint(x: origin.x + snapshot.bounds.width / 2, y: origin.y + snapshot.bounds.height / 2)
+            }
+            return CGPoint(x: location.x + originOffset.x, y: location.y + originOffset.y)
+        }
+    }
+
+    private func dragHitTestLocation(touchLocation: CGPoint, dragCenter: CGPoint) -> CGPoint {
+        switch dragHitTestPosition {
+        case .userTouch:
+            return touchLocation
+        case .dragViewCenter:
+            return dragSnapshot?.center ?? dragCenter
+        }
+    }
+
+    private func cleanupDrag() {
+        dragSnapshot?.removeFromSuperview()
+        dragSnapshot = nil
+        feedbackGenerator = nil
+        dragTargetIndexPath = nil
+        stopAutoScroll()
+        // Make sure no cells stay hidden after drag completes.
+        collectionView.visibleCells.forEach { $0.isHidden = false }
+        collectionView.panGestureRecognizer.isEnabled = true
+        dragSourceIndexPath = nil
+        dragSourceId = nil
+        collectionView.isScrollEnabled = true
+        hideDropIndicator()
+        cancelHoverExpand()
+    }
+
+    // MARK: - Debug logging
+    private func log(_ message: String) {
+        print("[LayersV2UI] \(message)")
+        logger?.printLog("[LayersV2UI] \(message)")
+    }
+
+    private func dropTarget(at location: CGPoint) -> (node: LayerNode?, intoParent: Bool, insertAbove: Bool) {
+        guard let indexPath = collectionView.indexPathForItem(at: location),
+              let nodeId = dataSource.itemIdentifier(for: indexPath),
+              let node = reducer.tree.nodes[nodeId],
+              let attrs = collectionView.layoutAttributesForItem(at: indexPath) else {
+            log("dropTarget: no index/node/attrs")
+            return (nil, false, false)
+        }
+        let localPoint = CGPoint(x: location.x - attrs.frame.minX, y: location.y - attrs.frame.minY)
+        let indent = CGFloat(node.depth) * 16.0
+        let placement = dragLogic.dropPlacement(localPoint: localPoint,
+                                               height: attrs.frame.height,
+                                               nodeType: node.type,
+                                               indent: indent,
+                                               localX: localPoint.x)
+        return (node, placement.intoParent, placement.insertAbove)
+    }
+
+    private func showDropIndicator(at indexPath: IndexPath, location: CGPoint) {
+        guard let attrs = collectionView.layoutAttributesForItem(at: indexPath) else {
+            log("showDropIndicator: missing attrs")
+            return
+        }
+        let info = dropTarget(at: location)
+        var y = attrs.frame.minY
+        if info.intoParent {
+            y = attrs.frame.maxY - 4
+        } else if info.insertAbove {
+            y = attrs.frame.minY
         } else {
-            // Move to new parent
-            moveToParent(nodeId: sourceId, newParentId: parentId, order: targetOrder)
+            y = attrs.frame.maxY
         }
+        dropIndicator.frame = CGRect(x: attrs.frame.minX, y: y - 1, width: attrs.frame.width, height: 2)
+        dropIndicator.alpha = 1.0
 
-        // Let the collection view animate the drop.
-        let dropIndexPath = IndexPath(item: targetIndex, section: 0)
-        coordinator.drop(item.dragItem, toItemAt: dropIndexPath)
+        let stripHeight: CGFloat = 18
+        dropHereView.frame = CGRect(x: attrs.frame.minX + 8,
+                                    y: y - stripHeight / 2,
+                                    width: attrs.frame.width - 16,
+                                    height: stripHeight)
+        dropHereView.alpha = 1.0
+    }
 
-        // Refresh from TemplateHandler to reflect committed order
-        if let adapter = adapter {
-            adapter.refreshFromTemplate()
-            reducer = adapter.currentReducer
-            applySnapshot()
+    private func hideDropIndicator() {
+        dropIndicator.alpha = 0.0
+        dropHereView.alpha = 0.0
+    }
+
+    private func updateAutoScroll(at location: CGPoint) {
+        // Determine auto-scroll deltas based on how close the drag is to edges,
+        // using an accelerated step toward the edge.
+        guard dragLogic.config.autoScrollEnabled else {
+            // Auto-scroll disabled via config.
+            log("autoScroll disabled")
+            stopAutoScroll()
+            return
+        }
+        let inset = dragLogic.config.autoScrollEdgeInset
+        let bounds = collectionView.bounds
+        var deltaY: CGFloat = 0
+        var deltaX: CGFloat = 0
+        if location.y < bounds.minY + inset {
+            // Near top edge: scroll up.
+            let distance = max(0, location.y - bounds.minY)
+            let t = max(0, min(1, 1 - (distance / inset)))
+            let step = dragLogic.config.autoScrollStep + t * (dragLogic.config.autoScrollMaxStep - dragLogic.config.autoScrollStep)
+            deltaY = -step
+        } else if location.y > bounds.maxY - inset {
+            // Near bottom edge: scroll down.
+            let distance = max(0, bounds.maxY - location.y)
+            let t = max(0, min(1, 1 - (distance / inset)))
+            let step = dragLogic.config.autoScrollStep + t * (dragLogic.config.autoScrollMaxStep - dragLogic.config.autoScrollStep)
+            deltaY = step
+        }
+        if location.x < bounds.minX + inset {
+            // Near left edge: scroll left.
+            let distance = max(0, location.x - bounds.minX)
+            let t = max(0, min(1, 1 - (distance / inset)))
+            let step = dragLogic.config.autoScrollStep + t * (dragLogic.config.autoScrollMaxStep - dragLogic.config.autoScrollStep)
+            deltaX = -step
+        } else if location.x > bounds.maxX - inset {
+            // Near right edge: scroll right.
+            let distance = max(0, bounds.maxX - location.x)
+            let t = max(0, min(1, 1 - (distance / inset)))
+            let step = dragLogic.config.autoScrollStep + t * (dragLogic.config.autoScrollMaxStep - dragLogic.config.autoScrollStep)
+            deltaX = step
+        }
+        // If content can't scroll on an axis, ignore its delta.
+        let maxOffsetX = max(0, collectionView.contentSize.width - collectionView.bounds.width)
+        let maxOffsetY = max(0, collectionView.contentSize.height - collectionView.bounds.height + collectionView.contentInset.bottom)
+        if maxOffsetX == 0 { deltaX = 0 }
+        if maxOffsetY == 0 { deltaY = 0 }
+        if deltaX == 0 && deltaY == 0 {
+            // No edge pressure: stop auto-scroll.
+            log("autoScroll idle")
+            stopAutoScroll()
+            return
+        }
+        if deltaY != autoScrollDeltaY || deltaX != autoScrollDeltaX {
+            // Edge pressure changed: restart timer with new deltas.
+            autoScrollDeltaY = deltaY
+            autoScrollDeltaX = deltaX
+            log("autoScroll deltaX=\(String(format: "%.1f", deltaX)) deltaY=\(String(format: "%.1f", deltaY))")
+            startAutoScroll()
         }
     }
 
-    private func reorderWithinParent(parentId: Int, sourceId: Int, targetOrder: Int) {
-        // Compute current order in active list
-        let active = reducer.tree.activeChildren(of: parentId)
-        guard let currentIndex = active.firstIndex(where: { $0.id == sourceId }) else { return }
-        onReorder?(parentId, currentIndex, targetOrder)
-        // Optimistically update local reducer for immediate visual feedback
-        reducer.reorderWithinParent(parentId: parentId, fromActiveIndex: currentIndex, toActiveIndex: targetOrder)
+    private func startAutoScroll() {
+        // Scroll the collection view while dragging near edges. If we hit a limit,
+        // stop moving on that axis to avoid flicker.
+        autoScrollTimer?.invalidate()
+        let timer = Timer(timeInterval: dragLogic.config.autoScrollInterval, repeats: true) { [weak self] _ in
+            guard let self else { return }
+            let maxOffsetX = max(0, self.collectionView.contentSize.width - self.collectionView.bounds.width)
+            let maxOffsetY = max(0, self.collectionView.contentSize.height - self.collectionView.bounds.height + self.collectionView.contentInset.bottom)
+            let current = self.collectionView.contentOffset
+            var appliedDeltaX = self.autoScrollDeltaX
+            var appliedDeltaY = self.autoScrollDeltaY
+            if (appliedDeltaX > 0 && current.x >= maxOffsetX) || (appliedDeltaX < 0 && current.x <= 0) {
+                // Hit horizontal limit: stop moving on X to avoid flicker.
+                appliedDeltaX = 0
+            }
+            if (appliedDeltaY > 0 && current.y >= maxOffsetY) || (appliedDeltaY < 0 && current.y <= 0) {
+                // Hit vertical limit: stop moving on Y to avoid flicker.
+                appliedDeltaY = 0
+            }
+            if appliedDeltaX == 0 && appliedDeltaY == 0 {
+                // Both axes blocked: stop auto-scroll timer.
+                self.stopAutoScroll()
+                return
+            }
+            var offset = current
+            offset.x = min(max(0, current.x + appliedDeltaX), maxOffsetX)
+            offset.y = min(max(0, current.y + appliedDeltaY), maxOffsetY)
+            self.log("autoScroll tick offsetX=\(String(format: "%.1f", offset.x)) offsetY=\(String(format: "%.1f", offset.y))")
+            self.collectionView.setContentOffset(offset, animated: false)
+            self.dragSnapshot?.center.x += appliedDeltaX
+
+            // Legacy only moves snapshot on Y during auto-scroll.
+            self.dragSnapshot?.center.y += appliedDeltaY
+        }
+        autoScrollTimer = timer
+        RunLoop.main.add(timer, forMode: .common)
+    }
+
+    private func stopAutoScroll() {
+        if autoScrollTimer != nil {
+            log("autoScroll stop")
+        }
+        autoScrollTimer?.invalidate()
+        autoScrollTimer = nil
+        autoScrollDeltaY = 0
+        autoScrollDeltaX = 0
+    }
+
+    // Hover-expand/collapse support for custom drag (single source of truth).
+    private func updateHoverState(location: CGPoint, node: LayerNode, indexPath: IndexPath) {
+        guard let attrs = collectionView.layoutAttributesForItem(at: indexPath) else { return }
+        let localX = location.x - attrs.frame.minX
+        let localY = location.y - attrs.frame.minY
+        let indent = CGFloat(node.depth) * 16.0
+
+        // Collapse any auto-expanded parents that are no longer in the hovered branch.
+        let hoverBranch = Set(ancestorIds(of: node.id))
+        log("hover branch=\(hoverBranch.sorted()) autoExpanded=\(hoverAutoExpandedParents.sorted()) node=\(node.id) x=\(String(format: "%.1f", localX)) y=\(String(format: "%.1f", localY)) indent=\(String(format: "%.1f", indent))")
+        let toCollapse = hoverAutoExpandedParents.subtracting(hoverBranch)
+        if !toCollapse.isEmpty {
+            log("hover collapse set=\(toCollapse.sorted())")
+            toCollapse.forEach { collapseAutoExpanded(parentId: $0) }
+        }
+
+        if node.type == .Parent || node.type == .Page {
+            if dragLogic.shouldAutoExpand(nodeType: node.type, localX: localX, indent: indent) {
+                scheduleHoverExpand(parentId: node.id)
+            } else {
+                cancelHoverExpand()
+                if hoverAutoExpandedParents.contains(node.id),
+                   dragLogic.shouldCollapseForIndent(localX: localX, indent: indent) {
+                    log("hover collapse: left indent for parent=\(node.id)")
+                    collapseAutoExpanded(parentId: node.id)
+                }
+            }
+            if hoverAutoExpandedParents.contains(node.id),
+               dragLogic.shouldCollapseForVerticalExit(localY: localY, height: attrs.frame.height) {
+                log("hover collapse: vertical exit parent=\(node.id)")
+                collapseAutoExpanded(parentId: node.id)
+            }
+        } else {
+            cancelHoverExpand()
+        }
+    }
+
+    private func scheduleHoverExpand(parentId: Int) {
+        if hoverAutoExpandedParents.contains(parentId) { return }
+        if hoverPendingParentId == parentId { return }
+        cancelHoverExpand()
+        hoverPendingParentId = parentId
+        log("hover expand scheduled parent=\(parentId)")
+        hoverExpandTimer = Timer.scheduledTimer(withTimeInterval: 0.35, repeats: false) { [weak self] _ in
+            guard let self else { return }
+            self.hoverPendingParentId = nil
+            if let currentNode = self.reducer.tree.nodes[parentId], !currentNode.isExpanded {
+                self.reducer.toggleExpanded(id: parentId)
+                self.hoverAutoExpandedParents.insert(parentId)
+                self.applySnapshot()
+                self.log("hover expand applied parent=\(parentId)")
+            }
+        }
+    }
+
+    private func cancelHoverExpand() {
+        hoverExpandTimer?.invalidate()
+        hoverExpandTimer = nil
+        hoverPendingParentId = nil
+    }
+
+    private func collapseAutoExpanded(parentId: Int) {
+        let toCollapse = hoverAutoExpandedParents.filter { $0 == parentId || isDescendant($0, of: parentId) }
+        guard !toCollapse.isEmpty else { return }
+        for id in toCollapse {
+            if let node = reducer.tree.nodes[id], node.isExpanded {
+                reducer.toggleExpanded(id: id)
+            }
+            hoverAutoExpandedParents.remove(id)
+        }
         applySnapshot()
     }
 
-    private func moveToParent(nodeId: Int, newParentId: Int, order: Int) {
-        onMove?(nodeId, newParentId, order)
-        // Optimistic local update
-        reducer.moveToParent(id: nodeId, newParentId: newParentId, toActiveIndex: order)
+    private func collapseAllAutoExpanded() {
+        let ids = hoverAutoExpandedParents
+        if ids.isEmpty { return }
+        for id in ids {
+            if let node = reducer.tree.nodes[id], node.isExpanded {
+                reducer.toggleExpanded(id: id)
+            }
+        }
+        hoverAutoExpandedParents.removeAll()
         applySnapshot()
     }
 
-    private func isDescendant(candidate: Int, of potentialParent: Int) -> Bool {
-        guard let candidateNode = reducer.tree.nodes[candidate] else { return false }
-        var currentParent = candidateNode.parentId
-        while let node = reducer.tree.nodes[currentParent] {
-            if node.id == potentialParent { return true }
-            currentParent = node.parentId
+    private func isDescendant(_ childId: Int, of ancestorId: Int) -> Bool {
+        var current = reducer.tree.nodes[childId]?.parentId
+        while let pid = current {
+            if pid == ancestorId { return true }
+            current = reducer.tree.nodes[pid]?.parentId
         }
         return false
+    }
+
+    private func ancestorIds(of nodeId: Int) -> [Int] {
+        var ids: [Int] = [nodeId]
+        var current = reducer.tree.nodes[nodeId]?.parentId
+        while let pid = current {
+            ids.append(pid)
+            current = reducer.tree.nodes[pid]?.parentId
+        }
+        return ids
+    }
+
+    private func logHoverContext(parentId: Int, nodeId: Int, location: CGPoint) {
+        // Log hover info relative to parent bounds when available.
+        let rows = reducer.tree.flattened(includeSoftDeleted: true)
+        if let parentIndex = rows.firstIndex(where: { $0.id == parentId }) {
+            let parentIndexPath = IndexPath(item: parentIndex, section: 0)
+            if let attrs = collectionView.layoutAttributesForItem(at: parentIndexPath) {
+                let localX = location.x - attrs.frame.minX
+                let localY = location.y - attrs.frame.minY
+                let isDesc = isDescendant(nodeId, of: parentId)
+                log("hover parent=\(parentId) node=\(nodeId) desc=\(isDesc) localX=\(String(format: "%.1f", localX)) localY=\(String(format: "%.1f", localY))")
+            }
+        }
     }
 }

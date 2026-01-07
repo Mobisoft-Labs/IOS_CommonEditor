@@ -15,6 +15,7 @@ public struct LayersV2Feature {
 public final class LayerOutlineAdapter : NSObject{
     private let templateHandler: TemplateHandler
     private let logger: PackageLogger?
+    private let layersConfig: LayersConfiguration?
     private var reducer: LayerReducer
     private var controller: LayerOutlineViewController!
 
@@ -22,12 +23,13 @@ public final class LayerOutlineAdapter : NSObject{
         reducer
     }
 
-    public init?(templateHandler: TemplateHandler, logger: PackageLogger? = nil) {
+    public init?(templateHandler: TemplateHandler, logger: PackageLogger? = nil, layersConfig: LayersConfiguration? = nil) {
         guard let page = templateHandler.currentPageModel else { return nil }
         let tree = LayerTreeBuilder.build(from: page)
         self.reducer = LayerReducer(tree: tree)
         self.templateHandler = templateHandler
         self.logger = logger
+        self.layersConfig = layersConfig
         super.init()
         self.controller = buildController()
         self.controller.adapter = self
@@ -41,7 +43,22 @@ public final class LayerOutlineAdapter : NSObject{
     /// Refresh the outline from the current TemplateHandler tree (call after external mutations).
     public func refreshFromTemplate() {
         guard let page = templateHandler.currentPageModel else { return }
-        let tree = LayerTreeBuilder.build(from: page)
+        // Preserve expansion/selection
+        let expandedIds: Set<Int> = Set(reducer.tree.nodes.values.filter { $0.isExpanded }.map { $0.id })
+        let selectedId = reducer.tree.nodes.values.first(where: { $0.isSelected })?.id
+
+        var tree = LayerTreeBuilder.build(from: page)
+        // Reapply expansion/selection where possible
+        for id in Array(tree.nodes.keys) {
+            guard var node = tree.nodes[id] else { continue }
+            if expandedIds.contains(id) {
+                node.isExpanded = true
+            }
+            if let selectedId, id == selectedId {
+                node.isSelected = true
+            }
+            tree.nodes[id] = node
+        }
         reducer = LayerReducer(tree: tree)
         controller.reload(with: reducer)
     }
@@ -59,11 +76,23 @@ public final class LayerOutlineAdapter : NSObject{
 
     // MARK: - Move / Reorder
 
-    /// Move a node to a new parent/position via TemplateHandler and refresh.
-    public func move(nodeId: Int, toParent newParentId: Int, atOrder order: Int) {
-        let moveModel = templateHandler.moveChildIntoNewParent(modelID: nodeId, newParentID: newParentId, order: order)
+    /// Move (or reorder within same parent) via TemplateHandler and refresh.
+    public func move(nodeId: Int, toParent newParentId: Int, atOrder order: Int, oldOrder: Int? = nil, sameParent: Bool = false) {
+        var targetOrder = order
+        if sameParent, let oldOrder = oldOrder, oldOrder < order, order > 0 {
+            targetOrder = order - 1
+        }
+        var moveModel = templateHandler.moveChildIntoNewParent(modelID: nodeId, newParentID: newParentId, order: targetOrder)
         // If move failed or empty, bail
         guard !moveModel.newMM.isEmpty else { return }
+
+        if sameParent {
+            moveModel.type = .OrderChangeOnly
+            moveModel.orderChange = OrderChange(selectedModelId: nodeId, oldOrder: oldOrder ?? 0, newOrder: targetOrder)
+        } else {
+            moveModel.type = .MoveModel
+        }
+
         // Persist DB changes for all entries
         for entry in moveModel.newMM {
             _ = DBManager.shared.updateMoveModelChild(moveModelData: entry, parentSize: templateHandler.getModel(modelId: entry.parentID)?.baseFrame.size ?? .zero)
@@ -113,6 +142,10 @@ public final class LayerOutlineAdapter : NSObject{
         return LayerOutlineViewController(
             reducer: reducer,
             logger: logger,
+            dragLogicConfig: .init(),
+            dragAnimationConfig: .init(),
+            dragViewPosition: .centerOfDragView,
+            dragHitTestPosition: .userTouch,
             onSelect: { [weak templateHandler] node in
                 templateHandler?.deepSetCurrentModel(id: node.id)
             },
@@ -135,13 +168,31 @@ public final class LayerOutlineAdapter : NSObject{
                 normalizeOrders(forParent: model.parentId)
                 refreshFromTemplate()
             },
-            onMove: { [weak self] nodeId, parentId, order in
-                self?.move(nodeId: nodeId, toParent: parentId, atOrder: order)
+            onMove: { [weak self] nodeId, parentId, order, oldOrder, sameParent in
+                self?.move(nodeId: nodeId, toParent: parentId, atOrder: order, oldOrder: oldOrder, sameParent: sameParent)
             },
             onReorder: { [weak self] parentId, from, to in
                 self?.reorderWithinParent(parentId: parentId, fromOrder: from, toOrder: to)
+            },
+            onClose: { [weak self] in
+                guard let self else { return }
+                self.layersConfig?.removeOrDismissViewController(self.controller)
             }
         )
+    }
+
+    public func updateDragLogic(config: LayerOutlineDragLogicConfig) {
+        controller.updateDragLogic(config: config)
+    }
+
+    public func updateDragPresentation(animation: LayerOutlineDragAnimationConfig, position: LayerOutlineDragViewPosition) {
+        controller.updateDragPresentation(animation: animation, position: position)
+    }
+
+    public func updateDragPresentation(animation: LayerOutlineDragAnimationConfig,
+                                       position: LayerOutlineDragViewPosition,
+                                       hitTestPosition: LayerOutlineDragHitTestPosition) {
+        controller.updateDragPresentation(animation: animation, position: position, hitTestPosition: hitTestPosition)
     }
 
     /// Convenience to refresh from handler and notify controller.
