@@ -89,6 +89,7 @@ public class ActionStates: ObservableObject {
 //    @Published public var lastSelctedOverlayContent: AnyBGContent?
 //    @Published public var lastSelectedFilter: FiltersEnum = .none
     @Published public var isCurrentModelDeleted: Bool = false
+    @Published public var deleteModelId: Int = 0
     @Published public var shouldRefreshOnAddComponent: Bool = false
 //    @Published public var lastSelectedFont: String = "Default"
 //    @Published public var lastSelectedFlipH: Bool = false

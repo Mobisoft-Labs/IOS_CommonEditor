@@ -83,6 +83,13 @@ extension MetalEngine {
             }
 
         }.store(in: &actionStateCancellables)
+
+        templateHandler.currentActionState.$deleteModelId.dropFirst().sink { [weak self] modelId in
+            guard let self = self else { return }
+            guard modelId != 0 else { return }
+            templateHandler.performDeleteAction(modelId: modelId, newValue: true)
+            templateHandler.currentActionState.deleteModelId = 0
+        }.store(in: &actionStateCancellables)
         
         templateHandler.currentActionState.$duplicateModel.dropFirst().sink { [weak self] duplicateModel in
             guard let self = self else { return }

@@ -189,5 +189,20 @@ public class ViewManager : GestureHandler ,
 
 }
 
+extension ViewManager {
+    func syncOrderForParent(parentId: Int) {
+        guard let templateHandler = templateHandler,
+              let parentInfo = templateHandler.getModel(modelId: parentId) as? ParentInfo,
+              let parentView = rootView?.hasChild(id: parentId) as? ParentView else { return }
+        let ordered = parentInfo.activeChildren.sorted { $0.orderInParent < $1.orderInParent }
+        for child in ordered {
+            if let childView = rootView?.hasChild(id: child.modelId) as? BaseView {
+                childView.setOrder(order: child.orderInParent)
+            }
+        }
+        parentView.sortChildrensInDescendingOrder()
+        refreshControlBar = true
+    }
+}
 
 

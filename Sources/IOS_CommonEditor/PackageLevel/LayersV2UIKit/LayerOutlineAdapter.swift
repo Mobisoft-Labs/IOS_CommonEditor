@@ -28,8 +28,14 @@ public final class LayerOutlineAdapter : NSObject{
     private var controller: LayerOutlineViewController!
     private var cancellables = Set<AnyCancellable>()
     private var shouldSeedFromEditState = true
+    private var scopedRootId: Int?
     public var outlineRootMode: LayerOutlineRootMode = .page {
-        didSet { refreshFromTemplate() }
+        didSet {
+            if outlineRootMode == .page {
+                scopedRootId = nil
+            }
+            refreshFromTemplate()
+        }
     }
     /// When true in selectedParent mode, show full nested tree; otherwise show only direct children.
     public var scopedShowsNestedChildren: Bool = false {
@@ -206,7 +212,7 @@ public final class LayerOutlineAdapter : NSObject{
             dragLogicConfig: .init(),
             dragAnimationConfig: .init(),
             dragViewPosition: .centerOfDragView,
-            dragHitTestPosition: .userTouch,
+            dragHitTestPosition: .dragViewOrigin,
             onSelect: { [weak templateHandler] node in
                 templateHandler?.deepSetCurrentModel(id: node.id)
             },
@@ -218,10 +224,7 @@ public final class LayerOutlineAdapter : NSObject{
             },
             onDeleteRestore: { [weak self, weak templateHandler] id, wasDeleted in
                 guard let self, let templateHandler = templateHandler, let model = templateHandler.getModel(modelId: id) else { return }
-                model.softDelete = !wasDeleted
-                model.orderInParent = wasDeleted ? model.orderInParent : -1
-                _ = DBManager.shared.updateSoftDelete(modelId: id, newValue: model.softDelete.toInt())
-                normalizeOrders(forParent: model.parentId)
+                templateHandler.performDeleteAction(modelId: model.modelId, newValue: !wasDeleted)
                 refreshFromTemplate()
             },
             onMove: { [weak self] nodeId, parentId, order, oldOrder, sameParent in
@@ -319,14 +322,27 @@ public final class LayerOutlineAdapter : NSObject{
 
     private func resolveOutlineRoot(templateHandler: TemplateHandler, mode: LayerOutlineRootMode) -> ParentModel? {
         guard let page = templateHandler.currentPageModel else { return nil }
-        guard mode == .selectedParent, let selected = templateHandler.currentModel else { return page }
+        if mode != .selectedParent { return page }
+        if let cachedId = scopedRootId,
+           let cached = templateHandler.getModel(modelId: cachedId) as? ParentModel,
+           !cached.softDelete {
+            if let selected = templateHandler.currentModel,
+               isDescendantOrSelf(modelId: selected.modelId, rootId: cachedId, templateHandler: templateHandler) {
+                return cached
+            }
+            scopedRootId = nil
+        }
+        guard let selected = templateHandler.currentModel else { return page }
         if let selectedParent = selected as? ParentModel, selectedParent.editState {
+            scopedRootId = selectedParent.modelId
             return selectedParent
         }
         if let nearest = nearestEditedParent(from: selected, templateHandler: templateHandler) {
+            scopedRootId = nearest.modelId
             return nearest
         }
         if let parent = templateHandler.getModel(modelId: selected.parentId) as? ParentModel {
+            scopedRootId = parent.modelId
             return parent
         }
         return page
@@ -340,6 +356,16 @@ public final class LayerOutlineAdapter : NSObject{
             currentId = current.parentId
         }
         return nil
+    }
+
+    private func isDescendantOrSelf(modelId: Int, rootId: Int, templateHandler: TemplateHandler) -> Bool {
+        if modelId == rootId { return true }
+        var currentId = templateHandler.getModel(modelId: modelId)?.parentId ?? 0
+        while currentId != 0 {
+            if currentId == rootId { return true }
+            currentId = templateHandler.getModel(modelId: currentId)?.parentId ?? 0
+        }
+        return false
     }
 
     private func updateOutlineRootContext() {

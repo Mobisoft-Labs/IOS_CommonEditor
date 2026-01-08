@@ -48,6 +48,8 @@ public enum LayerOutlineDragHitTestPosition {
     case userTouch
     /// Use the drag view's current center for hit testing.
     case dragViewCenter
+    /// Use the drag view's current origin (top-left) for hit testing.
+    case dragViewOrigin
 }
 
 public struct LayerOutlineDragAnimationConfig {

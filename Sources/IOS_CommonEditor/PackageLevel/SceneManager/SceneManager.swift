@@ -440,6 +440,22 @@ public class SceneManager  : NSObject, SceneComposable , TemplateObserversProtoc
       
 }
 
+extension SceneManager {
+    func syncOrderForParent(parentId: Int) {
+        guard let templateHandler = templateHandler,
+              let parentInfo = templateHandler.getModel(modelId: parentId) as? ParentInfo,
+              let parentMChild = mChildHandler.childDict[parentId] as? MParent else { return }
+        let orderedChildren = parentInfo.activeChildren.sorted { $0.orderInParent < $1.orderInParent }
+        for child in orderedChildren {
+            if let mChild = mChildHandler.childDict[child.modelId] {
+                mChild.mOrder = child.orderInParent
+            }
+        }
+        parentMChild.childern.sort { $0.mOrder < $1.mOrder }
+        redraw()
+    }
+}
+
 extension SceneManager : IOSMetalViewRenderDelegate {
     func IOSMetalView(_ metalView: IOSMetalView, didChangeSize: CGSize) {
         logger.printLog("Size did Change \(didChangeSize)")
