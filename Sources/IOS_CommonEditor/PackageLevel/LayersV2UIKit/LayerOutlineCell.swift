@@ -4,6 +4,7 @@
 //
 
 import UIKit
+import Combine
 
 final class LayerOutlineCell: UICollectionViewListCell {
     var onToggleExpand: (() -> Void)?
@@ -20,8 +21,10 @@ final class LayerOutlineCell: UICollectionViewListCell {
     private let colorDot = UIView()
     private let dragHandle = UIImageView(image: UIImage(systemName: "line.horizontal.3"))
     private let selectButton = UIButton(type: .system)
+    private let lockButton = UIButton(type: .system)
     private var expandWidthConstraint: NSLayoutConstraint?
     private var thumbLeadingConstraint: NSLayoutConstraint?
+    private var cancellables = Set<AnyCancellable>()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -75,7 +78,7 @@ final class LayerOutlineCell: UICollectionViewListCell {
         selectButton.widthAnchor.constraint(equalToConstant: 32).isActive = true
         selectButton.heightAnchor.constraint(equalToConstant: 32).isActive = true
 
-        let lockButton = makeTrailingButton(systemName: "lock.fill", action: #selector(lockTapped))
+        configureLockButton()
 
         trailingStack.axis = .horizontal
         trailingStack.spacing = 8
@@ -118,44 +121,42 @@ final class LayerOutlineCell: UICollectionViewListCell {
     }
 
     func configure(with node: LayerNode,
+                   model: BaseModel,
                    onToggleExpand: (() -> Void)?,
                    onSelectTick: (() -> Void)?,
                    onToggleLock: (() -> Void)?) {
         self.onToggleExpand = onToggleExpand
         self.onSelectTick = onSelectTick
         self.onToggleLock = onToggleLock
+        cancellables.removeAll()
 
-        titleLabel.text = "#\(node.id) \(node.type)"
-        subtitleLabel.text = node.softDelete ? "Deleted" : "Order \(node.orderInParent)"
-        titleLabel.textColor = node.softDelete ? .secondaryLabel : .label
-        subtitleLabel.textColor = node.softDelete ? .tertiaryLabel : .secondaryLabel
-        contentView.layer.borderWidth = node.isSelected ? 1.0 : 0.6
-        contentView.layer.borderColor = (node.isSelected ? UIColor.tintColor : UIColor.separator.withAlphaComponent(0.4)).cgColor
-        contentView.backgroundColor = UIColor.secondarySystemBackground.withAlphaComponent(node.softDelete ? 0.4 : 0.7)
-        selectButton.setImage(UIImage(systemName: node.isSelected ? "checkmark.circle.fill" : "circle"), for: .normal)
-        selectButton.tintColor = node.isSelected ? .systemBlue : .secondaryLabel
+        titleLabel.text = "#\(model.modelId) \(model.modelType)"
+        subtitleLabel.text = model.softDelete ? "Deleted" : "Order \(model.orderInParent)"
+        titleLabel.textColor = model.softDelete ? .secondaryLabel : .label
+        subtitleLabel.textColor = model.softDelete ? .tertiaryLabel : .secondaryLabel
+        let isSelected = model.isLayerAtive
+        let isParent = (node.type == .Page || node.type == .Parent)
+        let isExpanded = (model as? ParentModel)?.isExpanded ?? false
+        updateSelectionUI(isSelected: isSelected)
+        updateExpandedUI(isExpanded: isExpanded, isParent: isParent, isSelected: isSelected, isDeleted: model.softDelete, depth: node.depth)
 
-        if let thumb = node.thumbImage {
-            thumbImageView.image = thumb
-            thumbImageView.contentMode = .scaleAspectFill
-        } else {
-            thumbImageView.image = icon(for: node)
-            thumbImageView.tintColor = node.softDelete ? .secondaryLabel : .label
-            thumbImageView.contentMode = .scaleAspectFit
-        }
+        thumbImageView.image = model.thumbImage ?? icon(for: node)
+        thumbImageView.tintColor = model.softDelete ? .secondaryLabel : .label
+        thumbImageView.contentMode = model.thumbImage == nil ? .scaleAspectFit : .scaleAspectFill
 
-        expandButton.isHidden = !(node.type == .Page || node.type == .Parent)
-        expandButton.setImage(UIImage(systemName: node.isExpanded ? "chevron.down" : "chevron.right"), for: .normal)
-        expandButton.isEnabled = !node.isLocked
-        expandButton.alpha = node.isLocked ? 0.4 : 1.0
-        if node.isLocked {
+        expandButton.isHidden = !isParent
+        expandButton.setImage(UIImage(systemName: isExpanded ? "chevron.down" : "chevron.right"), for: .normal)
+        expandButton.isEnabled = !model.lockStatus
+        expandButton.alpha = model.lockStatus ? 0.4 : 1.0
+        updateLockIcon(isLocked: model.lockStatus)
+        if model.lockStatus {
             expandButton.isHidden = true
             expandWidthConstraint?.constant = 0
         } else {
-            expandWidthConstraint?.constant = (node.type == .Page || node.type == .Parent) ? 20 : 0
+            expandWidthConstraint?.constant = isParent ? 20 : 0
         }
         // Legacy: non-parents shift thumbnail left by removing spacing after expand button.
-        if node.type == .Page || node.type == .Parent {
+        if isParent {
             rootStack.setCustomSpacing(8, after: expandButton)
             thumbLeadingConstraint?.constant = 5
         } else {
@@ -164,15 +165,17 @@ final class LayerOutlineCell: UICollectionViewListCell {
             thumbLeadingConstraint?.constant = -40
         }
         leadingConstraint?.constant = 12 + CGFloat(node.depth) * 16
-        colorDot.backgroundColor = color(for: node)
+        updateColorDot(model: model, node: node)
         // Button colors and states
         trailingStack.arrangedSubviews.forEach { $0.isHidden = false }
         trailingStack.arrangedSubviews.compactMap { $0 as? UIButton }.forEach { btn in
-            btn.tintColor = node.softDelete ? .tertiaryLabel : .secondaryLabel
-            btn.isEnabled = !node.softDelete
+            btn.tintColor = model.softDelete ? .tertiaryLabel : .secondaryLabel
+            btn.isEnabled = !model.softDelete
         }
         dragHandle.isHidden = false
-        dragHandle.alpha = node.softDelete ? 0.3 : 1.0
+        dragHandle.alpha = model.softDelete ? 0.3 : 1.0
+
+        bind(model: model, node: node, isParent: isParent)
     }
 
     private func icon(for node: LayerNode) -> UIImage? {
@@ -216,6 +219,112 @@ final class LayerOutlineCell: UICollectionViewListCell {
 
     @objc private func lockTapped() {
         onToggleLock?()
+    }
+
+    private func bind(model: BaseModel, node: LayerNode, isParent: Bool) {
+        model.$isLayerAtive
+            .receive(on: RunLoop.main)
+            .sink { [weak self] isSelected in
+                self?.updateSelectionUI(isSelected: isSelected)
+                let isExpanded = (model as? ParentModel)?.isExpanded ?? false
+                self?.updateExpandedUI(isExpanded: isExpanded, isParent: isParent, isSelected: isSelected, isDeleted: model.softDelete, depth: node.depth)
+            }
+            .store(in: &cancellables)
+
+        model.$lockStatus
+            .receive(on: RunLoop.main)
+            .sink { [weak self] isLocked in
+                guard let self else { return }
+                self.expandButton.isEnabled = !isLocked
+                self.expandButton.alpha = isLocked ? 0.4 : 1.0
+                self.updateLockIcon(isLocked: isLocked)
+                if isLocked {
+                    self.expandButton.isHidden = true
+                    self.expandWidthConstraint?.constant = 0
+                } else {
+                    let isParent = (node.type == .Page || node.type == .Parent)
+                    self.expandButton.isHidden = !isParent
+                    self.expandWidthConstraint?.constant = isParent ? 20 : 0
+                }
+            }
+            .store(in: &cancellables)
+
+        model.$thumbImage
+            .receive(on: RunLoop.main)
+            .sink { [weak self] image in
+                guard let self else { return }
+                self.thumbImageView.image = image ?? self.icon(for: node)
+                self.thumbImageView.contentMode = image == nil ? .scaleAspectFit : .scaleAspectFill
+            }
+            .store(in: &cancellables)
+
+        if let parent = model as? ParentModel {
+            parent.$isExpanded
+                .receive(on: RunLoop.main)
+                .sink { [weak self] expanded in
+                    self?.expandButton.setImage(UIImage(systemName: expanded ? "chevron.down" : "chevron.right"), for: .normal)
+                    if let self {
+                        self.updateColorDot(model: model, node: node)
+                        self.updateExpandedUI(isExpanded: expanded, isParent: isParent, isSelected: model.isLayerAtive, isDeleted: model.softDelete, depth: node.depth)
+                    }
+                }
+                .store(in: &cancellables)
+        }
+    }
+
+    private func updateSelectionUI(isSelected: Bool) {
+        contentView.layer.borderWidth = isSelected ? 1.0 : 0.6
+        contentView.layer.borderColor = (isSelected ? UIColor.tintColor : UIColor.separator.withAlphaComponent(0.4)).cgColor
+        selectButton.setImage(UIImage(systemName: isSelected ? "checkmark.circle.fill" : "circle"), for: .normal)
+        selectButton.tintColor = isSelected ? .systemBlue : .secondaryLabel
+    }
+
+    private func configureLockButton() {
+        lockButton.setImage(UIImage(systemName: "lock.fill"), for: .normal)
+        lockButton.imageView?.contentMode = .scaleAspectFit
+        lockButton.tintColor = .secondaryLabel
+        lockButton.addTarget(self, action: #selector(lockTapped), for: .touchUpInside)
+        lockButton.widthAnchor.constraint(equalToConstant: 32).isActive = true
+        lockButton.heightAnchor.constraint(equalToConstant: 32).isActive = true
+    }
+
+    private func updateLockIcon(isLocked: Bool) {
+        let name = isLocked ? "lock.fill" : "lock.open"
+        lockButton.setImage(UIImage(systemName: name), for: .normal)
+    }
+
+    private func updateColorDot(model: BaseModel, node: LayerNode) {
+        if let parent = model as? ParentModel {
+            let colorName = parent.isExpanded ? "parentExpanded" : "parentCollapsed"
+            colorDot.backgroundColor = UIColor(named: colorName) ?? .systemOrange
+        } else {
+            colorDot.backgroundColor = color(for: node)
+        }
+    }
+
+    private func updateExpandedUI(isExpanded: Bool, isParent: Bool, isSelected: Bool, isDeleted: Bool, depth: Int) {
+        if isDeleted {
+            contentView.backgroundColor = UIColor.secondarySystemBackground.withAlphaComponent(0.4)
+            return
+        }
+        if isSelected {
+            contentView.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.18)
+            return
+        }
+        if isParent && isExpanded {
+            let cappedDepth = min(max(depth, 0), 4)
+            let base: CGFloat = 0.08
+            let step: CGFloat = 0.02
+            let alpha = base + (CGFloat(cappedDepth) * step)
+            contentView.backgroundColor = UIColor.systemYellow.withAlphaComponent(alpha)
+        } else {
+            contentView.backgroundColor = UIColor.secondarySystemBackground.withAlphaComponent(0.7)
+        }
+    }
+
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        cancellables.removeAll()
     }
 
 }

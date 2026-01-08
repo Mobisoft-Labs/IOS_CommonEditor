@@ -20,7 +20,7 @@ public final class LayerOutlineAdapter : NSObject{
     private var reducer: LayerReducer
     private var controller: LayerOutlineViewController!
     private var cancellables = Set<AnyCancellable>()
-    private var modelCancellables: [Int: Set<AnyCancellable>] = [:]
+    private var shouldSeedFromEditState = true
 
     public var currentReducer: LayerReducer {
         reducer
@@ -37,7 +37,6 @@ public final class LayerOutlineAdapter : NSObject{
         self.controller = buildController()
         self.controller.adapter = self
         observeTemplateUpdates()
-        observeModelChanges()
     }
 
     /// Returns the view controller for presentation or embedding.
@@ -46,27 +45,48 @@ public final class LayerOutlineAdapter : NSObject{
     }
 
     /// Refresh the outline from the current TemplateHandler tree (call after external mutations).
-    public func refreshFromTemplate() {
+    public func refreshFromTemplate(reconfigureIdsOverride: Set<Int>? = nil) {
         guard let page = templateHandler.currentPageModel else { return }
-        // Preserve expansion/selection
-        let expandedIds: Set<Int> = Set(reducer.tree.nodes.values.filter { $0.isExpanded }.map { $0.id })
-        let selectedId = reducer.tree.nodes.values.first(where: { $0.isSelected })?.id
-
+        let oldTree = reducer.tree
         var tree = LayerTreeBuilder.build(from: page)
         // Reapply expansion/selection where possible
         for id in Array(tree.nodes.keys) {
             guard var node = tree.nodes[id] else { continue }
-            if expandedIds.contains(id) {
-                node.isExpanded = true
-            }
-            if let selectedId, id == selectedId {
-                node.isSelected = true
+            if let parent = templateHandler.getModel(modelId: id) as? ParentModel {
+                if shouldSeedFromEditState {
+                    node.isExpanded = parent.editState
+                } else {
+                    node.isExpanded = parent.isExpanded
+                }
             }
             tree.nodes[id] = node
         }
+        shouldSeedFromEditState = false
         reducer = LayerReducer(tree: tree)
-        controller.reload(with: reducer)
-        observeModelChanges()
+        let reconfigureIds = reconfigureIdsOverride ?? computeReconfigureIds(oldTree: oldTree, newTree: tree)
+        controller.reload(with: reducer, reconfigureIds: reconfigureIds)
+    }
+
+    public func refreshFromTemplate(reconfigureIdsBuilder: (LayerTree, LayerTree) -> Set<Int>) {
+        guard let page = templateHandler.currentPageModel else { return }
+        let oldTree = reducer.tree
+        var tree = LayerTreeBuilder.build(from: page)
+        // Reapply expansion/selection where possible
+        for id in Array(tree.nodes.keys) {
+            guard var node = tree.nodes[id] else { continue }
+            if let parent = templateHandler.getModel(modelId: id) as? ParentModel {
+                if shouldSeedFromEditState {
+                    node.isExpanded = parent.editState
+                } else {
+                    node.isExpanded = parent.isExpanded
+                }
+            }
+            tree.nodes[id] = node
+        }
+        shouldSeedFromEditState = false
+        reducer = LayerReducer(tree: tree)
+        let reconfigureIds = reconfigureIdsBuilder(oldTree, tree)
+        controller.reload(with: reducer, reconfigureIds: reconfigureIds)
     }
 
     /// Apply a reorder/move/delete/undelete request and refresh UI.
@@ -108,7 +128,16 @@ public final class LayerOutlineAdapter : NSObject{
         // Normalize orders for both old and new parents
         let parentIds = Set(moveModel.oldMM.map { $0.parentID } + moveModel.newMM.map { $0.parentID })
         parentIds.forEach { normalizeOrders(forParent: $0) }
-        refreshFromTemplate()
+        refreshFromTemplate { oldTree, tree in
+            var ids = parentIds
+            ids.formUnion(descendantIds(of: nodeId, in: tree))
+            ids.insert(nodeId)
+            let oldParentId = oldTree.nodes[nodeId]?.parentId ?? newParentId
+            let oldOrderValue = oldOrder ?? oldTree.nodes[nodeId]?.orderInParent ?? 0
+            ids.formUnion(neighborIds(aroundOrder: oldOrderValue, parentId: oldParentId, in: oldTree))
+            ids.formUnion(neighborIds(aroundOrder: targetOrder, parentId: newParentId, in: tree))
+            return ids
+        }
     }
 
     /// Reorder within same parent via TemplateHandler (swap orders).
@@ -120,7 +149,15 @@ public final class LayerOutlineAdapter : NSObject{
         let moving = active[fromOrder]
         parent.changeOrder(child: moving, oldOrder: fromOrder, newOrder: safeTo)
         normalizeOrders(forParent: parentId)
-        refreshFromTemplate()
+        refreshFromTemplate { oldTree, newTree in
+            var ids: Set<Int> = [parentId]
+            if fromOrder >= 0, fromOrder < active.count {
+                ids.insert(active[fromOrder].modelId)
+            }
+            ids.formUnion(neighborIds(aroundOrder: fromOrder, parentId: parentId, in: oldTree))
+            ids.formUnion(neighborIds(aroundOrder: safeTo, parentId: parentId, in: newTree))
+            return ids
+        }
     }
 
     /// Normalize active children orders for a given parent and persist.
@@ -200,84 +237,37 @@ public final class LayerOutlineAdapter : NSObject{
         templateHandler.currentModel?.modelId ?? -1
     }
 
-    private func observeTemplateUpdates() {
-        templateHandler.currentActionState.$thumbUpdateId
-            .removeDuplicates()
-            .sink { [weak self] id in
-                guard let self else { return }
-                if id != 0 {
-                    self.refreshFromTemplate()
-                }
-            }
-            .store(in: &cancellables)
+    public func setNeedsExpandSeed() {
+        shouldSeedFromEditState = true
     }
 
-    private func observeModelChanges() {
-        modelCancellables.removeAll()
+    // UI-only selection highlight to match legacy (does not set current model).
+    public func setLayerActiveUIOnly(id: Int) {
         guard let page = templateHandler.currentPageModel else { return }
-        walk(model: page) { [weak self] model in
-            guard let self else { return }
-            var set = Set<AnyCancellable>()
-
-            model.$isLayerAtive
-                .removeDuplicates()
-                .sink { [weak self] isActive in
-                    self?.updateNode(modelId: model.modelId) { node in
-                        node.isSelected = isActive
-                    }
-                    if isActive {
-                        self?.controller.reconfigureItems([model.modelId])
-                    }
-                }
-                .store(in: &set)
-
-            model.$lockStatus
-                .removeDuplicates()
-                .sink { [weak self] isLocked in
-                    self?.updateNode(modelId: model.modelId) { node in
-                        node.isLocked = isLocked
-                    }
-                    self?.controller.reconfigureItems([model.modelId])
-                }
-                .store(in: &set)
-
-            model.$isHidden
-                .removeDuplicates()
-                .sink { [weak self] isHidden in
-                    self?.updateNode(modelId: model.modelId) { node in
-                        node.isHidden = isHidden
-                    }
-                    self?.controller.reconfigureItems([model.modelId])
-                }
-                .store(in: &set)
-
-            model.$thumbImage
-                .sink { [weak self] image in
-                    self?.updateNode(modelId: model.modelId) { node in
-                        node.thumbImage = image
-                    }
-                    self?.controller.reconfigureItems([model.modelId])
-                }
-                .store(in: &set)
-
-            if let parent = model as? ParentModel {
-                parent.$isExpanded
-                    .removeDuplicates()
-                    .sink { [weak self] isExpanded in
-                        self?.updateNode(modelId: parent.modelId) { node in
-                            node.isExpanded = isExpanded
-                        }
-                        self?.controller.refreshSnapshot()
-                    }
-                    .store(in: &set)
-            }
-
-            modelCancellables[model.modelId] = set
+        walk(model: page) { model in
+            model.isLayerAtive = (model.modelId == id)
         }
     }
 
-    private func updateNode(modelId: Int, _ block: (inout LayerNode) -> Void) {
-        reducer.updateNode(id: modelId, block)
+    public func synchronizeLayerUIState() {
+        guard let page = templateHandler.currentPageModel else { return }
+        synchronizeStateForNode(page)
+        if let current = templateHandler.currentModel {
+            current.isLayerAtive = true
+        }
+    }
+
+    private func synchronizeStateForNode(_ node: BaseModel) {
+        // Legacy parity: UI expansion follows editState, selection follows isActive.
+        if let parent = node as? ParentModel {
+            parent.isExpanded = parent.editState
+        }
+        node.isLayerAtive = node.isActive
+        if let parent = node as? ParentModel {
+            for child in parent.activeChildren {
+                synchronizeStateForNode(child)
+            }
+        }
     }
 
     private func walk(model: BaseModel, visit: (BaseModel) -> Void) {
@@ -289,8 +279,80 @@ public final class LayerOutlineAdapter : NSObject{
         }
     }
 
+
+    private func observeTemplateUpdates() {
+        templateHandler.currentActionState.$thumbUpdateId
+            .removeDuplicates()
+            .sink { [weak self] id in
+                guard let self else { return }
+                if id != 0 { self.refreshFromTemplate() }
+            }
+            .store(in: &cancellables)
+    }
+
+    public func modelFor(id: Int) -> BaseModel? {
+        templateHandler.getModel(modelId: id)
+    }
+
     /// Convenience to refresh from handler and notify controller.
     public func refreshAndReload() {
         refreshFromTemplate()
+    }
+
+    private func computeReconfigureIds(oldTree: LayerTree, newTree: LayerTree) -> Set<Int> {
+        var changed = Set<Int>()
+        for (id, newNode) in newTree.nodes {
+            guard let oldNode = oldTree.nodes[id] else {
+                changed.insert(id)
+                continue
+            }
+            if newNode.parentId != oldNode.parentId
+                || newNode.orderInParent != oldNode.orderInParent
+                || newNode.depth != oldNode.depth
+                || newNode.softDelete != oldNode.softDelete {
+                changed.insert(id)
+            }
+        }
+
+        let oldParents = Set(oldTree.childrenByParent.keys)
+        let newParents = Set(newTree.childrenByParent.keys)
+        let allParents = oldParents.union(newParents)
+        for parentId in allParents {
+            let oldChildren = oldTree.childrenByParent[parentId] ?? []
+            let newChildren = newTree.childrenByParent[parentId] ?? []
+            if oldChildren.count != newChildren.count {
+                changed.insert(parentId)
+                continue
+            }
+            if oldChildren != newChildren {
+                changed.insert(parentId)
+            }
+        }
+        return changed
+    }
+
+    private func descendantIds(of nodeId: Int, in tree: LayerTree) -> Set<Int> {
+        var result = Set<Int>()
+        var stack = [nodeId]
+        while let current = stack.popLast() {
+            let children = tree.childrenByParent[current] ?? []
+            for childId in children {
+                if result.insert(childId).inserted {
+                    stack.append(childId)
+                }
+            }
+        }
+        return result
+    }
+
+    private func neighborIds(aroundOrder order: Int, parentId: Int, in tree: LayerTree) -> Set<Int> {
+        let children = tree.childrenByParent[parentId] ?? []
+        guard !children.isEmpty else { return [] }
+        let index = min(max(0, order), children.count - 1)
+        var ids = Set<Int>()
+        ids.insert(children[index])
+        if index > 0 { ids.insert(children[index - 1]) }
+        if index + 1 < children.count { ids.insert(children[index + 1]) }
+        return ids
     }
 }

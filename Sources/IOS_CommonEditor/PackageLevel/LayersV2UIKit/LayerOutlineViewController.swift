@@ -95,27 +95,24 @@ import UIKit
         applySnapshot()
     }
 
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        adapter?.setNeedsExpandSeed()
+        adapter?.synchronizeLayerUIState()
+        adapter?.refreshFromTemplate()
+    }
+
     // MARK: - Public updates
 
-    func reload(with reducer: LayerReducer) {
+    func reload(with reducer: LayerReducer, reconfigureIds: Set<Int> = []) {
         self.reducer = reducer
         guard isViewLoaded else { return }
-        applySnapshot()
+        applySnapshot(reconfigureIds: reconfigureIds)
     }
 
     func refreshSnapshot() {
         guard isViewLoaded else { return }
         applySnapshot()
-    }
-
-    func reconfigureItems(_ ids: [Int]) {
-        guard isViewLoaded, dataSource != nil else { return }
-        var snapshot = dataSource.snapshot()
-        let existing = Set(snapshot.itemIdentifiers)
-        let safeIds = ids.filter { existing.contains($0) }
-        guard !safeIds.isEmpty else { return }
-        snapshot.reconfigureItems(safeIds)
-        dataSource.apply(snapshot, animatingDifferences: false)
     }
 
     func updateDragLogic(config: LayerOutlineDragLogicConfig) {
@@ -220,10 +217,11 @@ import UIKit
                 let self = self,
                 let node = self.reducer.tree.nodes[itemIdentifier]
             else { return UICollectionViewCell() }
+            guard let model = self.adapter?.modelFor(id: itemIdentifier) else { return cell }
             cell.configure(
                 with: node,
+                model: model,
                 onToggleExpand: { [weak self] in
-                    self?.selectIfNeeded(nodeId: node.id)
                     self?.toggleExpand(nodeId: node.id)
                 },
                 onSelectTick: { [weak self] in
@@ -239,28 +237,45 @@ import UIKit
         }
     }
 
-    private func applySnapshot() {
+    private func applySnapshot(reconfigureIds: Set<Int> = []) {
         guard dataSource != nil else { return }
         var snapshot = NSDiffableDataSourceSnapshot<Int, Int>()
         snapshot.appendSections([0])
         let rows = reducer.tree.flattened(includeSoftDeleted: true)
         snapshot.appendItems(rows.map { $0.id }, toSection: 0)
+        if !reconfigureIds.isEmpty {
+            let currentIds = Set(snapshot.itemIdentifiers)
+            let ids = Array(reconfigureIds.intersection(currentIds))
+            if !ids.isEmpty {
+                snapshot.reconfigureItems(ids)
+            }
+        }
         dataSource.apply(snapshot, animatingDifferences: true)
         collectionView.collectionViewLayout.invalidateLayout()
     }
 
     private func toggleExpand(nodeId: Int) {
-        reducer.toggleExpanded(id: nodeId)
-        applySnapshot()
+        guard let model = adapter?.modelFor(id: nodeId) as? ParentModel else { return }
+        // UI-only expand/collapse: do not touch TemplateHandler editState or undo stack.
+        model.isExpanded.toggle()
+        adapter?.refreshFromTemplate()
     }
 
     private func selectIfNeeded(nodeId: Int) {
-        guard let node = reducer.tree.nodes[nodeId], !node.isSelected else { return }
-        reducer.select(id: nodeId)
-        if let selected = reducer.tree.nodes[nodeId] {
-            onSelect?(selected)
-        }
-        applySnapshot()
+        guard let model = adapter?.modelFor(id: nodeId) else { return }
+        if model.isLayerAtive { return }
+        onSelect?(reducer.tree.nodes[nodeId] ?? LayerNode(id: nodeId,
+                                                          parentId: model.parentId,
+                                                          orderInParent: model.orderInParent,
+                                                          depth: 0,
+                                                          softDelete: model.softDelete,
+                                                          lastActiveOrder: nil,
+                                                          isLocked: model.lockStatus,
+                                                          isHidden: model.isHidden,
+                                                          isExpanded: (model as? ParentModel)?.isExpanded ?? false,
+                                                          isSelected: true,
+                                                          type: model.modelType,
+                                                          thumbImage: model.thumbImage))
     }
 
     private func logOrders(parentId: Int, label: String) {
@@ -280,9 +295,10 @@ extension LayerOutlineViewController: UICollectionViewDelegate {
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         guard let id = dataSource.itemIdentifier(for: indexPath), var node = reducer.tree.nodes[id] else { return }
         // Selection only; expansion handled by accessory button.
+        // Do not call setCurrentModel here; selection is driven by isLayerAtive.
+        adapter?.setLayerActiveUIOnly(id: id)
         reducer.select(id: id)
         node = reducer.tree.nodes[id] ?? node
-        onSelect?(node)
         applySnapshot()
     }
 
@@ -383,10 +399,11 @@ extension LayerOutlineViewController {
             let touch = gesture.location(in: collectionView)
             if let cell = collectionView.cellForItem(at: indexPath) {
                 collectionView.panGestureRecognizer.isEnabled = false
-                if node.type == .Parent || node.type == .Page, node.isExpanded {
+                if node.type == .Parent || node.type == .Page, isExpanded(id: node.id) {
                     // Legacy: collapse expanded parent before dragging.
-                    reducer.toggleExpanded(id: node.id)
-                    applySnapshot()
+                    setExpanded(ids: [node.id], expanded: false)
+                    adapter?.refreshFromTemplate()
+                    reducer = adapter?.currentReducer ?? reducer
                 }
                 dragTouchOffset = CGPoint(x: touch.x - cell.center.x, y: touch.y - cell.center.y)
                 let snapshot = cell.snapshotView(afterScreenUpdates: false) ?? UIView(frame: cell.frame)
@@ -518,12 +535,12 @@ extension LayerOutlineViewController {
         log("perform drop source=\(sourceId) parent=\(parentId) order=\(targetOrder) sameParent=\(sameParent)")
         dragTargetIndexPath = nil
         onMove?(sourceId, parentId, targetOrder, currentOrder, sameParent)
+        // Keep destination parent open in UI.
+        if let parentModel = adapter?.modelFor(id: parentId) as? ParentModel, !parentModel.isExpanded {
+            parentModel.isExpanded = true
+        }
         adapter?.refreshFromTemplate()
         reducer = adapter?.currentReducer ?? reducer
-        // Keep destination parent open in UI.
-        if let parent = reducer.tree.nodes[parentId], !parent.isExpanded {
-            reducer.toggleExpanded(id: parentId)
-        }
         applySnapshot()
         // Scroll back to the moved node so the view doesn’t jump to top.
         let flattened = reducer.tree.flattened(includeSoftDeleted: true)
@@ -810,8 +827,38 @@ extension LayerOutlineViewController {
     }
 
     // Hover-expand/collapse support for custom drag (single source of truth).
+    private func isExpanded(id: Int) -> Bool {
+        if let model = adapter?.modelFor(id: id) as? ParentModel {
+            return model.isExpanded
+        }
+        return reducer.tree.nodes[id]?.isExpanded ?? false
+    }
+
+    private func setExpanded(ids: [Int], expanded: Bool) {
+        for id in ids {
+            guard let model = adapter?.modelFor(id: id) as? ParentModel else { continue }
+            if model.isExpanded == expanded { continue }
+            model.isExpanded = expanded
+        }
+    }
+
+    private func applyHoverExpand(parentId: Int) {
+        guard let model = adapter?.modelFor(id: parentId) as? ParentModel else { return }
+        if model.isExpanded { return }
+        model.isExpanded = true
+        hoverAutoExpandedParents.insert(parentId)
+        adapter?.refreshFromTemplate()
+        reducer = adapter?.currentReducer ?? reducer
+        log("hover expand applied parent=\(parentId)")
+    }
+
     private func updateHoverState(location: CGPoint, node: LayerNode, indexPath: IndexPath) {
         guard let attrs = collectionView.layoutAttributesForItem(at: indexPath) else { return }
+        if node.id == dragSourceId {
+            // Legacy: never auto-expand the dragged node itself.
+            cancelHoverExpand()
+            return
+        }
         let localX = location.x - attrs.frame.minX
         let localY = location.y - attrs.frame.minY
         let indent = CGFloat(node.depth) * 16.0
@@ -830,11 +877,12 @@ extension LayerOutlineViewController {
         let toCollapse = hoverAutoExpandedParents.subtracting(hoverBranch)
         if !toCollapse.isEmpty {
             log("hover collapse set=\(toCollapse.sorted())")
-            toCollapse.forEach { collapseAutoExpanded(parentId: $0) }
+            collapseAutoExpanded(parentIds: toCollapse)
         }
 
         if node.type == .Parent || node.type == .Page {
-            if node.isExpanded {
+            let expanded = isExpanded(id: node.id)
+            if expanded {
                 // Legacy collapse regions: top half OR bottom-left quadrant.
                 let inTopHalf = localY >= 0 && localY < midY
                 let inBottomLeft = localY >= midY && localY <= attrs.frame.height && localX >= 0 && localX <= midX
@@ -864,23 +912,13 @@ extension LayerOutlineViewController {
         log("hover expand scheduled parent=\(parentId)")
         if dragLogic.config.hoverExpandDelay <= 0 {
             hoverPendingParentId = nil
-            if let currentNode = reducer.tree.nodes[parentId], !currentNode.isExpanded {
-                reducer.toggleExpanded(id: parentId)
-                hoverAutoExpandedParents.insert(parentId)
-                applySnapshot()
-                log("hover expand applied parent=\(parentId)")
-            }
+            applyHoverExpand(parentId: parentId)
             return
         }
         hoverExpandTimer = Timer.scheduledTimer(withTimeInterval: dragLogic.config.hoverExpandDelay, repeats: false) { [weak self] _ in
             guard let self else { return }
             self.hoverPendingParentId = nil
-            if let currentNode = self.reducer.tree.nodes[parentId], !currentNode.isExpanded {
-                self.reducer.toggleExpanded(id: parentId)
-                self.hoverAutoExpandedParents.insert(parentId)
-                self.applySnapshot()
-                self.log("hover expand applied parent=\(parentId)")
-            }
+            self.applyHoverExpand(parentId: parentId)
         }
     }
 
@@ -892,26 +930,24 @@ extension LayerOutlineViewController {
 
     private func collapseAutoExpanded(parentId: Int) {
         let toCollapse = hoverAutoExpandedParents.filter { $0 == parentId || isDescendant($0, of: parentId) }
-        guard !toCollapse.isEmpty else { return }
-        for id in toCollapse {
-            if let node = reducer.tree.nodes[id], node.isExpanded {
-                reducer.toggleExpanded(id: id)
-            }
-            hoverAutoExpandedParents.remove(id)
-        }
-        applySnapshot()
+        collapseAutoExpanded(parentIds: toCollapse)
+    }
+
+    private func collapseAutoExpanded(parentIds: Set<Int>) {
+        guard !parentIds.isEmpty else { return }
+        setExpanded(ids: Array(parentIds), expanded: false)
+        hoverAutoExpandedParents.subtract(parentIds)
+        adapter?.refreshFromTemplate()
+        reducer = adapter?.currentReducer ?? reducer
     }
 
     private func collapseAllAutoExpanded() {
         let ids = hoverAutoExpandedParents
         if ids.isEmpty { return }
-        for id in ids {
-            if let node = reducer.tree.nodes[id], node.isExpanded {
-                reducer.toggleExpanded(id: id)
-            }
-        }
+        setExpanded(ids: Array(ids), expanded: false)
         hoverAutoExpandedParents.removeAll()
-        applySnapshot()
+        adapter?.refreshFromTemplate()
+        reducer = adapter?.currentReducer ?? reducer
     }
 
     private func isDescendant(_ childId: Int, of ancestorId: Int) -> Bool {
