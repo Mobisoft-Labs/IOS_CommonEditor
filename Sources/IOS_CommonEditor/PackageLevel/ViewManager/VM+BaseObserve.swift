@@ -109,9 +109,10 @@ extension ViewManager{
     func recursiveChildBaseFrameForDragging(parent:ParentModel,oldParentSize : CGSize ,newSize:CGSize, shouldRevert : Bool){
         guard let templateHandler = templateHandler else { return }
         for child in parent.children {
-            let view = currentParentView?.viewWithTag(child.modelId) as? BaseView
-            let centerX = view!.centerPoints.x//child.baseFrame.center.x
-            let centerY = view!.centerPoints.y//child.baseFrame.center.y
+            let viewCurrent = currentParentView?.viewWithTag(child.modelId) as? BaseView
+            guard let view = viewCurrent else { return }
+            let centerX = view.centerPoints.x//child.baseFrame.center.x
+            let centerY = view.centerPoints.y//child.baseFrame.center.y
             var newCenter = CGPoint(
                 x: centerX,
                 y: centerY
@@ -120,8 +121,8 @@ extension ViewManager{
             if shouldRevert{
                 let deltaInHeight = newSize.height - oldParentSize.height
                 let deltaInWidth = newSize.width - oldParentSize.width
-                let newCenterX = view!.centerPoints.x/*child.baseFrame.center.x*/ + deltaInWidth
-                let newCenterY = view!.centerPoints.y/*child.baseFrame.center.y*/ + deltaInHeight
+                let newCenterX = view.centerPoints.x/*child.baseFrame.center.x*/ + deltaInWidth
+                let newCenterY = view.centerPoints.y/*child.baseFrame.center.y*/ + deltaInHeight
                 print("NHH \(newCenter), \(deltaInHeight)")
                 newCenter = CGPoint(
                    x: newCenterX,
@@ -132,7 +133,7 @@ extension ViewManager{
             
             var baseFrame = child.baseFrame
             baseFrame.center = newCenter
-            view?.setFrame(frame:  baseFrame)
+            view.setFrame(frame:  baseFrame)
         }
     }
 }

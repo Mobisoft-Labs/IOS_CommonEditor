@@ -13,6 +13,13 @@ public struct LayersV2Feature {
     public static var isEnabled: Bool = true
 }
 
+public enum LayerOutlineRootMode {
+    /// Outline is rooted at the current page (legacy behavior).
+    case page
+    /// Outline is rooted at the selected model's nearest parent (or selected parent if editState is true).
+    case selectedParent
+}
+
 public final class LayerOutlineAdapter : NSObject{
     private let templateHandler: TemplateHandler
     private let logger: PackageLogger?
@@ -21,6 +28,13 @@ public final class LayerOutlineAdapter : NSObject{
     private var controller: LayerOutlineViewController!
     private var cancellables = Set<AnyCancellable>()
     private var shouldSeedFromEditState = true
+    public var outlineRootMode: LayerOutlineRootMode = .page {
+        didSet { refreshFromTemplate() }
+    }
+    /// When true in selectedParent mode, show full nested tree; otherwise show only direct children.
+    public var scopedShowsNestedChildren: Bool = false {
+        didSet { refreshFromTemplate() }
+    }
 
     public var currentReducer: LayerReducer {
         reducer
@@ -28,7 +42,7 @@ public final class LayerOutlineAdapter : NSObject{
 
     public init?(templateHandler: TemplateHandler, logger: PackageLogger? = nil, layersConfig: LayersConfiguration? = nil) {
         guard let page = templateHandler.currentPageModel else { return nil }
-        let tree = LayerTreeBuilder.build(from: page)
+        let tree = LayerTreeBuilder.build(from: page, includeDescendants: true)
         self.reducer = LayerReducer(tree: tree)
         self.templateHandler = templateHandler
         self.logger = logger
@@ -36,6 +50,7 @@ public final class LayerOutlineAdapter : NSObject{
         super.init()
         self.controller = buildController()
         self.controller.adapter = self
+        updateOutlineRootContext()
         observeTemplateUpdates()
     }
 
@@ -46,9 +61,9 @@ public final class LayerOutlineAdapter : NSObject{
 
     /// Refresh the outline from the current TemplateHandler tree (call after external mutations).
     public func refreshFromTemplate(reconfigureIdsOverride: Set<Int>? = nil) {
-        guard let page = templateHandler.currentPageModel else { return }
+        guard let root = resolveOutlineRoot(templateHandler: templateHandler, mode: outlineRootMode) else { return }
         let oldTree = reducer.tree
-        var tree = LayerTreeBuilder.build(from: page)
+        var tree = LayerTreeBuilder.build(from: root, includeDescendants: includeDescendantsForCurrentMode())
         // Reapply expansion/selection where possible
         for id in Array(tree.nodes.keys) {
             guard var node = tree.nodes[id] else { continue }
@@ -63,14 +78,15 @@ public final class LayerOutlineAdapter : NSObject{
         }
         shouldSeedFromEditState = false
         reducer = LayerReducer(tree: tree)
+        updateOutlineRootContext()
         let reconfigureIds = reconfigureIdsOverride ?? computeReconfigureIds(oldTree: oldTree, newTree: tree)
         controller.reload(with: reducer, reconfigureIds: reconfigureIds)
     }
 
     public func refreshFromTemplate(reconfigureIdsBuilder: (LayerTree, LayerTree) -> Set<Int>) {
-        guard let page = templateHandler.currentPageModel else { return }
+        guard let root = resolveOutlineRoot(templateHandler: templateHandler, mode: outlineRootMode) else { return }
         let oldTree = reducer.tree
-        var tree = LayerTreeBuilder.build(from: page)
+        var tree = LayerTreeBuilder.build(from: root, includeDescendants: includeDescendantsForCurrentMode())
         // Reapply expansion/selection where possible
         for id in Array(tree.nodes.keys) {
             guard var node = tree.nodes[id] else { continue }
@@ -85,6 +101,7 @@ public final class LayerOutlineAdapter : NSObject{
         }
         shouldSeedFromEditState = false
         reducer = LayerReducer(tree: tree)
+        updateOutlineRootContext()
         let reconfigureIds = reconfigureIdsBuilder(oldTree, tree)
         controller.reload(with: reducer, reconfigureIds: reconfigureIds)
     }
@@ -175,9 +192,10 @@ public final class LayerOutlineAdapter : NSObject{
 
     /// Refresh from TemplateHandler and return updated reducer (for UI snapshots).
     public func refreshedReducer() -> LayerReducer {
-        guard let page = templateHandler.currentPageModel else { return reducer }
-        let tree = LayerTreeBuilder.build(from: page)
+        guard let root = resolveOutlineRoot(templateHandler: templateHandler, mode: outlineRootMode) else { return reducer }
+        let tree = LayerTreeBuilder.build(from: root, includeDescendants: includeDescendantsForCurrentMode())
         reducer = LayerReducer(tree: tree)
+        updateOutlineRootContext()
         return reducer
     }
 
@@ -292,6 +310,51 @@ public final class LayerOutlineAdapter : NSObject{
 
     public func modelFor(id: Int) -> BaseModel? {
         templateHandler.getModel(modelId: id)
+    }
+
+    public func activeChildrenIds(for parentId: Int) -> [Int] {
+        guard let parent = templateHandler.getModel(modelId: parentId) as? ParentModel else { return [] }
+        return parent.activeChildren.sorted { $0.orderInParent < $1.orderInParent }.map { $0.modelId }
+    }
+
+    private func resolveOutlineRoot(templateHandler: TemplateHandler, mode: LayerOutlineRootMode) -> ParentModel? {
+        guard let page = templateHandler.currentPageModel else { return nil }
+        guard mode == .selectedParent, let selected = templateHandler.currentModel else { return page }
+        if let selectedParent = selected as? ParentModel, selectedParent.editState {
+            return selectedParent
+        }
+        if let nearest = nearestEditedParent(from: selected, templateHandler: templateHandler) {
+            return nearest
+        }
+        if let parent = templateHandler.getModel(modelId: selected.parentId) as? ParentModel {
+            return parent
+        }
+        return page
+    }
+
+    private func nearestEditedParent(from model: BaseModel, templateHandler: TemplateHandler) -> ParentModel? {
+        var currentId = model.parentId
+        while currentId != 0 {
+            guard let current = templateHandler.getModel(modelId: currentId) as? ParentModel else { break }
+            if current.editState { return current }
+            currentId = current.parentId
+        }
+        return nil
+    }
+
+    private func updateOutlineRootContext() {
+        guard let page = templateHandler.currentPageModel,
+              let root = resolveOutlineRoot(templateHandler: templateHandler, mode: outlineRootMode) else { return }
+        let parentId: Int? = (root.modelId == page.modelId) ? nil : root.parentId
+        controller.updateOutlineRoot(rootId: root.modelId,
+                                     parentId: parentId,
+                                     orderInParent: root.orderInParent,
+                                     allowNestedDrops: includeDescendantsForCurrentMode())
+    }
+
+    private func includeDescendantsForCurrentMode() -> Bool {
+        if outlineRootMode == .page { return true }
+        return scopedShowsNestedChildren
     }
 
     /// Convenience to refresh from handler and notify controller.

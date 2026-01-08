@@ -25,6 +25,7 @@ final class LayerOutlineCell: UICollectionViewListCell {
     private var expandWidthConstraint: NSLayoutConstraint?
     private var thumbLeadingConstraint: NSLayoutConstraint?
     private var cancellables = Set<AnyCancellable>()
+    private var isParentNode: Bool = false
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -122,6 +123,7 @@ final class LayerOutlineCell: UICollectionViewListCell {
 
     func configure(with node: LayerNode,
                    model: BaseModel,
+                   hasVisibleChildren: Bool,
                    onToggleExpand: (() -> Void)?,
                    onSelectTick: (() -> Void)?,
                    onToggleLock: (() -> Void)?) {
@@ -135,7 +137,8 @@ final class LayerOutlineCell: UICollectionViewListCell {
         titleLabel.textColor = model.softDelete ? .secondaryLabel : .label
         subtitleLabel.textColor = model.softDelete ? .tertiaryLabel : .secondaryLabel
         let isSelected = model.isLayerAtive
-        let isParent = (node.type == .Page || node.type == .Parent)
+        let isParent = (node.type == .Page || node.type == .Parent) && hasVisibleChildren
+        isParentNode = isParent
         let isExpanded = (model as? ParentModel)?.isExpanded ?? false
         updateSelectionUI(isSelected: isSelected)
         updateExpandedUI(isExpanded: isExpanded, isParent: isParent, isSelected: isSelected, isDeleted: model.softDelete, depth: node.depth)
@@ -242,9 +245,8 @@ final class LayerOutlineCell: UICollectionViewListCell {
                     self.expandButton.isHidden = true
                     self.expandWidthConstraint?.constant = 0
                 } else {
-                    let isParent = (node.type == .Page || node.type == .Parent)
-                    self.expandButton.isHidden = !isParent
-                    self.expandWidthConstraint?.constant = isParent ? 20 : 0
+                    self.expandButton.isHidden = !self.isParentNode
+                    self.expandWidthConstraint?.constant = self.isParentNode ? 20 : 0
                 }
             }
             .store(in: &cancellables)

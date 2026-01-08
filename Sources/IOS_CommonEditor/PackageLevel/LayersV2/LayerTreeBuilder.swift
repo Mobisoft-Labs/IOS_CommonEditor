@@ -10,6 +10,11 @@ import Foundation
 public enum LayerTreeBuilder {
     /// Build from a ParentModel (page or group). Includes soft-deleted nodes so undo/restore works.
     public static func build(from root: ParentModel) -> LayerTree {
+        build(from: root as BaseModel)
+    }
+
+    /// Build from any BaseModel root (for scoped outlines).
+    public static func build(from root: BaseModel, includeDescendants: Bool = true) -> LayerTree {
         var nodes: [Int: LayerNode] = [:]
         var children: [Int: [Int]] = [:]
         var roots: [Int] = []
@@ -31,10 +36,14 @@ public enum LayerTreeBuilder {
             )
             nodes[model.modelId] = node
             if let parent = model as? ParentModel {
-                let ids = parent.children.map { $0.modelId }
-                children[model.modelId] = ids
-                for child in parent.children {
-                    walk(model: child, depth: depth + 1)
+                if includeDescendants || depth == 0 {
+                    let ids = parent.children.map { $0.modelId }
+                    children[model.modelId] = ids
+                    for child in parent.children {
+                        walk(model: child, depth: depth + 1)
+                    }
+                } else {
+                    children[model.modelId] = []
                 }
             }
         }

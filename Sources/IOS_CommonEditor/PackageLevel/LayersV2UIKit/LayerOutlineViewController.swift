@@ -50,6 +50,10 @@ import UIKit
         case horizontal
     }
     private var currentScrollAxis: ScrollAxis = .none
+    private var outlineRootId: Int = 0
+    private var outlineRootParentId: Int?
+    private var outlineRootOrderInParent: Int = 0
+    private var allowNestedDrops: Bool = true
 
     init(
         reducer: LayerReducer,
@@ -131,6 +135,13 @@ import UIKit
         dragAnimationConfig = animation
         dragViewPosition = position
         dragHitTestPosition = hitTestPosition
+    }
+
+    func updateOutlineRoot(rootId: Int, parentId: Int?, orderInParent: Int, allowNestedDrops: Bool) {
+        outlineRootId = rootId
+        outlineRootParentId = parentId
+        outlineRootOrderInParent = orderInParent
+        self.allowNestedDrops = allowNestedDrops
     }
 
     // MARK: - Private
@@ -218,9 +229,11 @@ import UIKit
                 let node = self.reducer.tree.nodes[itemIdentifier]
             else { return UICollectionViewCell() }
             guard let model = self.adapter?.modelFor(id: itemIdentifier) else { return cell }
+            let hasVisibleChildren = !(self.reducer.tree.childrenByParent[node.id]?.isEmpty ?? true)
             cell.configure(
                 with: node,
                 model: model,
+                hasVisibleChildren: hasVisibleChildren,
                 onToggleExpand: { [weak self] in
                     self?.toggleExpand(nodeId: node.id)
                 },
@@ -515,16 +528,16 @@ extension LayerOutlineViewController {
 
         if dropIntoParent {
             parentId = target.id
-            targetOrder = reducer.tree.activeChildren(of: parentId).count
+            targetOrder = activeChildrenIds(parentId: parentId).count
         } else {
             parentId = target.parentId
-            let active = reducer.tree.activeChildren(of: parentId)
-            let targetIndex = active.firstIndex(where: { $0.id == target.id }) ?? active.count
+            let activeIds = activeChildrenIds(parentId: parentId)
+            let targetIndex = activeIds.firstIndex(where: { $0 == target.id }) ?? activeIds.count
             targetOrder = targetInfo.insertAbove ? targetIndex : targetIndex + 1
         }
 
         let sameParent = sourceNode.parentId == parentId
-        let currentOrder = reducer.tree.activeChildren(of: sourceNode.parentId).firstIndex(where: { $0.id == sourceId }) ?? 0
+        let currentOrder = activeChildrenIds(parentId: sourceNode.parentId).firstIndex(where: { $0 == sourceId }) ?? 0
 
         if sameParent && currentOrder == targetOrder {
             log("finishDrag: no-op move, cancel")
@@ -550,6 +563,13 @@ extension LayerOutlineViewController {
             collectionView.scrollToItem(at: idx, at: .centeredVertically, animated: false)
         }
         animateDropIfNeeded()
+    }
+
+    private func activeChildrenIds(parentId: Int) -> [Int] {
+        if reducer.tree.nodes[parentId] != nil {
+            return reducer.tree.activeChildren(of: parentId).map { $0.id }
+        }
+        return adapter?.activeChildrenIds(for: parentId) ?? []
     }
 
     private func animateDropIfNeeded() {
@@ -629,6 +649,7 @@ extension LayerOutlineViewController {
     }
 
     private func dropTarget(at location: CGPoint) -> (node: LayerNode?, intoParent: Bool, insertAbove: Bool) {
+        let rows = reducer.tree.flattened(includeSoftDeleted: true)
         var targetIndexPath = collectionView.indexPathForItem(at: location)
         if targetIndexPath == nil {
             // Legacy: scan upward to find a drop target.
@@ -641,6 +662,16 @@ extension LayerOutlineViewController {
                 y -= 4
             }
         }
+        if targetIndexPath == nil, outlineRootParentId != nil, let first = rows.first {
+            // Scoped outline: allow drop above the root row to move to page-level parent.
+            if let attrs = collectionView.layoutAttributesForItem(at: IndexPath(item: 0, section: 0)),
+               location.y < attrs.frame.minY {
+                targetIndexPath = IndexPath(item: 0, section: 0)
+                if let node = reducer.tree.nodes[first.id] {
+                    return (node, false, true)
+                }
+            }
+        }
         guard let indexPath = targetIndexPath,
               let nodeId = dataSource.itemIdentifier(for: indexPath),
               let node = reducer.tree.nodes[nodeId],
@@ -650,7 +681,6 @@ extension LayerOutlineViewController {
         }
         let localPoint = CGPoint(x: location.x - attrs.frame.minX, y: location.y - attrs.frame.minY)
         let indent = CGFloat(node.depth) * 16.0
-        let rows = reducer.tree.flattened(includeSoftDeleted: true)
         let currentIndex = indexPath.item
         let lowerNode = currentIndex + 1 < rows.count ? rows[currentIndex + 1] : nil
         let midY = attrs.frame.height / 2
@@ -667,12 +697,14 @@ extension LayerOutlineViewController {
             return (node, true, false)
         }
 
-        let placement = dragLogic.dropPlacement(localPoint: localPoint,
+            let placement = dragLogic.dropPlacement(localPoint: localPoint,
                                                height: attrs.frame.height,
                                                nodeType: node.type,
                                                indent: indent,
                                                localX: localPoint.x)
-        return (node, placement.intoParent, placement.insertAbove)
+        let allowIntoParent = allowNestedDrops || node.id == outlineRootId
+        let intoParent = placement.intoParent && allowIntoParent
+        return (node, intoParent, placement.insertAbove)
     }
 
     private func showDropIndicator(at indexPath: IndexPath, location: CGPoint) {
