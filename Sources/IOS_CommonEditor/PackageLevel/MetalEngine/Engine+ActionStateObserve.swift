@@ -404,6 +404,7 @@ extension MetalEngine {
             guard let self = self else { return }
             
             guard let moveModel = value else {return}
+            var parentsToNormalize = Set<Int>()
             
             func logOrders(_ parent: ParentModel, label: String) {
                 let childDesc = parent.children
@@ -459,6 +460,8 @@ extension MetalEngine {
                     if let oldParent = templateHandler.getModel(modelId: oldChildValue.parentID) as? ParentModel,
                        let newParent = templateHandler.getModel(modelId: newChildValue.parentID) as? ParentModel,
                        let childModel = templateHandler.getModel(modelId: oldChildValue.modelID){
+                        parentsToNormalize.insert(oldParent.modelId)
+                        parentsToNormalize.insert(newParent.modelId)
                         
                         logOrders(oldParent, label: "pre old")
                         if oldParent.modelId != newParent.modelId {
@@ -554,6 +557,12 @@ extension MetalEngine {
                     }// end of get old new and child from model
                     
                 }
+
+            if !parentsToNormalize.isEmpty {
+                for parentId in parentsToNormalize {
+                    templateHandler.normalizeActiveOrders(parentId: parentId)
+                }
+            }
             
             if moveModel.type == .UnGroup || moveModel.type == .Group {
                 if let parentIdToAdd = moveModel.shouldRemoveParentID  {

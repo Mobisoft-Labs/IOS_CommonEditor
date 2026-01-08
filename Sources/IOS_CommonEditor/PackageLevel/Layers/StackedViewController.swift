@@ -295,6 +295,8 @@ class CustomCollectionView: UICollectionView, UICollectionViewDataSource, UIColl
         viewModel.logger?.logError("Data Is Missing Not")
         viewModel.templateHandler.deepSetCurrentModel(id: viewModel.templateHandler.currentPageModel!.modelId)
         if let destinationParentId = destinationParentNode{
+            let oldParentId = sourceNode.parentId
+            let oldOrder = sourceNode.orderInParent
             var newOrder = order
             var moveModel = MoveModel(type: .NotDefined, oldMM: [], newMM: [])
             
@@ -339,7 +341,35 @@ class CustomCollectionView: UICollectionView, UICollectionViewDataSource, UIColl
            // viewModel.templateHandler.setCurrentModel(id: viewModel.templateHandler.lastSelectedId!)
             viewModel.updateFlatternTree()
             viewModel.selectedChild = sourceNode
-            self.reloadData()
+            if let newIndex = viewModel.flatternTree.firstIndex(where: { $0.modelId == sourceNode.modelId }) {
+                let newIndexPath = IndexPath(item: newIndex, section: sourceIndex.section)
+                let parentIds = Set([oldParentId, destinationParentId])
+                var reloadIndexPaths = [IndexPath]()
+                for (idx, node) in viewModel.flatternTree.enumerated() {
+                    if parentIds.contains(node.parentId) {
+                        reloadIndexPaths.append(IndexPath(item: idx, section: 0))
+                    }
+                }
+                let isMove = newIndexPath != sourceIndex
+                if isMove {
+                    reloadIndexPaths.removeAll { $0 == sourceIndex || $0 == newIndexPath }
+                }
+                performBatchUpdates({
+                    if isMove {
+                        moveItem(at: sourceIndex, to: newIndexPath)
+                    }
+                }, completion: { [weak self] _ in
+                    guard let self else { return }
+                    if !reloadIndexPaths.isEmpty {
+                        self.reloadItems(at: reloadIndexPaths)
+                    }
+                    if newOrder != oldOrder {
+                        self.setNeedsLayout()
+                    }
+                })
+            } else {
+                reloadData()
+            }
             
         }
         
@@ -491,6 +521,23 @@ class CustomCollectionView: UICollectionView, UICollectionViewDataSource, UIColl
     
     func deselectCell() {
         self.selectedCell?.isTapped = false
+    }
+
+    func setDropGapHeight(_ height: CGFloat) {
+        guard let layout = collectionViewLayout as? StackedVerticalFlowLayout else { return }
+        layout.dropGapHeight = height
+    }
+
+    func setDropIndicatorStyle(useDetailed: Bool) {
+        guard let layout = collectionViewLayout as? StackedVerticalFlowLayout else { return }
+        layout.useDetailedDropView = useDetailed
+    }
+
+    func setDragHitTestSources(x: StackedVerticalFlowLayout.DragCoordinateSource,
+                               y: StackedVerticalFlowLayout.DragCoordinateSource) {
+        guard let layout = collectionViewLayout as? StackedVerticalFlowLayout else { return }
+        layout.dragHitTestXSource = x
+        layout.dragHitTestYSource = y
     }
     
     func selectCell() {
@@ -731,6 +778,3 @@ var isFirstTime = true
             }
         }
 }
-
-
-

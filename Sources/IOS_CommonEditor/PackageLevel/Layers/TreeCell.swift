@@ -95,6 +95,15 @@ class LayerCell: UICollectionViewCell {
         
         return dividerView
     }()
+
+    private let orderLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = UIFont.systemFont(ofSize: 11, weight: .semibold)
+        label.textColor = .white
+        label.textAlignment = .center
+        return label
+    }()
     
     let draggableIndicator: UIButton = {
         let button = UIButton(type: .system)
@@ -136,6 +145,7 @@ class LayerCell: UICollectionViewCell {
         blurView.addSubview(lockButton)
 //        thumbImage.addSubview(displayView)
         blurView.addSubview(colorView)
+        blurView.addSubview(orderLabel)
         blurView.addSubview(dividerView)
         
         expandCollapseButton.addTarget(self, action: #selector(expandCollapseButtonTapped), for: .touchUpInside)
@@ -177,6 +187,11 @@ class LayerCell: UICollectionViewCell {
                                        colorView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
                                        colorView.widthAnchor.constraint(equalToConstant: 10),
                                        colorView.heightAnchor.constraint(equalToConstant: 10),
+                                       
+                                       orderLabel.leadingAnchor.constraint(equalTo: colorView.trailingAnchor, constant: 6),
+                                       orderLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+                                       orderLabel.widthAnchor.constraint(equalToConstant: 26),
+                                       orderLabel.heightAnchor.constraint(equalToConstant: 16),
                                        
                                        lockButton.trailingAnchor.constraint(equalTo: draggableIndicator.leadingAnchor, constant: -5),
                                         lockButton.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
@@ -280,6 +295,8 @@ class LayerCell: UICollectionViewCell {
             self?.thumbImageView.image = resizeImage(image: newValue ?? UIImage(named: "none")!, targetSize: CGSize(width: 100, height: 100))
             self?.thumbImageView.contentMode = .scaleAspectFit
         }.store(in: &cancellables)
+
+        orderLabel.text = "\(node.orderInParent)"
         
         node.$lockStatus.sink(receiveValue: { [weak self] newValue in
             self?.lockToggle(isLocked: newValue)

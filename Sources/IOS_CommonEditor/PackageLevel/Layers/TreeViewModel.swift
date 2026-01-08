@@ -369,37 +369,20 @@ public class LayersViewModel2 : ObservableObject{
     }
 
     private func moveNodeInSameParent(parentNode: inout ParentModel, sourceNode: BaseModel, order: Int) {
-        let sourceSequence = sourceNode.orderInParent
-        parentNode.children.insert(sourceNode, at: order)
-
-        // Remove source node from Source's parent at source sequence
-        // Update source Node order
-        sourceNode.orderInParent = order
-        if order < sourceSequence{
-               if let index = parentNode.children.lastIndex(where: {$0.modelId == sourceNode.modelId}){
-                   parentNode.children.remove(at: index)
-               }else{
-                   print("source node is not present at source Parent's children")
-               }
-               parentNode   = increaseOrderId(parentNode: parentNode, order: order)
-           }
-           else{
-               parentNode   = increaseOrderId(parentNode: parentNode, order: order)
-               if let index = parentNode.children.firstIndex(where: {$0.modelId == sourceNode.modelId}){
-                   parentNode.children.remove(at: index)
-               }else{
-                   print("source node is not present at source Parent's children")
-               }
-               parentNode   = decreaseOrderId(parentNode: parentNode, order: sourceSequence)
-              
-           }
-           
+        // Remove the source from current children list first.
+        if let index = parentNode.children.firstIndex(where: { $0.modelId == sourceNode.modelId }) {
+            parentNode.children.remove(at: index)
+        }
+        let active = parentNode.children.filter { !$0.softDelete }
+        let targetIndex = min(max(0, order), active.count)
+        var newActive = active
+        newActive.insert(sourceNode, at: targetIndex)
+        rebuildChildren(parentNode: &parentNode, activeChildren: newActive)
+        normalizeActiveOrders(parentNode: parentNode)
     }
 
     private func moveNodeInDifferentParent(sourceParentNode: inout ParentModel, destinationParentNode: inout ParentModel, sourceNode: BaseModel, order: Int) {
-        let sourceSequence = sourceNode.orderInParent
         sourceNode.parentId = destinationParentNode.modelId
-        sourceNode.orderInParent = order
 
         // Remove source node from Source's parent at source sequence
         if let index = sourceParentNode.children.firstIndex(where: { $0.modelId == sourceNode.modelId }) {
@@ -424,11 +407,13 @@ public class LayersViewModel2 : ObservableObject{
             }
         }
 
-        destinationParentNode.children.insert(sourceNode, at: order)
-
-        // Update the rest of the sequence
-        destinationParentNode = increaseOrderId(parentNode: destinationParentNode, order: order)
-        sourceParentNode = decreaseOrderId(parentNode: sourceParentNode, order: sourceSequence)
+        let destinationActive = destinationParentNode.children.filter { !$0.softDelete }
+        let targetIndex = min(max(0, order), destinationActive.count)
+        var newActive = destinationActive
+        newActive.insert(sourceNode, at: targetIndex)
+        rebuildChildren(parentNode: &destinationParentNode, activeChildren: newActive)
+        normalizeActiveOrders(parentNode: destinationParentNode)
+        normalizeActiveOrders(parentNode: sourceParentNode)
     }
 
   //  private func removeNode(parentNode: inout BaseModel, node: BaseModel, at sequence: Int) {
@@ -488,6 +473,20 @@ public class LayersViewModel2 : ObservableObject{
             logger.printLog(message)
         } else {
             print(message)
+        }
+    }
+
+    private func rebuildChildren(parentNode: inout ParentModel, activeChildren: [BaseModel]) {
+        let deleted = parentNode.children.filter { $0.softDelete }
+        parentNode.children = activeChildren + deleted
+    }
+
+    private func normalizeActiveOrders(parentNode: ParentModel) {
+        let active = parentNode.children.filter { !$0.softDelete }
+        for (idx, child) in active.enumerated() {
+            if child.orderInParent == idx { continue }
+            child.orderInParent = idx
+            _ = DBManager.shared.updateOrderInParent(modelId: child.modelId, newValue: idx)
         }
     }
 }
