@@ -430,12 +430,20 @@ class StackedVerticalFlowLayout: UICollectionViewFlowLayout, UIGestureRecognizer
     var destinationX:Float?
     var destinationY:Float?
     var destinationNode:BaseModel?
+
+    private func dragHitPoint(_ draggedCell: UIView) -> CGPoint {
+        draggedCell.frame.origin
+    }
+
+    private func findNodeById(_ modelId: Int) -> BaseModel? {
+        delegate?.getFlattenTree().first(where: { $0.modelId == modelId })
+    }
     
     private func inDragging(_ gesture : UIGestureRecognizer) {
 //        destinationNode = nil
         guard let draggedCell = snapshot else { return }
-
-        if let indexPath = collectionView?.indexPathForItem(at: draggedCell.center){
+        let hitPoint = dragHitPoint(draggedCell)
+        if let indexPath = collectionView?.indexPathForItem(at: hitPoint){
             
             guard let cell = collectionView?.cellForItem(at: indexPath) as? LayerCell else { return }
             
@@ -469,29 +477,39 @@ class StackedVerticalFlowLayout: UICollectionViewFlowLayout, UIGestureRecognizer
             print("no cell is lies in this reason")
             
 //            if destinationX == nil {
-                destinationX = Float(draggedCell.center.x)
+                destinationX = Float(hitPoint.x)
             if let node = destinationNode {
-                if (Int(Float(draggedCell.center.x)) >= node.depthLevel * 40 && Int(Float(draggedCell.center.x)) <= (node.depthLevel + 1) * 40) {
+                if (Int(Float(hitPoint.x)) >= node.depthLevel * 40 && Int(Float(hitPoint.x)) <= (node.depthLevel + 1) * 40) {
                     // The center x-coordinate of draggedCell is within the specified range
                     return
                 }
             }
 
 //                if let y = draggedCell.center.y
-                for i in stride(from:draggedCell.center.y, to: 0 as CGFloat, by: -1 as CGFloat) {
-                    if let indexPath = collectionView?.indexPathForItem(at: CGPoint(x: draggedCell.center.x, y: i)){
+                for i in stride(from: hitPoint.y, to: 0 as CGFloat, by: -1 as CGFloat) {
+                    if let indexPath = collectionView?.indexPathForItem(at: CGPoint(x: hitPoint.x, y: i)){
                         guard let cell = collectionView?.cellForItem(at: indexPath) as? LayerCell else { return }
-                        destinationNodeID = cell.node.parentId
+                        guard let targetNode = cell.node else { return }
+                        var resolvedParentId = targetNode.parentId
+                        var resolvedOrder = targetNode.orderInParent + 1
+                        var resolvedIndentX = cell.frame.minX
+                        if hitPoint.x < cell.frame.minX - 20,
+                           let parentNode = findNodeById(targetNode.parentId) {
+                            resolvedParentId = parentNode.parentId
+                            resolvedOrder = parentNode.orderInParent + 1
+                            resolvedIndentX = CGFloat((parentNode.depthLevel - 1) * 50)
+                        }
+                        destinationNodeID = resolvedParentId
                         print("node id", destinationNodeID)
                         dropHereView.frame.size.width = cell.frame.width
-                        dropHereView.frame.origin =   CGPoint(x: cell.frame.minX, y: cell.frame.maxY-dropHereView.frame.height)
+                        dropHereView.frame.origin =   CGPoint(x: resolvedIndentX, y: cell.frame.maxY-dropHereView.frame.height)
             //            destinationNodeID = cell.node.nodeID
-                        destinationNode = cell.node
-                        order = cell.node.orderInParent+1
+                        destinationNode = targetNode
+                        order = resolvedOrder
                         
                         
                         //JD**
-                        if  let parentNode = cell.node as? ParentModel {
+                        if  let parentNode = targetNode as? ParentModel {
                             
                             destinationIndexpath = IndexPath(item: indexPath.item+parentNode.children.count, section: 0)
                             print("new cell ",cell.node.modelId)
@@ -517,79 +535,57 @@ class StackedVerticalFlowLayout: UICollectionViewFlowLayout, UIGestureRecognizer
     private func handleHovering(_ cell: LayerCell, draggedCell: UIView, indexPath: IndexPath) -> Bool {
         // Handle hovering logic here
         // ...
-        if !cell.frame.contains(draggedCell.center) {return false}
+        let hitPoint = dragHitPoint(draggedCell)
+        if !cell.frame.contains(hitPoint) {return false}
         guard let cv = self.collectionView as? CustomCollectionView else{return false}
         if let _ = selectedNodes.firstIndex(where: {$0 == cell.node.modelId }){
             return false
         }
-        else
-        if let parentNode = cell.node as? ParentModel  {
-            
-            
+        else if let parentNode = cell.node as? ParentModel  {
+            let expandThresholdX = cell.frame.minX + 40
             if parentNode.isExpanded == false {
-                if draggedCell.center.y >= cell.center.y && draggedCell.center.y <= cell.frame.maxY {
+                if hitPoint.y >= cell.center.y && hitPoint.y <= cell.frame.maxY {
                     logger?.printLog("handleHovering - Eligible For Expnsaion Y")
-                    if draggedCell.center.x >= cell.center.x && draggedCell.center.x <= cell.frame.maxX {
+                    if hitPoint.x >= expandThresholdX && hitPoint.x <= cell.frame.maxX {
                         logger?.printLog("handleHovering - Eligible For Expnsaion X")
-
-                        if parentNode.isExpanded == false{
-                            logger?.printLog("handleHovering - Expanding Parent")
-                            cv.onCellExpand(modelId: parentNode.modelId, expand: true)
-
-                            //                parentNode.editState = true
-                            parentNode.isExpanded = true
-                          //  cv.viewModel.isEditParent = true
-                            
-                        }
+                        logger?.printLog("handleHovering - Expanding Parent")
+                        cv.onCellExpand(modelId: parentNode.modelId, expand: true)
+                        parentNode.isExpanded = true
+                        blinkParentCell(cell)
                     }
                 }
-            }else {
-                
-                
-               
-                if draggedCell.center.y >= cell.frame.minY && draggedCell.center.y < cell.center.y {
+            } else {
+                if hitPoint.y >= cell.frame.minY && hitPoint.y < cell.center.y {
                     logger?.printLog("handleHovering - Eligible For collapsing Y")
-
-                    if draggedCell.center.x >= cell.frame.minX &&  draggedCell.center.x <= cell.frame.maxX {
+                    if hitPoint.x >= cell.frame.minX &&  hitPoint.x <= cell.frame.maxX {
                         logger?.printLog("handleHovering - Eligible For Collapsing X")
-
-                        if parentNode.isExpanded == true{
-                            cv.onCellExpand(modelId: parentNode.modelId, expand: false)
-                            logger?.printLog("handleHovering - Collapsing Parent")
-
-                            parentNode.isExpanded = false
-                            // cv.viewModel.isEditParent = false
-                        }
+                        cv.onCellExpand(modelId: parentNode.modelId, expand: false)
+                        logger?.printLog("handleHovering - Collapsing Parent")
+                        parentNode.isExpanded = false
                     }
-                }else if draggedCell.center.y >= cell.center.y && draggedCell.center.y <= cell.frame.maxY {
+                } else if hitPoint.y >= cell.center.y && hitPoint.y <= cell.frame.maxY {
                     logger?.printLog("handleHovering - Eligible For collapsing Y")
-
-                    if draggedCell.center.x >= cell.frame.minX && draggedCell.center.x <= cell.center.x {
+                    if hitPoint.x >= cell.frame.minX && hitPoint.x <= expandThresholdX {
                         logger?.printLog("handleHovering - Eligible For collapsing X")
-
-                        if parentNode.isExpanded == true{
-                            cv.onCellExpand(modelId: parentNode.modelId, expand: false)
-                            logger?.printLog("handleHovering - Collapsing Parent")
-
-                            parentNode.isExpanded = false
-                            // cv.viewModel.isEditParent = false
-                        }
+                        cv.onCellExpand(modelId: parentNode.modelId, expand: false)
+                        logger?.printLog("handleHovering - Collapsing Parent")
+                        parentNode.isExpanded = false
                     }
                 }
-                
-            
             }
-            
-            
-
-//            if parentNode.is
-         
-                   // cv.expandCollapse(cell: cell)
-            
-            
         }
       
         return false
+    }
+
+    private func blinkParentCell(_ cell: LayerCell) {
+        UIView.animate(withDuration: 0.08, animations: {
+            cell.contentView.alpha = 0.4
+        }, completion: { _ in
+            UIView.animate(withDuration: 0.12) {
+                cell.contentView.alpha = 1.0
+            }
+        })
     }
 
     private func handleFirstItem(_ cell: LayerCell, draggedCell: UIView, indexPath: IndexPath,lowerCell:LayerCell) {
@@ -809,7 +805,7 @@ class StackedVerticalFlowLayout: UICollectionViewFlowLayout, UIGestureRecognizer
             
         }
 
-           let location = gesture.location(in: collectionView)
+           let location = snapshot.frame.origin
            snapshot.removeFromSuperview()
           
         if let indexPath = collectionView.indexPathForItem(at: location) {
