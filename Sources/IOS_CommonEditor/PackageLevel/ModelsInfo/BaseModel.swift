@@ -69,7 +69,23 @@ public class BaseModel :ObservableObject, BaseModelProtocol{
     @Published public var beginTintIntensity: Float = 0
     @Published public var endTintIntensity: Float = 0
     
-    @Published public var baseFrame: Frame = Frame(size: CGSize(width: 1, height: 1), center: CGPoint(x: 0.5, y: 0.5), rotation: 0.0)
+    @Published public var baseFrame: Frame = Frame(size: CGSize(width: 1, height: 1), center: CGPoint(x: 0.5, y: 0.5), rotation: 0.0){
+        didSet{
+            let size = baseFrame.size
+
+            if size.width <= 0 || size.height <= 0 {
+                // 🔴 ALWAYS log (release-safe)
+                print("""
+                        ❌ Invalid baseFrame size detected
+                        width: \(size.width)
+                        height: \(size.height)
+                        oldValue: \(oldValue)
+                        newValue: \(baseFrame)
+                        thread: \(Thread.current)
+                        """)
+            }
+        }
+    }
     @Published public var baseTimeline: StartDuration = StartDuration(startTime: 0.0, duration: 5.0)
 //    @Published var endFrame:Frame = Frame(size: .zero, center: .zero, rotation: 0.0)
     
