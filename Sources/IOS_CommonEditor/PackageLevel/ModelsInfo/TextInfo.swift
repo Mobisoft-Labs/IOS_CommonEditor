@@ -447,7 +447,12 @@ extension TextInfo {
     /// Neeshu Use this method
     func createImage(thumbUpdate : Bool = false , keepSameFont:Bool = false , text:String,properties:TextProperties,refSize:CGSize,maxWidth: CGFloat,maxHeight:CGFloat, contentScaleFactor : CGFloat, logger: PackageLogger?) -> UIImage?{
         if refSize.width == 0.0 || refSize.height == 0.0 {
-            logger?.logError("Text RefSize Zero \(text) , returning Empty Image")
+            logger?.logErrorFirebase("[preAvailbaleSize changes] Text RefSize Zero \(text) , returning Empty Image")
+            return createTransparentImage(size: CGSize(width: 10 , height: 10))
+        }
+
+        if refSize.width < 0.0 || refSize.height < 0.0 {
+            logger?.logErrorFirebase("[preAvailbaleSize changes] Text RefSize Negative \(refSize) for text: \(text)")
             return createTransparentImage(size: CGSize(width: 10 , height: 10))
         }
         

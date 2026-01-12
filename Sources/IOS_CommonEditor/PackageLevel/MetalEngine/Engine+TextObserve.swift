@@ -215,8 +215,31 @@ extension MetalEngine {
                 textModel.text = textChangedModel!.newText
                 print("KLP \(textChangedModel!.newSize)")
                 textModel.baseFrame.size = textChangedModel!.newSize
+                let oldPrevAvailableWidth = textModel.prevAvailableWidth
+                let oldPrevAvailableHeight = textModel.prevAvailableHeight
+                textModel.prevAvailableWidth = Float(textChangedModel!.newSize.width)
+                textModel.prevAvailableHeight = Float(textChangedModel!.newSize.height)
+                logger.printLog("[preAvailbaleSize changes] text resize modelId=\(textModel.modelId), " +
+                                "prevW=\(oldPrevAvailableWidth)->\(textModel.prevAvailableWidth), " +
+                                "prevH=\(oldPrevAvailableHeight)->\(textModel.prevAvailableHeight), " +
+                                "newSize=\(textChangedModel!.newSize)")
+                if textModel.prevAvailableWidth <= 0 || textModel.prevAvailableHeight <= 0 {
+                    logger.logErrorFirebase("[preAvailbaleSize changes] Invalid text prevAvailable after resize: " +
+                                            "modelId=\(textModel.modelId), prevW=\(textModel.prevAvailableWidth), " +
+                                            "prevH=\(textModel.prevAvailableHeight), newSize=\(textChangedModel!.newSize)")
+                }
                 if !(isDBDisabled){
                     _ = DBManager.shared.updateText(modelId: textModel.textId, newValue: textChangedModel!.newText)
+                    if let parent = templateHandler.getModel(modelId: textModel.parentId) {
+                        _ = DBManager.shared.updateBaseFrameWithPrevious(modelId: textModel.modelId,
+                                                                         newValue: textModel.baseFrame,
+                                                                         parentFrame: parent.baseFrame.size,
+                                                                         previousWidth: CGFloat(textModel.prevAvailableWidth),
+                                                                         previousHeight: CGFloat(textModel.prevAvailableHeight))
+                    } else {
+                        logger.logErrorFirebase("[preAvailbaleSize changes] Parent not found for text resize: " +
+                                                "modelId=\(textModel.modelId), parentId=\(textModel.parentId)")
+                    }
                 }
                 templateHandler.currentActionState.isTextInUpdateMode = false
             }.store(in: &modelPropertiesCancellables)
