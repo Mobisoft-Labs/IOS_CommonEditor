@@ -41,6 +41,66 @@ public class DBMediator : DictCacheProtocol  {
         childDict.removeAll()
 //        templateHandler = TemplateHandler()
     }
+
+    private func normalizePrevAvailableSize(model: BaseModel, parentSize: CGSize, source: String) {
+        let prevW = model.prevAvailableWidth
+        let prevH = model.prevAvailableHeight
+        if !prevW.isFinite || !prevH.isFinite {
+            DBManager.logger?.logError("[preAvailbaleSize changes] \(source) invalid prevAvailable: " +
+                                       "modelId=\(model.modelId), modelType=\(model.modelType), " +
+                                       "prevW=\(prevW), prevH=\(prevH)")
+            return
+        }
+
+        // Normalize negative/zero baseFrame sizes from legacy DB values.
+        let frameW = model.baseFrame.size.width
+        let frameH = model.baseFrame.size.height
+        if !frameW.isFinite || !frameH.isFinite || frameW <= 0 || frameH <= 0 {
+            let fixedW = abs(frameW)
+            let fixedH = abs(frameH)
+            if fixedW > 0 && fixedH > 0 {
+                model.baseFrame.size = CGSize(width: fixedW, height: fixedH)
+                model.width = Float(fixedW)
+                model.height = Float(fixedH)
+                DBManager.logger?.printLog("[preAvailbaleSize changes] \(source) normalized baseFrame size: " +
+                                           "modelId=\(model.modelId), modelType=\(model.modelType), " +
+                                           "frameW=\(frameW)->\(fixedW), frameH=\(frameH)->\(fixedH)")
+            } else {
+                DBManager.logger?.logError("[preAvailbaleSize changes] \(source) baseFrame invalid: " +
+                                           "modelId=\(model.modelId), modelType=\(model.modelType), " +
+                                           "frameW=\(frameW), frameH=\(frameH)")
+                return
+            }
+        }
+
+        if prevW <= 0 || prevH <= 0 {
+            let fallbackW = Float(model.baseFrame.size.width)
+            let fallbackH = Float(model.baseFrame.size.height)
+            if fallbackW <= 0 || fallbackH <= 0 {
+                DBManager.logger?.logError("[preAvailbaleSize changes] \(source) fallback invalid: " +
+                                           "modelId=\(model.modelId), modelType=\(model.modelType), " +
+                                           "fallbackW=\(fallbackW), fallbackH=\(fallbackH)")
+                return
+            }
+            model.prevAvailableWidth = fallbackW
+            model.prevAvailableHeight = fallbackH
+            DBManager.logger?.printLog("[preAvailbaleSize changes] \(source) normalized prevAvailable: " +
+                                       "modelId=\(model.modelId), modelType=\(model.modelType), " +
+                                       "prevW=\(prevW)->\(fallbackW), prevH=\(prevH)->\(fallbackH)")
+        }
+
+        if parentSize.width > 0 && parentSize.height > 0 {
+            _ = dbManager.updateBaseFrameWithPrevious(modelId: model.modelId,
+                                                      newValue: model.baseFrame,
+                                                      parentFrame: parentSize,
+                                                      previousWidth: CGFloat(model.prevAvailableWidth),
+                                                      previousHeight: CGFloat(model.prevAvailableHeight))
+        } else {
+            DBManager.logger?.logError("[preAvailbaleSize changes] \(source) invalid parentSize for DB update: " +
+                                       "modelId=\(model.modelId), modelType=\(model.modelType), " +
+                                       "parentSize=\(parentSize)")
+        }
+    }
     //MARK: - Fetch Methods
     
     func fetchCategoryInfoModel() -> [CategoryMetaInfo]{
@@ -68,6 +128,7 @@ public class DBMediator : DictCacheProtocol  {
         
         if let baseModel = dbManager.getBaseModelFromDB(modelId: modelID){
             stickerInfo.setBaseModel(baseModel: baseModel, refSize: refSize)
+            normalizePrevAvailableSize(model: stickerInfo, parentSize: refSize, source: "fetchStickerInfoModel")
             if baseModel.modelType == "IMAGE"{
                 guard let stickerModel = dbManager.getStickerModel(stickerId: baseModel.dataId) else {
                     DBManager.logger?.printLog(" BaseModel found but not sticker")
@@ -88,6 +149,7 @@ public class DBMediator : DictCacheProtocol  {
     func createStickerInfo(baseModel:DBBaseModel,refSize:CGSize) -> StickerInfo? {
         var  stickerInfo = StickerInfo()
         stickerInfo.setBaseModel(baseModel: baseModel, refSize: refSize)
+        normalizePrevAvailableSize(model: stickerInfo, parentSize: refSize, source: "createStickerInfo")
 
         var animationModel = dbManager.getAnimation(modelId: stickerInfo.modelId)
 //        animationModel.inAnimationTemplateId = 58
@@ -121,6 +183,7 @@ public class DBMediator : DictCacheProtocol  {
     func createTextInfo(model:DBBaseModel,refSize:CGSize)->TextInfo?{
         var textInfo = TextInfo()
         textInfo.setBaseModel(baseModel: model, refSize: refSize)
+        normalizePrevAvailableSize(model: textInfo, parentSize: refSize, source: "createTextInfo")
         
         let animationModel = dbManager.getAnimation(modelId: textInfo.modelId)
          
@@ -463,6 +526,7 @@ public class DBMediator : DictCacheProtocol  {
     func createPageInfo(pageModel:DBBaseModel , refSize:CGSize)->PageInfo?{
        var pageInfo = PageInfo()
         pageInfo.setBaseModel(baseModel: pageModel, refSize: refSize)
+        normalizePrevAvailableSize(model: pageInfo, parentSize: refSize, source: "createPageInfo")
         let animationModel = dbManager.getAnimation(modelId: pageInfo.modelId)
          
          
@@ -518,6 +582,7 @@ public class DBMediator : DictCacheProtocol  {
     func createParentInfo(pageInfo:DBBaseModel,refSize:CGSize)->ParentInfo?{
         var parentInfo = ParentInfo()
         parentInfo.setBaseModel(baseModel: pageInfo as! DBBaseModel, refSize: refSize)
+        normalizePrevAvailableSize(model: parentInfo, parentSize: refSize, source: "createParentInfo")
         
         let animationModel = dbManager.getAnimation(modelId: parentInfo.modelId)
          

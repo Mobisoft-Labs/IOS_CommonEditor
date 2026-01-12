@@ -273,8 +273,41 @@ extension MetalEngine {
 //               if !(baseModel.modelType == .Text){
                let widthChange = frame.size.width  - oldFrame.size.width
                let heightChange = frame.size.height  - oldFrame.size.height
-               baseModel.prevAvailableWidth += Float(widthChange)//Float(frame.size.width/*oldFrame.size.width*/)
-               baseModel.prevAvailableHeight += Float(heightChange)//Float(frame.size.height/*oldFrame.size.height*/)
+               let oldPrevAvailableWidth = baseModel.prevAvailableWidth
+               let oldPrevAvailableHeight = baseModel.prevAvailableHeight
+               // Old delta-based update (kept for rollback reference).
+               // baseModel.prevAvailableWidth += Float(widthChange)
+               // baseModel.prevAvailableHeight += Float(heightChange)
+
+               if oldFrame.size.width > 0 && oldFrame.size.height > 0 {
+                   let scaleX = frame.size.width / oldFrame.size.width
+                   let scaleY = frame.size.height / oldFrame.size.height
+                   if scaleX.isFinite && scaleY.isFinite {
+                       baseModel.prevAvailableWidth = oldPrevAvailableWidth * Float(scaleX)
+                       baseModel.prevAvailableHeight = oldPrevAvailableHeight * Float(scaleY)
+                       logger.printLog("[preAvailbaleSize changes] modelId=\(baseModel.modelId), modelType=\(baseModel.modelType), " +
+                                       "scaleX=\(scaleX), scaleY=\(scaleY), " +
+                                       "prevW=\(oldPrevAvailableWidth)->\(baseModel.prevAvailableWidth), " +
+                                       "prevH=\(oldPrevAvailableHeight)->\(baseModel.prevAvailableHeight), " +
+                                       "beginW=\(oldFrame.size.width), beginH=\(oldFrame.size.height), " +
+                                       "endW=\(frame.size.width), endH=\(frame.size.height), " +
+                                       "widthChange=\(widthChange), heightChange=\(heightChange)")
+                   } else {
+                       logger.logErrorFirebase("[preAvailbaleSize changes] Invalid scale values for modelId=\(baseModel.modelId), " +
+                                               "modelType=\(baseModel.modelType), scaleX=\(scaleX), scaleY=\(scaleY)")
+                   }
+               } else {
+                   logger.logErrorFirebase("[preAvailbaleSize changes] Invalid beginFrame size for modelId=\(baseModel.modelId), " +
+                                           "modelType=\(baseModel.modelType), beginW=\(oldFrame.size.width), beginH=\(oldFrame.size.height)")
+               }
+
+               if baseModel.prevAvailableWidth < 0 || baseModel.prevAvailableHeight < 0 || frame.size.width < 0 || frame.size.height < 0 {
+                   logger.logErrorFirebase("[preAvailbaleSize changes] Negative sizes after endFrame: " +
+                                           "modelId=\(baseModel.modelId), modelType=\(baseModel.modelType), " +
+                                           "prevAvailableWidth=\(baseModel.prevAvailableWidth), prevAvailableHeight=\(baseModel.prevAvailableHeight), " +
+                                           "frameW=\(frame.size.width), frameH=\(frame.size.height), " +
+                                           "widthChange=\(widthChange), heightChange=\(heightChange)")
+               }
                
 //               }
                 if let parent = templateHandler.getModel(modelId:baseModel.parentId) {
