@@ -15,6 +15,7 @@ public class LayersViewModel2 : ObservableObject{
     var cancellables = Set<AnyCancellable>()
     var actionCancellables = Set<AnyCancellable>()
     var layerConfig: LayersConfiguration?
+    var designSystem: LayersDesignSystem?
     var logger: PackageLogger?
 //    @Published var isCellSelected : Bool = false
 //    @Published var lockStatus : Bool = false
@@ -92,6 +93,7 @@ public class LayersViewModel2 : ObservableObject{
     func setPackageLogger(logger: PackageLogger, layersConfig: LayersConfiguration){
         self.logger = logger
         self.layerConfig = layersConfig
+        self.designSystem = LayersDesignSystem(config: layersConfig)
     }
     
     func updateFlatternTree() {
@@ -108,10 +110,7 @@ public class LayersViewModel2 : ObservableObject{
             
             return
         }
-        
-        let lockArray = model.unlockedModel
-//        model.unlockedModel.removeAll()
-        model.lockUnlockState = lockArray
+        templateHandler.currentActionState.lockAllState = true
        
         // change button State
     }
@@ -123,10 +122,7 @@ public class LayersViewModel2 : ObservableObject{
             
             return
         }
-        
-        let unlockArray = templateHandler.filterAndTransformUnlockAll(model)
-        model.lockUnlockState = unlockArray
-//        model.unlockedModel = unlockArray
+        templateHandler.currentActionState.lockAllState = false
         // change button State
     }
     
@@ -494,15 +490,11 @@ public class LayersViewModel2 : ObservableObject{
 extension LayersViewModel2{
     
     func lockAllModels(){
-        if let model = templateHandler.currentPageModel{
-            lockAll(parentInfo: model, state: true)
-        }
+        lockAll()
     }
     
     func unlockAllModels(){
-        if let model = templateHandler.currentPageModel {
-            lockAll(parentInfo: model, state: true)
-        }
+        unLockAll()
     }
     
     func lockAll(parentInfo:ParentModel,state:Bool){

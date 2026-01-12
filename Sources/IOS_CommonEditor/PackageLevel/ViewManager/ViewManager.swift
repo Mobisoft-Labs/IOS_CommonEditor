@@ -203,6 +203,14 @@ extension ViewManager {
         parentView.sortChildrensInDescendingOrder()
         refreshControlBar = true
     }
-}
 
+    func syncLockStatus(ids: [Int]) {
+        for id in ids {
+            guard let model = templateHandler?.getModel(modelId: id),
+                  let view = rootView?.viewWithTag(id) as? BaseView else { continue }
+            view.vISLOCKED = model.lockStatus
+        }
+        refreshControlBar = true
+    }
+}
 

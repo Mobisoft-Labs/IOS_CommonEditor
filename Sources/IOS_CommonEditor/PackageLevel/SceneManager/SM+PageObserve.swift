@@ -17,16 +17,6 @@ extension SceneManager {
                 return
             }
             
-            cPage.$lockUnlockState.dropFirst().sink { [weak self] lockUnlockArray in
-                guard let self = self else { return }
-                for item in lockUnlockArray{
-                    if let childModel = self.mChildHandler.getModel(modelId: item.id){
-                        childModel.setLockStatus(lock: item.lockStatus)
-                    }
-                }
-                
-            }.store(in: &modelPropertiesCancellables)
-            
             cPage.$bgBlurProgress.dropFirst().sink { [weak self] blurProgress in
                 guard let self = self else { return }
     //            print("blur progress",blurProgress)

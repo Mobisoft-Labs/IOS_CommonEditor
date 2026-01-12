@@ -90,6 +90,26 @@ extension MetalEngine {
             templateHandler.performDeleteAction(modelId: modelId, newValue: true)
             templateHandler.currentActionState.deleteModelId = 0
         }.store(in: &actionStateCancellables)
+
+        templateHandler.currentActionState.$lockAllState.dropFirst().sink { [weak self] lockAll in
+            guard let self = self else { return }
+            guard let shouldLock = lockAll else { return }
+            guard let pageModel = templateHandler.currentPageModel else { return }
+            let newArray = shouldLock
+                ? templateHandler.filterAndTransformLockAll(pageModel)
+                : templateHandler.filterAndTransformUnlockAll(pageModel)
+            let oldArray = shouldLock
+                ? templateHandler.filterAndTransformUnlockAll(pageModel)
+                : templateHandler.filterAndTransformLockAll(pageModel)
+            templateHandler.currentActionState.lockAllState = nil
+            if newArray.isEmpty { return }
+            pageModel.lockUnlockState = newArray
+            templateHandler.currentActionState.lockUnlockAllAction = lockUnlockAllAction(
+                id: pageModel.modelId,
+                newArray: newArray,
+                oldArray: oldArray
+            )
+        }.store(in: &actionStateCancellables)
         
         templateHandler.currentActionState.$duplicateModel.dropFirst().sink { [weak self] duplicateModel in
             guard let self = self else { return }

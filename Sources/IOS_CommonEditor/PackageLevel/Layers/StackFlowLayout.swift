@@ -47,6 +47,7 @@ protocol StackedCollectionViewDelegate: AnyObject {
 class StackedVerticalFlowLayout: UICollectionViewFlowLayout, UIGestureRecognizerDelegate, UICollectionViewDelegate {
     
     weak var delegate: StackedCollectionViewDelegate?
+    var onLongPressEnded: (() -> Void)?
     
     private var longPressGestureRecognizer: UILongPressGestureRecognizer!
     private var panGestureRecognizer: UIPanGestureRecognizer!
@@ -55,7 +56,7 @@ class StackedVerticalFlowLayout: UICollectionViewFlowLayout, UIGestureRecognizer
     private var touchOffset: CGPoint?
     private var cellAttributes: [UICollectionViewLayoutAttributes] = []
     private var contentSize: CGSize = .zero
-    let cellSize = CGSize(width: 0, height: 60)  // Set your cell size
+    let cellSize = CGSize(width: 0, height: 72)  // Set your cell size
    // var delegate : CustomLayoutDelegate?
 
     override init() {
@@ -82,7 +83,7 @@ class StackedVerticalFlowLayout: UICollectionViewFlowLayout, UIGestureRecognizer
             let numberOfItems = collectionView.numberOfItems(inSection: section)
             for item in 0..<numberOfItems {
                 let indexPath = IndexPath(item: item, section: section)
-                var width = collectionView.frame.width
+                var width = collectionView.frame.width + 160
                 xOffset = 0
 //                if indexPath.item == 4 {
 //                    width = cellSize.width * 1.5
@@ -97,7 +98,7 @@ class StackedVerticalFlowLayout: UICollectionViewFlowLayout, UIGestureRecognizer
                 if let layers = delegate?.getFlattenTree() {
                     if item >= 0 && item < layers.count {
                         let node = layers[item]
-                        width = collectionView.frame.width
+                        width = collectionView.frame.width + 160
                         xOffset = CGFloat((node.depthLevel - 1) * 50)
                     }
                 }
@@ -106,7 +107,8 @@ class StackedVerticalFlowLayout: UICollectionViewFlowLayout, UIGestureRecognizer
                 maxX = max(maxX , xOffset)
 
                 let attributes = UICollectionViewLayoutAttributes(forCellWith: indexPath)
-                attributes.frame = CGRect(x: xOffset, y: yOffset, width: width*0.7, height: rowHeight)
+                let cellWidth = max(0, (width * 0.7) - 20)
+                attributes.frame = CGRect(x: xOffset, y: yOffset, width: cellWidth, height: rowHeight)
 
                 cellAttributes.append(attributes)
 
@@ -118,12 +120,15 @@ class StackedVerticalFlowLayout: UICollectionViewFlowLayout, UIGestureRecognizer
 
         }
             
-        contentSize = CGSize(width:maxX + maxWidth  , height: yOffset + 60)
+        contentSize = CGSize(width: maxX + maxWidth, height: yOffset + 60)
     }
     
     func setPackageLogger(logger: PackageLogger, layersConfig: LayersConfiguration){
         self.logger = logger
         self.layersConfig = layersConfig
+        if let dropHereView = dropHereView as? DropHereLineView {
+            dropHereView.tintColor = layersConfig.accentColorUIKit
+        }
     }
     
     func addGesture() {
@@ -256,6 +261,7 @@ class StackedVerticalFlowLayout: UICollectionViewFlowLayout, UIGestureRecognizer
           
             autoScrollYtimer?.invalidate()
             autoScrollXtimer?.invalidate()
+            onLongPressEnded?()
 
             endDragging(gesture)
             // remove all selected index
@@ -283,22 +289,20 @@ class StackedVerticalFlowLayout: UICollectionViewFlowLayout, UIGestureRecognizer
 
         guard let snapshot = snapshot else {
             logger?.logError("No Snapshot")
-            dropHereView.isHidden = true
+            setDropIndicatorHidden(true)
             collectionView?.isScrollEnabled = true
             return
         }
         
         switch gesture.state {
         case .changed:
-            dropHereView.isHidden = useDetailedDropView
-            dropDetailView.isHidden = !useDetailedDropView
+            setDropIndicatorHidden(false)
             updateSnapshotPosition(gesture)
             updateAutoScroll(gesture)
             inDragging(gesture)
         case .ended, .cancelled:
             endDragging(gesture)
-            dropHereView.isHidden = true
-            dropDetailView.isHidden = true
+            setDropIndicatorHidden(true)
             collectionView?.isScrollEnabled = true
         default:
             break
@@ -445,8 +449,8 @@ class StackedVerticalFlowLayout: UICollectionViewFlowLayout, UIGestureRecognizer
     var dropGapHeight: CGFloat = 40
     var useDetailedDropView = false {
         didSet {
-            dropHereView.isHidden = useDetailedDropView
-            dropDetailView.isHidden = !useDetailedDropView
+            let isHidden = dropHereView.isHidden && dropDetailView.isHidden
+            setDropIndicatorHidden(isHidden)
             syncDropIndicatorView()
         }
     }
@@ -875,18 +879,65 @@ class StackedVerticalFlowLayout: UICollectionViewFlowLayout, UIGestureRecognizer
     }
     
    lazy var dropHereView : UIView = {
-        let dropHereView = UIView(frame: CGRect(x: 0, y: 0, width: 100, height: 5))
-        dropHereView.backgroundColor = .blue
-       dropHereView.isHidden = true
-       dropHereView.layer.cornerRadius = 5
+        let dropHereView = DropHereLineView(frame: CGRect(x: 0, y: 0, width: 100, height: 12))
+        dropHereView.isHidden = true
         return dropHereView
     }()
+
+    private final class DropHereLineView: UIView {
+        private let titleLabel = UILabel()
+        private let lineView = UIView()
+
+        override init(frame: CGRect) {
+            super.init(frame: frame)
+            backgroundColor = .clear
+            titleLabel.text = "Drop Here"
+            titleLabel.textAlignment = .left
+            titleLabel.textColor = tintColor
+            titleLabel.translatesAutoresizingMaskIntoConstraints = true
+            lineView.backgroundColor = tintColor
+            lineView.translatesAutoresizingMaskIntoConstraints = true
+            addSubview(titleLabel)
+            addSubview(lineView)
+        }
+
+        required init?(coder: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+        }
+
+        override func tintColorDidChange() {
+            super.tintColorDidChange()
+            titleLabel.textColor = tintColor
+            lineView.backgroundColor = tintColor
+        }
+
+        override func layoutSubviews() {
+            super.layoutSubviews()
+            let height = bounds.height
+            let fontSize = max(4, min(12, height - 1))
+            titleLabel.font = UIFont.systemFont(ofSize: fontSize, weight: .semibold)
+            titleLabel.sizeToFit()
+            let labelHeight = min(titleLabel.bounds.height, height)
+            titleLabel.frame = CGRect(x: 0, y: (height - labelHeight) / 2, width: titleLabel.bounds.width, height: labelHeight)
+
+            let lineHeight = max(1, height / 4)
+            let lineX = titleLabel.frame.maxX + 6
+            let lineWidth = max(0, bounds.width - lineX)
+            lineView.frame = CGRect(x: lineX, y: (height - lineHeight) / 2, width: lineWidth, height: lineHeight)
+            lineView.layer.cornerRadius = lineHeight / 2
+        }
+    }
 
    private lazy var dropDetailView: DropIndicatorView = {
         let view = DropIndicatorView()
         view.isHidden = true
         return view
     }()
+
+    private func setDropIndicatorHidden(_ hidden: Bool) {
+        dropHereView.isHidden = hidden || useDetailedDropView
+        dropDetailView.isHidden = hidden || !useDetailedDropView
+    }
 
     private func syncDropIndicatorView() {
         guard useDetailedDropView else { return }

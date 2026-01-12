@@ -454,6 +454,17 @@ extension SceneManager {
         parentMChild.childern.sort { $0.mOrder < $1.mOrder }
         redraw()
     }
+
+    func syncLockStatus(ids: [Int]) {
+        for id in ids {
+            if let childModel = mChildHandler.getModel(modelId: id) {
+                if let baseModel = templateHandler?.getModel(modelId: id) {
+                    childModel.setLockStatus(lock: baseModel.lockStatus)
+                }
+            }
+        }
+        redraw()
+    }
 }
 
 extension SceneManager : IOSMetalViewRenderDelegate {

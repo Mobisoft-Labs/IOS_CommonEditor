@@ -358,7 +358,7 @@ struct MusicChange{
     var newMusicModel : MusicInfo?
 }
 
-struct lockUnlockAllAction{
+public struct lockUnlockAllAction{
     var id: Int
     var newArray : [LockUnlockModel]
     var oldArray : [LockUnlockModel]
