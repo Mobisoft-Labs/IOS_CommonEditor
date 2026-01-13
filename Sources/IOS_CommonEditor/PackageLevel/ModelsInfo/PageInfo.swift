@@ -276,8 +276,8 @@ public class PageInfo:ParentModel,ImageProtocol, Equatable  {
         posY = (baseModel.posY).toFloat() * Float(refSize.height)
         width = (baseModel.width).toFloat() * Float(refSize.width)
         height = (baseModel.height).toFloat() * Float(refSize.height)
-        prevAvailableWidth = (baseModel.prevAvailableWidth).toFloat() * Float(refSize.width)
-        prevAvailableHeight = (baseModel.prevAvailableHeight).toFloat() * Float(refSize.height)
+        prevAvailableWidth = width
+        prevAvailableHeight = height
         rotation = (baseModel.rotation).toFloat()
         modelOpacity = (baseModel.modelOpacity).toFloat()/255.0
         modelFlipHorizontal = baseModel.modelFlipHorizontal.toBool()
@@ -612,4 +612,3 @@ public class PageInfo:ParentModel,ImageProtocol, Equatable  {
    
     
 }
-
