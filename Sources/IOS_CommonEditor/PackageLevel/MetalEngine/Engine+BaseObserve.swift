@@ -281,10 +281,10 @@ extension MetalEngine {
                                "endW=\(frame.size.width), endH=\(frame.size.height)")
 
                if baseModel.prevAvailableWidth < 0 || baseModel.prevAvailableHeight < 0 || frame.size.width < 0 || frame.size.height < 0 {
-                   logger.logErrorFirebase("[preAvailbaleSize changes] Negative sizes after endFrame: " +
-                                           "modelId=\(baseModel.modelId), modelType=\(baseModel.modelType), " +
-                                           "prevAvailableWidth=\(baseModel.prevAvailableWidth), prevAvailableHeight=\(baseModel.prevAvailableHeight), " +
-                                           "frameW=\(frame.size.width), frameH=\(frame.size.height)")
+                   logger.logErrorFirebaseWithBacktrace("[preAvailbaleSize changes] Negative sizes after endFrame: " +
+                                                        "modelId=\(baseModel.modelId), modelType=\(baseModel.modelType), " +
+                                                        "prevAvailableWidth=\(baseModel.prevAvailableWidth), prevAvailableHeight=\(baseModel.prevAvailableHeight), " +
+                                                        "frameW=\(frame.size.width), frameH=\(frame.size.height)")
                }
                
 //               }

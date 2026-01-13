@@ -204,9 +204,9 @@ extension MetalEngine {
                             "prevW=\(oldPrevAvailableWidth), prevH=\(oldPrevAvailableHeight), " +
                             "parentOld=\(oldParentSize), parentNew=\(newParentSize)")
             if child.prevAvailableWidth < 0 || child.prevAvailableHeight < 0 {
-                logger.logErrorFirebase("[preAvailbaleSize changes] Negative prevAvailable after ratio change: " +
-                                        "modelId=\(child.modelId), modelType=\(child.modelType), " +
-                                        "prevAvailableWidth=\(child.prevAvailableWidth), prevAvailableHeight=\(child.prevAvailableHeight)")
+                logger.logErrorFirebaseWithBacktrace("[preAvailbaleSize changes] Negative prevAvailable after ratio change: " +
+                                                     "modelId=\(child.modelId), modelType=\(child.modelType), " +
+                                                     "prevAvailableWidth=\(child.prevAvailableWidth), prevAvailableHeight=\(child.prevAvailableHeight)")
             }
             if !(isDBDisabled){
                 _ = DBManager.shared.updateBaseFrameWithPrevious(modelId: child.modelId,

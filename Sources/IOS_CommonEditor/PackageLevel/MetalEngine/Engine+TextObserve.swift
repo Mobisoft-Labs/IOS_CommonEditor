@@ -224,9 +224,9 @@ extension MetalEngine {
                                 "prevH=\(oldPrevAvailableHeight)->\(textModel.prevAvailableHeight), " +
                                 "newSize=\(textChangedModel!.newSize)")
                 if textModel.prevAvailableWidth <= 0 || textModel.prevAvailableHeight <= 0 {
-                    logger.logErrorFirebase("[preAvailbaleSize changes] Invalid text prevAvailable after resize: " +
-                                            "modelId=\(textModel.modelId), prevW=\(textModel.prevAvailableWidth), " +
-                                            "prevH=\(textModel.prevAvailableHeight), newSize=\(textChangedModel!.newSize)")
+                    logger.logErrorFirebaseWithBacktrace("[preAvailbaleSize changes] Invalid text prevAvailable after resize: " +
+                                                         "modelId=\(textModel.modelId), prevW=\(textModel.prevAvailableWidth), " +
+                                                         "prevH=\(textModel.prevAvailableHeight), newSize=\(textChangedModel!.newSize)")
                 }
                 if !(isDBDisabled){
                     _ = DBManager.shared.updateText(modelId: textModel.textId, newValue: textChangedModel!.newText)
@@ -237,8 +237,8 @@ extension MetalEngine {
                                                                          previousWidth: CGFloat(textModel.prevAvailableWidth),
                                                                          previousHeight: CGFloat(textModel.prevAvailableHeight))
                     } else {
-                        logger.logErrorFirebase("[preAvailbaleSize changes] Parent not found for text resize: " +
-                                                "modelId=\(textModel.modelId), parentId=\(textModel.parentId)")
+                        logger.logErrorFirebaseWithBacktrace("[preAvailbaleSize changes] Parent not found for text resize: " +
+                                                             "modelId=\(textModel.modelId), parentId=\(textModel.parentId)")
                     }
                 }
                 templateHandler.currentActionState.isTextInUpdateMode = false
