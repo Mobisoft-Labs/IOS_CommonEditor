@@ -2188,7 +2188,7 @@ class TextBreaker {
 
 func drawTextAsImage(keepFontSizeFix:Bool, text: String, boundingBox: CGRect, textProperties: TextProperties, logger: PackageLogger?) -> (UIImage?, CGFloat)? {
     
-    
+    let userLanguage = Locale.userLanguageIdentifier
     var adjustedRect = CGRect.zero
 //    let widthMargin = boundingBox.width * ( textProperties.externalWidthMargin / 100 )
 //    let heightMargin = boundingBox.height * ( textProperties.externalHeightMargin / 100 )
@@ -2302,6 +2302,8 @@ func drawTextAsImage(keepFontSizeFix:Bool, text: String, boundingBox: CGRect, te
     //   let image = UIGraphicsGetImageFromCurrentImageContext()
     //   UIGraphicsEndImageContext()
     //   print(image)
+    
+    logger?.logInfo("Create Text Image Info Completed : user language -> \(userLanguage), original Text -> \(text), ref width -> \(boundingBox.size.width), ref height -> \(boundingBox.size.height)")
     
     return (image2,currentTextProperties.fontSize)
 }
