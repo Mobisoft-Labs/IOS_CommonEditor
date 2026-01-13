@@ -271,10 +271,21 @@ extension MetalEngine {
                 // get parent for calculate size and center with respect to parent
                 let oldFrame = baseModel.beginFrame
 //               if !(baseModel.modelType == .Text){
-               let widthChange = frame.size.width  - oldFrame.size.width
-               let heightChange = frame.size.height  - oldFrame.size.height
-               baseModel.prevAvailableWidth += Float(widthChange)//Float(frame.size.width/*oldFrame.size.width*/)
-               baseModel.prevAvailableHeight += Float(heightChange)//Float(frame.size.height/*oldFrame.size.height*/)
+               let oldPrevAvailableWidth = baseModel.prevAvailableWidth
+               let oldPrevAvailableHeight = baseModel.prevAvailableHeight
+               baseModel.prevAvailableWidth = Float(frame.size.width)
+               baseModel.prevAvailableHeight = Float(frame.size.height)
+               logger.printLog("[preAvailbaleSize changes] modelId=\(baseModel.modelId), modelType=\(baseModel.modelType), " +
+                               "prevW=\(oldPrevAvailableWidth)->\(baseModel.prevAvailableWidth), " +
+                               "prevH=\(oldPrevAvailableHeight)->\(baseModel.prevAvailableHeight), " +
+                               "endW=\(frame.size.width), endH=\(frame.size.height)")
+
+               if baseModel.prevAvailableWidth < 0 || baseModel.prevAvailableHeight < 0 || frame.size.width < 0 || frame.size.height < 0 {
+                   logger.logErrorFirebase("[preAvailbaleSize changes] Negative sizes after endFrame: " +
+                                           "modelId=\(baseModel.modelId), modelType=\(baseModel.modelType), " +
+                                           "prevAvailableWidth=\(baseModel.prevAvailableWidth), prevAvailableHeight=\(baseModel.prevAvailableHeight), " +
+                                           "frameW=\(frame.size.width), frameH=\(frame.size.height)")
+               }
                
 //               }
                 if let parent = templateHandler.getModel(modelId:baseModel.parentId) {

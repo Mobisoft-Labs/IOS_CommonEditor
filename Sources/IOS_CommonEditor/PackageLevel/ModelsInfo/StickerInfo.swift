@@ -345,8 +345,8 @@ public class StickerInfo:BaseModel ,StickerModelProtocol,ImageProtocol{
         posY = (baseModel.posY).toFloat() * Float(refSize.height)
         width = (baseModel.width).toFloat() * Float(refSize.width)
         height = (baseModel.height).toFloat() * Float(refSize.height)
-        prevAvailableWidth = (baseModel.prevAvailableWidth).toFloat() * Float(refSize.width)
-        prevAvailableHeight = (baseModel.prevAvailableHeight).toFloat() * Float(refSize.height)
+        prevAvailableWidth = width
+        prevAvailableHeight = height
         rotation = (baseModel.rotation).toFloat()
         modelOpacity = (baseModel.modelOpacity).toFloat()/255.0
         modelFlipHorizontal = baseModel.modelFlipHorizontal.toBool()
@@ -383,50 +383,50 @@ public class StickerInfo:BaseModel ,StickerModelProtocol,ImageProtocol{
     
    
     
-    func setBaseModel(baseModel:DBBaseModel){
-      
-        modelId = baseModel.modelId
-        parentId = baseModel.parentId
-        modelType = ContentType(rawValue: baseModel.modelType) ?? .Text
-        dataId = baseModel.dataId
-        posX = (baseModel.posX).toFloat() 
-        posY = (baseModel.posY).toFloat()
-        width = (baseModel.width).toFloat()
-        height = (baseModel.height).toFloat()
-        prevAvailableWidth = (baseModel.prevAvailableWidth).toFloat()
-        prevAvailableHeight = (baseModel.prevAvailableHeight).toFloat()
-        rotation = (baseModel.rotation).toFloat()
-        modelOpacity = (baseModel.modelOpacity).toFloat()/255.0
-        modelFlipHorizontal = baseModel.modelFlipHorizontal.toBool()
-        modelFlipVertical = baseModel.modelFlipVertical.toBool()
-        lockStatus = baseModel.lockStatus.toBool()
-        orderInParent = baseModel.orderInParent
-        bgBlurProgress = baseModel.bgBlurProgress.toFloat()
-        overlayDataId = baseModel.overlayDataId
-        overlayOpacity = baseModel.overlayOpacity.toFloat()/255.0
-        startTime = (baseModel.startTime).toFloat()
-        duration = (baseModel.duration).toFloat()
-        softDelete = baseModel.softDelete.toBool()
-        isHidden = baseModel.isHidden
-        templateID = baseModel.templateID
-        
-        //Changes for filter done by NK.
-        filterType = getFilter(filterNumber: baseModel.filterType)
-        brightnessIntensity = baseModel.brightnessIntensity
-        contrastIntensity = baseModel.contrastIntensity
-        highlightIntensity = baseModel.highlightIntensity
-        shadowsIntensity = baseModel.shadowsIntensity
-        saturationIntensity = baseModel.saturationIntensity
-        vibranceIntensity = baseModel.vibranceIntensity
-        sharpnessIntensity = baseModel.sharpnessIntensity
-        warmthIntensity = baseModel.warmthIntensity
-        tintIntensity = baseModel.tintIntensity
-        
-        hasMask = baseModel.hasMask.toBool()
-        maskShape = baseModel.maskShape
-
-        
-    }
+//    func setBaseModel(baseModel:DBBaseModel){
+//      
+//        modelId = baseModel.modelId
+//        parentId = baseModel.parentId
+//        modelType = ContentType(rawValue: baseModel.modelType) ?? .Text
+//        dataId = baseModel.dataId
+//        posX = (baseModel.posX).toFloat() 
+//        posY = (baseModel.posY).toFloat()
+//        width = (baseModel.width).toFloat()
+//        height = (baseModel.height).toFloat()
+//        prevAvailableWidth = (baseModel.prevAvailableWidth).toFloat()
+//        prevAvailableHeight = (baseModel.prevAvailableHeight).toFloat()
+//        rotation = (baseModel.rotation).toFloat()
+//        modelOpacity = (baseModel.modelOpacity).toFloat()/255.0
+//        modelFlipHorizontal = baseModel.modelFlipHorizontal.toBool()
+//        modelFlipVertical = baseModel.modelFlipVertical.toBool()
+//        lockStatus = baseModel.lockStatus.toBool()
+//        orderInParent = baseModel.orderInParent
+//        bgBlurProgress = baseModel.bgBlurProgress.toFloat()
+//        overlayDataId = baseModel.overlayDataId
+//        overlayOpacity = baseModel.overlayOpacity.toFloat()/255.0
+//        startTime = (baseModel.startTime).toFloat()
+//        duration = (baseModel.duration).toFloat()
+//        softDelete = baseModel.softDelete.toBool()
+//        isHidden = baseModel.isHidden
+//        templateID = baseModel.templateID
+//        
+//        //Changes for filter done by NK.
+//        filterType = getFilter(filterNumber: baseModel.filterType)
+//        brightnessIntensity = baseModel.brightnessIntensity
+//        contrastIntensity = baseModel.contrastIntensity
+//        highlightIntensity = baseModel.highlightIntensity
+//        shadowsIntensity = baseModel.shadowsIntensity
+//        saturationIntensity = baseModel.saturationIntensity
+//        vibranceIntensity = baseModel.vibranceIntensity
+//        sharpnessIntensity = baseModel.sharpnessIntensity
+//        warmthIntensity = baseModel.warmthIntensity
+//        tintIntensity = baseModel.tintIntensity
+//        
+//        hasMask = baseModel.hasMask.toBool()
+//        maskShape = baseModel.maskShape
+//
+//        
+//    }
 
     func setStickerModel(stickerModel:DBStickerModel){
         stickerId = stickerModel.stickerId
@@ -655,5 +655,4 @@ public class StickerInfo:BaseModel ,StickerModelProtocol,ImageProtocol{
         
     }
 }
-
 

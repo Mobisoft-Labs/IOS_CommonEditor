@@ -233,8 +233,8 @@ public class TextInfo:BaseModel,TextModelProtocol{
         posY = (baseModel.posY).toFloat() * Float(refSize.height)
         width = (baseModel.width).toFloat() * Float(refSize.width)
         height = (baseModel.height).toFloat() * Float(refSize.height)
-        prevAvailableWidth = (baseModel.prevAvailableWidth).toFloat() * Float(refSize.width)
-        prevAvailableHeight = (baseModel.prevAvailableHeight).toFloat() * Float(refSize.height)
+        prevAvailableWidth = width
+        prevAvailableHeight = height
         rotation = (baseModel.rotation).toFloat()
         modelOpacity = (baseModel.modelOpacity).toFloat() / 255
         modelFlipHorizontal = baseModel.modelFlipHorizontal.toBool()
@@ -449,7 +449,12 @@ extension TextInfo {
         let userLanguage = Locale.userLanguageIdentifier
         
         if refSize.width == 0.0 || refSize.height == 0.0 {
-            logger?.logError("Text RefSize Zero \(text) , returning Empty Image")
+            logger?.logErrorFirebase("[preAvailbaleSize changes] Text RefSize Zero \(text) , returning Empty Image")
+            return createTransparentImage(size: CGSize(width: 10 , height: 10))
+        }
+
+        if refSize.width < 0.0 || refSize.height < 0.0 {
+            logger?.logErrorFirebase("[preAvailbaleSize changes] Text RefSize Negative \(refSize) for text: \(text)")
             return createTransparentImage(size: CGSize(width: 10 , height: 10))
         }
         

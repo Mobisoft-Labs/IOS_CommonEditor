@@ -535,6 +535,15 @@ func calculateComponentPosition(componentX: CGFloat, componentY: CGFloat, compon
                                 componentAvailableWidth: CGFloat, componentAvailableHeight: CGFloat, rotationInDegree: CGFloat,
                                 currentParentWidth: CGFloat, currentParentHeight: CGFloat, newParentWidth: CGFloat, newParentHeight: CGFloat) -> [CGFloat] {
     
+    // This method scales a component from an old parent size to a new parent size while
+    // preserving aspect-fit constraints. The "available" size represents the container
+    // the content was fit into before resizing (prevAvailableWidth/Height).
+    //
+    // Example:
+    // - Content was fit into a 300x200 container (available), resulting in a 300x150 final size.
+    // - If the parent width doubles while height stays, the available size becomes 600x200.
+    // - The content is re-fit into 600x200, producing a 400x200 final size (not 600x300).
+    // This prevents incorrect scaling when aspect ratios change.
     let componentCenterX = componentWidth / 2.0 + componentX
     let componentCenterY = componentHeight / 2.0 + componentY
     let rotationInRadian = rotationInDegree * .pi / 180.0
@@ -640,6 +649,15 @@ func calculateComponentPosition(componentX: CGFloat, componentY: CGFloat, compon
         newComponentFinalY = newParentHeight - newComponentFinalH / 2.0 + ((componentCenterY - currentParentBottom) * changeRatioInComponentHeight)
     }
     
+    if componentAvailableWidth < 0 || componentAvailableHeight < 0 || newComponentWidth < 0 || newComponentHeight < 0 ||
+        newComponentFinalW < 0 || newComponentFinalH < 0 || newComponentFinalX < 0 || newComponentFinalY < 0 {
+        print("[preAvailbaleSize changes] calculateComponentPosition negative sizes: " +
+              "componentAvailableWidth=\(componentAvailableWidth), componentAvailableHeight=\(componentAvailableHeight), " +
+              "newComponentWidth=\(newComponentWidth), newComponentHeight=\(newComponentHeight), " +
+              "newComponentFinalW=\(newComponentFinalW), newComponentFinalH=\(newComponentFinalH), " +
+              "newComponentFinalX=\(newComponentFinalX), newComponentFinalY=\(newComponentFinalY)")
+    }
+
     return [newComponentFinalX, newComponentFinalY, newComponentFinalW, newComponentFinalH, newComponentWidth, newComponentHeight]
 }
 

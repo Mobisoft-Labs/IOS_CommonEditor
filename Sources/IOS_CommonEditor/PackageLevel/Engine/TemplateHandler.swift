@@ -156,7 +156,7 @@ public class TemplateHandler  : TemplateHandlerProtocol,DictCacheProtocol, Obser
     
    
     
-    var logger: PackageLogger?
+    public var logger: PackageLogger?
     var engineConfig: EngineConfiguration?
     
     deinit {
