@@ -200,11 +200,8 @@ extension MetalEngine {
             child.baseFrame.center = newCenter
             let oldPrevAvailableWidth = child.prevAvailableWidth
             let oldPrevAvailableHeight = child.prevAvailableHeight
-            child.prevAvailableWidth = Float(calculateSize[4])
-            child.prevAvailableHeight = Float(calculateSize[5])
             logger.printLog("[preAvailbaleSize changes] ratioChange modelId=\(child.modelId), modelType=\(child.modelType), " +
-                            "prevW=\(oldPrevAvailableWidth)->\(child.prevAvailableWidth), " +
-                            "prevH=\(oldPrevAvailableHeight)->\(child.prevAvailableHeight), " +
+                            "prevW=\(oldPrevAvailableWidth), prevH=\(oldPrevAvailableHeight), " +
                             "parentOld=\(oldParentSize), parentNew=\(newParentSize)")
             if child.prevAvailableWidth < 0 || child.prevAvailableHeight < 0 {
                 logger.logErrorFirebase("[preAvailbaleSize changes] Negative prevAvailable after ratio change: " +
@@ -212,7 +209,11 @@ extension MetalEngine {
                                         "prevAvailableWidth=\(child.prevAvailableWidth), prevAvailableHeight=\(child.prevAvailableHeight)")
             }
             if !(isDBDisabled){
-                _ = DBManager.shared.updateBaseFrameWithPrevious(modelId: child.modelId, newValue: child.baseFrame, parentFrame: newParentSize, previousWidth: CGFloat(child.prevAvailableWidth), previousHeight: CGFloat(child.prevAvailableHeight))
+                _ = DBManager.shared.updateBaseFrameWithPrevious(modelId: child.modelId,
+                                                                newValue: child.baseFrame,
+                                                                parentFrame: newParentSize,
+                                                                previousWidth: CGFloat(child.prevAvailableWidth),
+                                                                previousHeight: CGFloat(child.prevAvailableHeight))
             }
             if let parent = child as? ParentModel{
                 recursiveChildSizeChange(parent: parent, oldParentSize: oldChildSize, newParentSize: newSize)
