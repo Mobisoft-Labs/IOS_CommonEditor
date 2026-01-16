@@ -2433,7 +2433,7 @@ func isValidFit(boundingBox: CGRect, text: String,textProperties: TextProperties
 //        let lineText = (text as NSString).substring(with: lineRange)
 //        lineText.draw(in: rect, withAttributes: attributes)
        let lineText = attributedString.attributedSubstring(from: lineRange)
-        lineText.draw(in: rect)
+//        lineText.draw(in: rect)
         // Check for word wrapping validity (space or hyphen)
         if lineRange.location + lineRange.length < text.count { //lineRange.location + lineRange.length < attributedString.length{
             let endIndex = lineRange.location + lineRange.length

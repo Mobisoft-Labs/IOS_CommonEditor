@@ -46,8 +46,13 @@ extension TimelineView {
                             let parent = tlManager.templateHandler?.getParentModel(for: currentModel.parentId)
                             let parentChildCount = parent?.activeChildren.count ?? 0
                             logger?.logError("GroupUndoCrash \(index) : \(self.scroller.collectionView.rulingModel!.activeChildren.count): \(parentChildCount) ")
-                            if index >= 0 && index <= index,((self.scroller.collectionView.rulingModel!.activeChildren.count - 1) != 0) {
+                            let activeCount = self.scroller.collectionView.rulingModel?.activeChildren.count ?? 0
+                            let itemCount = self.scroller.collectionView.numberOfItems(inSection: 0)
+                            logger?.logErrorFirebaseWithBacktrace("[TimelineTrace][isActive] currentModelId=\(currentModel.modelId) rulingModelId=\(self.scroller.collectionView.rulingModel?.modelId ?? -1) index=\(index) activeCount=\(activeCount) itemCount=\(itemCount) parentChildCount=\(parentChildCount) isMainThread=\(Thread.isMainThread)", record: false)
+                            if index >= 0 && index < itemCount,((self.scroller.collectionView.rulingModel!.activeChildren.count - 1) != 0) {
                                 self.scroller.collectionView.scrollToItem(at: IndexPath(item: index, section: 0), at: .centeredVertically, animated: true)
+                            } else {
+                                logger?.logErrorFirebaseWithBacktrace("[TimelineTrace][isActive][skip] currentModelId=\(currentModel.modelId) rulingModelId=\(self.scroller.collectionView.rulingModel?.modelId ?? -1) index=\(index) itemCount=\(itemCount) activeCount=\(activeCount) parentChildCount=\(parentChildCount) isMainThread=\(Thread.isMainThread)", record: true)
                             }
                         }
                     }

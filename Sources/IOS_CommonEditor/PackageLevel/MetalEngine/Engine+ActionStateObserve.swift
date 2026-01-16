@@ -752,6 +752,8 @@ extension MetalEngine {
         templateHandler.currentActionState.$didGroupTapped.dropFirst().sink { [weak self] value in
             guard let self = self else { return }
             if value == true{
+                let selectedIds = templateHandler.currentActionState.multiSelectedItems.map { $0.modelId }
+                logger.logErrorFirebaseWithBacktrace("[TimelineTrace][didGroupTapped] currentModelId=\(templateHandler.currentModel?.modelId ?? -1) pageId=\(templateHandler.currentPageModel?.modelId ?? -1) selectedIds=\(selectedIds) isMainThread=\(Thread.isMainThread)", record: false)
                
                 templateHandler.currentActionState.multiSelectedItems.forEach { model in
                     if let model = templateHandler.getModel(modelId: model.modelId) {

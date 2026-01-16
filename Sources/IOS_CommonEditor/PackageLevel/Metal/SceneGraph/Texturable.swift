@@ -89,11 +89,12 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
         if !hasMask { return }
         
         guard let maskTexture = maskTexture , let maskAdjustment = maskAdjustment  else { return }
+        logger?.logInfo("[Trace] TexturableChild.applyMaskIfNeeded id=\(identification) mask=\(maskTexture.width)x\(maskTexture.height) source=\(sourceTexture?.width ?? 0)x\(sourceTexture?.height ?? 0)")
         maskAdjustment.setMaskTexture(maskTexture)
         maskAdjustment.encode(source: finaltexture, mask: maskTexture, destination: destinationTexture, in: computeEncoder)
         finaltexture = destinationTexture
 //        sourceTexture = destinationTexture
-        destinationTexture = try! textureManager.matchingTexture(to: sourceTexture)
+        updateDestinationTexture()
 
        
         
@@ -102,6 +103,16 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
 //        let image3 = Conversion.textureToUIImage(finaltexture)
 
         if !hasMask { return }
+    }
+
+    private func updateDestinationTexture(context: String = #function) {
+        logger?.logInfo("[Trace] TexturableChild.updateDestinationTexture context=\(context) id=\(identification) source=\(sourceTexture?.width ?? 0)x\(sourceTexture?.height ?? 0)")
+        do {
+            destinationTexture = try textureManager.matchingTexture(to: sourceTexture)
+        } catch {
+            logger?.logErrorFirebase("matchingTexture failed in \(context) id=\(identification) source=\(sourceTexture?.width ?? 0)x\(sourceTexture?.height ?? 0) error=\(error)", record: true)
+            destinationTexture = sourceTexture
+        }
     }
     
     var maskTexture:  MTLTexture?
@@ -408,7 +419,7 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
         maskAdjustment = try? MaskAdjustment(library: shaderLibrary.DefaultLibrary)
         
         self.sourceTexture = texture
-        destinationTexture = try! textureManager.matchingTexture(to: sourceTexture)
+        updateDestinationTexture()
     }
     
     func setBGTexture(texture: MTLTexture) {
@@ -459,7 +470,7 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
         maskAdjustment = try? MaskAdjustment(library: shaderLibrary.DefaultLibrary)
 
         self.sourceTexture = texture
-        destinationTexture = try! textureManager.matchingTexture(to: sourceTexture)
+        updateDestinationTexture()
     }
     
     func setEmptyTexture(){
@@ -571,6 +582,7 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
     var finaltexture : MTLTexture!
     func precomuteData(computeEncoder: MTLComputeCommandEncoder) {
         if !canRender { return ;}
+        logger?.logInfo("[Trace] TexturableChild.precomuteData id=\(identification) contentType=\(mContentType) stickerType=\(mStickerType) sourceTex=\(sourceTexture?.width ?? 0)x\(sourceTexture?.height ?? 0)")
         _use_cached_texture = false
         if _use_cached_texture{
             finaltexture = sourceTexture
@@ -578,7 +590,7 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
         }else{
             finaltexture = sourceTexture
             // empty texture
-            destinationTexture = try! textureManager.matchingTexture(to: sourceTexture)
+            updateDestinationTexture()
             
            
             if mContentType == 0.0  {
@@ -661,7 +673,7 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
         colorAdjustment?.color = mcolor
         colorAdjustment?.encode(source: finaltexture, destination: destinationTexture, in: computeEncoder)
         finaltexture = destinationTexture
-        destinationTexture = try! textureManager.matchingTexture(to: sourceTexture)
+        updateDestinationTexture()
     }
     
     func blurShaderIfNeeded(_ computeEncoder:MTLComputeCommandEncoder){
@@ -669,7 +681,7 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
         if mblur > 0.0{
             blurAdjustment?.encode(source: finaltexture, destination: destinationTexture, in: computeEncoder)
             finaltexture = destinationTexture
-            destinationTexture = try! textureManager.matchingTexture(to: sourceTexture)
+            updateDestinationTexture()
         }
     }
     
@@ -678,7 +690,7 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
         overlayAdjustments?.overlayOpacity = mOverlayBlur
             overlayAdjustments?.encode(input1: finaltexture, input2: mOverlayTexture!, destination: destinationTexture, in: computeEncoder)
             finaltexture = destinationTexture
-            destinationTexture = try! textureManager.matchingTexture(to: sourceTexture)
+            updateDestinationTexture()
         }
     }
     
@@ -694,7 +706,7 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
                 tileAdjustment?.encode(source: sourceTexture, destination: destinationTexture, in: computeEncoder)
                 finaltexture = destinationTexture
                 sourceTexture = destinationTexture
-                destinationTexture = try! textureManager.matchingTexture(to: sourceTexture)
+                updateDestinationTexture()
             }
         }
     }
@@ -703,13 +715,13 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
         hueAdjustment?.hue = mHue
         hueAdjustment?.encode(source: finaltexture, destination: destinationTexture, in: computeEncoder)
         finaltexture = destinationTexture
-        destinationTexture = try! textureManager.matchingTexture(to: sourceTexture)
+        updateDestinationTexture()
     }
     
     func circleCropIfNeeded(_ computeEncoder:MTLComputeCommandEncoder){
         circleCropAdjustment?.encode(source: finaltexture, destination: destinationTexture, in: computeEncoder)
         finaltexture = destinationTexture
-        destinationTexture = try! textureManager.matchingTexture(to: sourceTexture)
+        updateDestinationTexture()
     }
     
     func colorFilterOnImageIfNeeded( _ computeEncoder:MTLComputeCommandEncoder){
@@ -721,7 +733,7 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
         colorFilterOnImage?.color = mcolor
         colorFilterOnImage?.encode(source: finaltexture, destination: destinationTexture, in: computeEncoder)
         finaltexture = destinationTexture
-        destinationTexture = try! textureManager.matchingTexture(to: sourceTexture)
+        updateDestinationTexture()
     }
     
     // Adjust texture processing dynamically based on the state
@@ -734,7 +746,7 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
         if sepiaFilter.enabled {
             sepiaFilter.encode(source: finaltexture, destination: destinationTexture, in: computeEncoder)
             finaltexture = destinationTexture
-            destinationTexture = try! textureManager.matchingTexture(to: sourceTexture)
+            updateDestinationTexture()
         }
     }
     
@@ -748,7 +760,7 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
         if blackNWhiteFilter.enabled {
             blackNWhiteFilter.encode(source: finaltexture, destination: destinationTexture, in: computeEncoder)
             finaltexture = destinationTexture
-            destinationTexture = try! textureManager.matchingTexture(to: sourceTexture)
+            updateDestinationTexture()
         }
     }
     
@@ -762,7 +774,7 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
         if falseColorFilter.enabled {
             falseColorFilter.encode(source: finaltexture, destination: destinationTexture, in: computeEncoder)
             finaltexture = destinationTexture
-            destinationTexture = try! textureManager.matchingTexture(to: sourceTexture)
+            updateDestinationTexture()
         }
     }
     
@@ -776,7 +788,7 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
         if monoChromeFilter.enabled {
             monoChromeFilter.encode(source: finaltexture, destination: destinationTexture, in: computeEncoder)
             finaltexture = destinationTexture
-            destinationTexture = try! textureManager.matchingTexture(to: sourceTexture)
+            updateDestinationTexture()
         }
     }
     
@@ -790,7 +802,7 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
         if sketchFilter.enabled {
             sketchFilter.encode(source: finaltexture, destination: destinationTexture, in: computeEncoder)
             finaltexture = destinationTexture
-            destinationTexture = try! textureManager.matchingTexture(to: sourceTexture)
+            updateDestinationTexture()
         }
     }
     
@@ -804,7 +816,7 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
         if softEleganceFilter.enabled {
             softEleganceFilter.encode(source: finaltexture, destination: destinationTexture, in: computeEncoder)
             finaltexture = destinationTexture
-            destinationTexture = try! textureManager.matchingTexture(to: sourceTexture)
+            updateDestinationTexture()
         }
     }
     
@@ -818,7 +830,7 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
         if massEtikateFilter.enabled {
             massEtikateFilter.encode(source: finaltexture, destination: destinationTexture, in: computeEncoder)
             finaltexture = destinationTexture
-            destinationTexture = try! textureManager.matchingTexture(to: sourceTexture)
+            updateDestinationTexture()
         }
     }
     
@@ -833,7 +845,7 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
         if polkadotFilter.enabled {
             polkadotFilter.encode(source: finaltexture, destination: destinationTexture, in: computeEncoder)
             finaltexture = destinationTexture
-            destinationTexture = try! textureManager.matchingTexture(to: sourceTexture)
+            updateDestinationTexture()
         }
     }
     
@@ -854,7 +866,7 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
 
         // Swap textures for the next processing step
         finaltexture = destinationTexture
-        destinationTexture = try! textureManager.matchingTexture(to: sourceTexture)
+        updateDestinationTexture()
     }
     
     
@@ -865,7 +877,7 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
 
         // Swap textures for the next processing step
         finaltexture = destinationTexture
-        destinationTexture = try! textureManager.matchingTexture(to: sourceTexture)
+        updateDestinationTexture()
     }
 
     func highlightShaderIfNeeded(_ computeEncoder: MTLComputeCommandEncoder) {
@@ -875,7 +887,7 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
 
         // Swap textures for the next processing step
         finaltexture = destinationTexture
-        destinationTexture = try! textureManager.matchingTexture(to: sourceTexture)
+        updateDestinationTexture()
     }
     
     func shadowsShaderIfNeeded(_ computeEncoder: MTLComputeCommandEncoder) {
@@ -885,7 +897,7 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
 
         // Swap textures for the next processing step
         finaltexture = destinationTexture
-        destinationTexture = try! textureManager.matchingTexture(to: sourceTexture)
+        updateDestinationTexture()
     }
     
     func saturationShaderIfNeeded(_ computeEncoder: MTLComputeCommandEncoder) {
@@ -895,7 +907,7 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
 
         // Swap textures for the next processing step
         finaltexture = destinationTexture
-        destinationTexture = try! textureManager.matchingTexture(to: sourceTexture)
+        updateDestinationTexture()
     }
     
     func vibranceShaderIfNeeded(_ computeEncoder: MTLComputeCommandEncoder) {
@@ -905,7 +917,7 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
 
         // Swap textures for the next processing step
         finaltexture = destinationTexture
-        destinationTexture = try! textureManager.matchingTexture(to: sourceTexture)
+        updateDestinationTexture()
     }
     
     func sharpnessShaderIfNeeded(_ computeEncoder: MTLComputeCommandEncoder) {
@@ -915,7 +927,7 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
 
         // Swap textures for the next processing step
         finaltexture = destinationTexture
-        destinationTexture = try! textureManager.matchingTexture(to: sourceTexture)
+        updateDestinationTexture()
     }
     
     func tintShaderIfNeeded(_ computeEncoder: MTLComputeCommandEncoder) {
@@ -925,7 +937,7 @@ class TexturableChild : MChild,Texturable,Computable,Maskable{
 
         // Swap textures for the next processing step
         finaltexture = destinationTexture
-        destinationTexture = try! textureManager.matchingTexture(to: sourceTexture)
+        updateDestinationTexture()
     }
     
     

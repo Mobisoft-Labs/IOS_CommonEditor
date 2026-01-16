@@ -447,6 +447,8 @@ extension TextInfo {
     /// Neeshu Use this method
     func createImage(thumbUpdate : Bool = false , keepSameFont:Bool = false , text:String,properties:TextProperties,refSize:CGSize,maxWidth: CGFloat,maxHeight:CGFloat, contentScaleFactor : CGFloat, logger: PackageLogger?) -> UIImage?{
         let userLanguage = Locale.userLanguageIdentifier
+        logger?.logInfo("[Trace] TextInfo.createImage textId=\(textId) modelId=\(modelId) parentId=\(parentId) templateId=\(templateID) ref=\(refSize.width)x\(refSize.height) max=\(maxWidth)x\(maxHeight) scale=\(contentScaleFactor) thumb=\(thumbUpdate) keepFont=\(keepSameFont) len=\(text.count)")
+
         
         if refSize.width == 0.0 || refSize.height == 0.0 {
             logger?.logErrorFirebaseWithBacktrace("[preAvailbaleSize changes] Text RefSize Zero \(text) , returning Empty Image")
@@ -466,12 +468,22 @@ extension TextInfo {
         let newScaledWidth = refSize.width * contentScaleFactor
         let newScaledHeight = refSize.height * contentScaleFactor
         let scaledRefSize = CGSize(width: newScaledWidth, height: newScaledHeight)
-        logger?.logInfo("Create Text Image Info Started : user language -> \(userLanguage), original Text -> \(text), ref width -> \(refSize.width), ref height -> \(refSize.height)")
-       let values =  drawTextAsImage(keepFontSizeFix: keepSameFont, text: text, boundingBox: CGRect(origin: .zero, size: scaledRefSize), textProperties: properties, logger: logger)
+        let maxDimension = CGFloat(16384)
+        let pixelWidth = scaledRefSize.width
+        let pixelHeight = scaledRefSize.height
+        if !pixelWidth.isFinite || !pixelHeight.isFinite || pixelWidth <= 0 || pixelHeight <= 0 {
+            logger?.logErrorFirebase("TextInfo.createImage invalid pixel size textId=\(textId) modelId=\(modelId) ref=\(refSize.width)x\(refSize.height) scale=\(contentScaleFactor) pixels=\(pixelWidth)x\(pixelHeight)", record: false)
+        }
+        if pixelWidth > maxDimension || pixelHeight > maxDimension {
+            logger?.logErrorFirebase("TextInfo.createImage pixel size too large textId=\(textId) modelId=\(modelId) pixels=\(pixelWidth)x\(pixelHeight) max=\(maxDimension)", record: false)
+        }
+        logger?.logInfo("[TextTexture] createImage start lang=\(userLanguage) textLen=\(text.count) refSize=\(refSize.width)x\(refSize.height) scaled=\(scaledRefSize.width)x\(scaledRefSize.height) scale=\(contentScaleFactor) thumb=\(thumbUpdate) keepFont=\(keepSameFont)")
+        let values =  drawTextAsImage(keepFontSizeFix: keepSameFont, text: text, boundingBox: CGRect(origin: .zero, size: scaledRefSize), textProperties: properties, logger: logger)
         let image = values!.0!
         if !thumbUpdate{
             fontSize = values!.1
         }
+        logger?.logInfo("[TextTexture] createImage result size=\(image.size.width)x\(image.size.height) fontSize=\(fontSize)")
 
         return image
 

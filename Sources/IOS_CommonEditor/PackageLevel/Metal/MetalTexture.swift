@@ -71,6 +71,7 @@ class MetalTexture: NSObject {
     super.init()
   }
     let maxTextureSize = 16384
+            
     func clampedTextureSize(width: Int, height: Int, maxDimension: Int = 16384) -> (width: Int, height: Int) {
         let originalWidth = CGFloat(width)
         let originalHeight = CGFloat(height)
@@ -97,19 +98,30 @@ class MetalTexture: NSObject {
     }
   func loadTexture(device: MTLDevice, commandQ: MTLCommandQueue? = nil, flip: Bool){
     
-    let image = imageForTexture.cgImage! //(UIImage(contentsOfFile: path)?.cgImage)!
+    guard let image = imageForTexture.cgImage else {
+      Conversion.logger?.logErrorFirebase("MetalTexture.loadTexture missing cgImage")
+      return
+    } //(UIImage(contentsOfFile: path)?.cgImage)!
     let colorSpace = CGColorSpaceCreateDeviceRGB()
     
 //      let clampedWidth = min(width, maxTextureSize)
 //      let clampedHeight = min(height, maxTextureSize)
-      let (safeWidth, safeHeight) = clampedTextureSize(width: image.width, height: image.height)
+    if image.width > maxTextureSize || image.height > maxTextureSize {
+        Conversion.logger?.logErrorFirebase("MetalTexture.loadTexture image too large cg=\(image.width)x\(image.height) max=\(maxTextureSize)", record: false)
+    }
 
-    width = Int(safeWidth)//.pointsToPixel())
-    height = Int(safeHeight)//.pointsToPixel())
+    width = Int(image.width)//.pointsToPixel())
+    height = Int(image.height)//.pointsToPixel())
     
-    let rowBytes = width * bytesPerPixel
+    let contextRowBytes = width * bytesPerPixel
+    let rowAlignment = 256
+    let uploadRowBytes = ((contextRowBytes + rowAlignment - 1) / rowAlignment) * rowAlignment
+    Conversion.logger?.logInfo("[Trace] MetalTexture.loadTexture cg=\(image.width)x\(image.height) tex=\(width!)x\(height!) rowBytes=\(contextRowBytes) uploadRowBytes=\(uploadRowBytes) flip=\(flip)")
     
-      let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: rowBytes, space: colorSpace, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+      guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: contextRowBytes, space: colorSpace, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else {
+        Conversion.logger?.logErrorFirebase("MetalTexture.loadTexture CGContext failed")
+        return
+      }
     let bounds = CGRect(x: 0, y: 0, width: Int(width), height: Int(height))
     context.clear(bounds)
     
@@ -124,10 +136,30 @@ class MetalTexture: NSObject {
     
     target = texDescriptor.textureType
     texture = device.makeTexture(descriptor: texDescriptor)
+    if texture == nil {
+        Conversion.logger?.logErrorFirebase("MetalTexture.loadTexture makeTexture failed size=\(width!)x\(height!)", record: true)
+        return
+    }
     
     let pixelsData = context.data!
     let region = MTLRegionMake2D(0, 0, Int(width), Int(height))
-    texture.replace(region: region, mipmapLevel: 0, withBytes: pixelsData, bytesPerRow: Int(rowBytes))
+    if uploadRowBytes == contextRowBytes {
+        texture.replace(region: region, mipmapLevel: 0, withBytes: pixelsData, bytesPerRow: Int(contextRowBytes))
+    } else {
+        Conversion.logger?.logErrorFirebase("MetalTexture.loadTexture using aligned uploadRowBytes textSize=\(width!)x\(height!) rowBytes=\(contextRowBytes) uploadRowBytes=\(uploadRowBytes)", record: true)
+        let uploadBufferSize = uploadRowBytes * height
+        var uploadBuffer = [UInt8](repeating: 0, count: uploadBufferSize)
+        for row in 0..<height {
+            let src = pixelsData.advanced(by: row * contextRowBytes)
+            uploadBuffer.withUnsafeMutableBytes { dest in
+                let destRow = dest.baseAddress!.advanced(by: row * uploadRowBytes)
+                memcpy(destRow, src, contextRowBytes)
+            }
+        }
+        uploadBuffer.withUnsafeBytes { bytes in
+            texture.replace(region: region, mipmapLevel: 0, withBytes: bytes.baseAddress!, bytesPerRow: Int(uploadRowBytes))
+        }
+    }
     
     if (isMipmaped == true){
 //      generateMipMapLayersUsingSystemFunc(texture: texture, device: device, commandQ: commandQ, block: { (buffer) -> Void in
@@ -140,17 +172,30 @@ class MetalTexture: NSObject {
   
     func loadTextureForColor(device: MTLDevice, commandQ: MTLCommandQueue? = nil, flip: Bool){
       
-      let image = imageForTexture.cgImage! //(UIImage(contentsOfFile: path)?.cgImage)!
+      guard let image = imageForTexture.cgImage else {
+        Conversion.logger?.logErrorFirebase("MetalTexture.loadTextureForColor missing cgImage")
+        return
+      } //(UIImage(contentsOfFile: path)?.cgImage)!
       let colorSpace = CGColorSpaceCreateDeviceRGB()
       
       
       
+      if image.width > maxTextureSize || image.height > maxTextureSize {
+          Conversion.logger?.logErrorFirebase("MetalTexture.loadTextureForColor image too large cg=\(image.width)x\(image.height) max=\(maxTextureSize)", record: false)
+      }
+
       width = Int(Float(image.width))//.pointsToPixel())
-      height = Int(Float(image.height ))//.pointsToPixel())
+      height = Int(Float(image.height))//.pointsToPixel())
       
-      let rowBytes = width * bytesPerPixel
+      let contextRowBytes = width * bytesPerPixel
+      let rowAlignment = 256
+      let uploadRowBytes = ((contextRowBytes + rowAlignment - 1) / rowAlignment) * rowAlignment
+      Conversion.logger?.logInfo("[Trace] MetalTexture.loadTextureForColor cg=\(image.width)x\(image.height) tex=\(width!)x\(height!) rowBytes=\(contextRowBytes) uploadRowBytes=\(uploadRowBytes) flip=\(flip)")
       
-        let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: rowBytes, space: colorSpace, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+        guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: contextRowBytes, space: colorSpace, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else {
+          Conversion.logger?.logErrorFirebase("MetalTexture.loadTextureForColor CGContext failed")
+          return
+        }
       let bounds = CGRect(x: 0, y: 0, width: Int(width), height: Int(height))
       context.clear(bounds)
       
@@ -165,10 +210,30 @@ class MetalTexture: NSObject {
       
       target = texDescriptor.textureType
       texture = device.makeTexture(descriptor: texDescriptor)
+      if texture == nil {
+          Conversion.logger?.logErrorFirebase("MetalTexture.loadTextureForColor makeTexture failed size=\(width!)x\(height!)", record: true)
+          return
+      }
       
       let pixelsData = context.data!
       let region = MTLRegionMake2D(0, 0, Int(width), Int(height))
-      texture.replace(region: region, mipmapLevel: 0, withBytes: pixelsData, bytesPerRow: Int(rowBytes))
+      if uploadRowBytes == contextRowBytes {
+          texture.replace(region: region, mipmapLevel: 0, withBytes: pixelsData, bytesPerRow: Int(contextRowBytes))
+      } else {
+          Conversion.logger?.logErrorFirebase("MetalTexture.loadTextureForColor using aligned uploadRowBytes textSize=\(width!)x\(height!) rowBytes=\(contextRowBytes) uploadRowBytes=\(uploadRowBytes)", record: true)
+          let uploadBufferSize = uploadRowBytes * height
+          var uploadBuffer = [UInt8](repeating: 0, count: uploadBufferSize)
+          for row in 0..<height {
+              let src = pixelsData.advanced(by: row * contextRowBytes)
+              uploadBuffer.withUnsafeMutableBytes { dest in
+                  let destRow = dest.baseAddress!.advanced(by: row * uploadRowBytes)
+                  memcpy(destRow, src, contextRowBytes)
+              }
+          }
+          uploadBuffer.withUnsafeBytes { bytes in
+              texture.replace(region: region, mipmapLevel: 0, withBytes: bytes.baseAddress!, bytesPerRow: Int(uploadRowBytes))
+          }
+      }
       
       if (isMipmaped == true){
   //      generateMipMapLayersUsingSystemFunc(texture: texture, device: device, commandQ: commandQ, block: { (buffer) -> Void in

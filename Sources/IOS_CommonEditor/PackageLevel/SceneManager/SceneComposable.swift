@@ -334,6 +334,7 @@ extension SceneComposable {
     func setImageAsSource(imageModel:ImageProtocol,info: TexturableChild,overlay:String = " ") async->TexturableChild{
         let localImageModel = imageModel.changeOrReplaceImage!
         let model = info
+        logger.logInfo("[Trace] SceneComposable.setImageAsSource id=\(info.id) type=\(localImageModel.imageModel.imageType) source=\(localImageModel.imageModel.sourceType) crop=\(localImageModel.imageModel.cropRect) img=\(localImageModel.imageModel.imageWidth)x\(localImageModel.imageModel.imageHeight)")
         model.setMCropRect(cropRect: (localImageModel.imageModel.cropRect))
         if localImageModel.imageModel.imageType == .COLOR{
             model.mContentType =  0.0
@@ -434,6 +435,7 @@ extension SceneComposable {
     
     func setBGSource(imageModel:ImageProtocol,info: TexturableChild,overlay:String = " ",isRatioChanged:Bool = false) async->TexturableChild{
         let model = info
+        logger.logInfo("[Trace] SceneComposable.setBGSource id=\(info.id) type=\(imageModel.imageType) source=\(imageModel.sourceType) crop=\(imageModel.cropRect) img=\(imageModel.imageWidth)x\(imageModel.imageHeight) ratioChanged=\(isRatioChanged)")
         model.setMCropRect(cropRect: imageModel.cropRect)
         if imageModel.imageType == .COLOR{
             model.mContentType =  0.0
@@ -507,6 +509,7 @@ extension SceneComposable {
     
     func setBGSource(imageModel:AnyBGContent,info: TexturableChild,overlay:String = " ",isRatioChanged:Bool = false , tileCount : Float ) async->TexturableChild{
         let model = info
+        logger.logInfo("[Trace] SceneComposable.setBGSource(any) id=\(info.id) type=\(type(of: imageModel)) ratioChanged=\(isRatioChanged) tile=\(tileCount)")
 //        model.setMCropRect(cropRect: imageModel.cropRect)
         
         if let color = imageModel as? BGColor{

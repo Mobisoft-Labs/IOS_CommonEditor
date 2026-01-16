@@ -56,6 +56,11 @@ extension TimelineView {
         templateHandler.currentActionState.$shouldRefreshOnAddComponent.dropFirst().sink { [weak self] value in
             guard let self = self else { return }
             if value == true{
+                let currentModelId = self.tlManager.templateHandler?.currentModel?.modelId ?? -1
+                let rulingModelId = self.scroller.collectionView.rulingModel?.modelId ?? -1
+                let activeCount = self.scroller.collectionView.rulingModel?.activeChildren.count ?? 0
+                let itemCount = self.scroller.collectionView.numberOfItems(inSection: 0)
+                logger?.logErrorFirebaseWithBacktrace("[TimelineTrace][shouldRefresh] begin currentModelId=\(currentModelId) rulingModelId=\(rulingModelId) activeCount=\(activeCount) itemCount=\(itemCount) isMainThread=\(Thread.isMainThread)", record: false)
                 updateRulingParentViewWithDurationAndStartTime(duration: Double(templateHandler.currentSuperModel!.baseTimeline.duration), startTime: Double(templateHandler.currentSuperModel!.baseTimeline.startTime))
                 if let parentModel = tlManager.templateHandler?.currentModel as? ParentModel{
                     if parentModel.editState{
@@ -66,7 +71,14 @@ extension TimelineView {
                 self.scroller.collectionView.updateFrames()
                 if let currentModel = self.tlManager.templateHandler?.currentModel{
                     if let index = self.scroller.collectionView.rulingModel?.activeChildren.firstIndex(where: { $0.modelId == currentModel.modelId }) {
-                        self.scroller.collectionView.scrollToItem(at: IndexPath(item: index, section: 0), at: .centeredVertically, animated: true)
+                        let postItemCount = self.scroller.collectionView.numberOfItems(inSection: 0)
+                        let postActiveCount = self.scroller.collectionView.rulingModel?.activeChildren.count ?? 0
+                        logger?.logErrorFirebaseWithBacktrace("[TimelineTrace][shouldRefresh] scroll index=\(index) currentModelId=\(currentModel.modelId) rulingModelId=\(self.scroller.collectionView.rulingModel?.modelId ?? -1) activeCount=\(postActiveCount) itemCount=\(postItemCount) isMainThread=\(Thread.isMainThread)", record: false)
+                        if index >= 0 && index < postItemCount {
+                            self.scroller.collectionView.scrollToItem(at: IndexPath(item: index, section: 0), at: .centeredVertically, animated: true)
+                        } else {
+                            logger?.logErrorFirebaseWithBacktrace("[TimelineTrace][shouldRefresh][skip] currentModelId=\(currentModel.modelId) rulingModelId=\(self.scroller.collectionView.rulingModel?.modelId ?? -1) index=\(index) itemCount=\(postItemCount) activeCount=\(postActiveCount) isMainThread=\(Thread.isMainThread)", record: true)
+                        }
                         
                     }
                 }
