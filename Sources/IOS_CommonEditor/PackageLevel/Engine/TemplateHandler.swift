@@ -1806,6 +1806,7 @@ extension TemplateHandler {
     func performGroupAction(moveModel:MoveModel) {
         
       
+        logger?.logErrorFirebaseWithBacktrace("[TimelineTrace][performGroupAction] begin type=\(moveModel.type) pageId=\(currentPageModel?.modelId ?? -1) oldLast=\(moveModel.oldlastSelectedId) newLast=\(moveModel.newLastSelected) addParentId=\(moveModel.shouldAddParentID ?? -1) removeParentId=\(moveModel.shouldRemoveParentID ?? -1) oldIds=\(moveModel.oldMM.map { $0.modelID }) newIds=\(moveModel.newMM.map { $0.modelID }) isMainThread=\(Thread.isMainThread)", record: false)
         deepSetCurrentModel(id: currentPageModel?.modelId ?? -1)
         logger?.logInfo("Action:\(moveModel.type)")
         currentActionState.moveModel = moveModel
@@ -1816,6 +1817,7 @@ extension TemplateHandler {
         currentActionState.updatePageAndParentThumb = true
 
         currentActionState.shouldRefreshOnAddComponent = true
+        logger?.logErrorFirebaseWithBacktrace("[TimelineTrace][performGroupAction] end type=\(moveModel.type) currentModelId=\(currentModel?.modelId ?? -1) isMainThread=\(Thread.isMainThread)", record: false)
 
     }
     

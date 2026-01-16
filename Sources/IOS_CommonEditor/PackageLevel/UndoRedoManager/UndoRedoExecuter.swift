@@ -20,6 +20,7 @@ public class UndoRedoExecuter{
     }
     public func PerformUndoAction(engine: MetalEngine){
         let result = engine.undoRedoManager?.undo()//UndoRedoManager.shared.undo()
+        logger.logErrorFirebaseWithBacktrace("[TimelineTrace][Undo] begin result=\(String(describing: result)) currentModelId=\(engine.templateHandler.currentModel?.modelId ?? -1) pageId=\(engine.templateHandler.currentPageModel?.modelId ?? -1) isMainThread=\(Thread.isMainThread)", record: false)
         switch result{
         case .OpacityChanged(let opacity):
             setCurrentModelIfNeeded(engine: engine, currentId: opacity.id)
@@ -198,6 +199,7 @@ public class UndoRedoExecuter{
             engine.templateHandler.currentStickerModel?.changeOrReplaceImage = stickerImageContent.oldContent
             engine.templateHandler.currentActionState.updateThumb = true
         case .MoveModelChanged(let moveModel):
+            logger.logErrorFirebaseWithBacktrace("[TimelineTrace][Undo] MoveModelChanged type=\(moveModel.type) oldLast=\(moveModel.oldlastSelectedId) newLast=\(moveModel.newLastSelected) addParentId=\(moveModel.shouldAddParentID ?? -1) removeParentId=\(moveModel.shouldRemoveParentID ?? -1) oldIds=\(moveModel.oldMM.map { $0.modelID }) newIds=\(moveModel.newMM.map { $0.modelID }) isMainThread=\(Thread.isMainThread)", record: false)
             let oldMM = moveModel.newMM
             let newMM = moveModel.oldMM
             var moveModelNew = MoveModel(type: moveModel.type, oldMM: oldMM, newMM: newMM)

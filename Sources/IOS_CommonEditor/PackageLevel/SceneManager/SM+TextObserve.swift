@@ -28,6 +28,7 @@ extension SceneManager {
             child.setmZRotation(rotation: value.rotation)
             if text.baseFrame.size != value.size && !(self!.templateHandler?.currentActionState.isTextInUpdateMode)!{
                 let textProperties = text.textProperty
+                self?.logger.logInfo("[Trace] SceneManager.observeAsCurrentText sizeChange textId=\(text.textId) modelId=\(text.modelId) size=\(value.size.width)x\(value.size.height) center=\(value.center.x),\(value.center.y) rot=\(value.rotation) scale=\(self?.sceneConfig?.contentScaleFactor ?? 0)")
                 if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont: false, text: text.text, properties: textProperties, refSize: value.size, maxWidth: value.size.width, maxHeight: .infinity, contentScaleFactor: self!.sceneConfig!.contentScaleFactor, logger: self!.logger)!, flip: false ){
                     // Set Texture
                     child.setTexture(texture: texture)
@@ -36,6 +37,7 @@ extension SceneManager {
             }
             else if text.baseFrame.center != value.center {
                 let textProperties = text.textProperty
+                self?.logger.logInfo("[Trace] SceneManager.observeAsCurrentText centerChange textId=\(text.textId) modelId=\(text.modelId) size=\(value.size.width)x\(value.size.height) center=\(value.center.x),\(value.center.y) rot=\(value.rotation) scale=\(self?.sceneConfig?.contentScaleFactor ?? 0)")
                 if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont: false, text: text.text, properties: textProperties, refSize: value.size, maxWidth: value.size.width, maxHeight: .infinity, contentScaleFactor: self!.sceneConfig!.contentScaleFactor, logger: self!.logger)!, flip: false ){
                     // Set Texture
                     child.setTexture(texture: texture)
@@ -44,6 +46,7 @@ extension SceneManager {
             }
             else if  text.baseFrame.rotation != value.rotation{
                 let textProperties = text.textProperty
+                self?.logger.logInfo("[Trace] SceneManager.observeAsCurrentText rotationChange textId=\(text.textId) modelId=\(text.modelId) size=\(value.size.width)x\(value.size.height) center=\(value.center.x),\(value.center.y) rot=\(value.rotation) scale=\(self?.sceneConfig?.contentScaleFactor ?? 0)")
                 if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont: false, text: text.text, properties: textProperties, refSize: value.size, maxWidth: value.size.width, maxHeight: .infinity, contentScaleFactor: self!.sceneConfig!.contentScaleFactor, logger: self!.logger)!, flip: false ){
                     // Set Texture
                     child.setTexture(texture: texture)
@@ -65,6 +68,7 @@ extension SceneManager {
             let parentModel = templateHandler?.getModel(modelId: text.parentId)
             let isPersonalizeActive = (templateHandler?.isPersonalizeActive)!
             // create a new texture
+            self.logger.logInfo("[Trace] SceneManager.observeAsCurrentText textChanged textId=\(text.textId) modelId=\(text.modelId) size=\(textChangedModel!.newSize.width)x\(textChangedModel!.newSize.height) scale=\(sceneConfig?.contentScaleFactor ?? 0)")
             if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont: isPersonalizeActive ? false : true , text: textChangedModel!.newText, properties: textProperty, refSize: textChangedModel!.newSize, maxWidth: textChangedModel!.newSize.width, maxHeight: .infinity, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
                 // set texture
                 child.setTexture(texture: texture)
