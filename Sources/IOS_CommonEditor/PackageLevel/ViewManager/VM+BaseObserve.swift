@@ -39,7 +39,7 @@ extension ViewManager {
         }.store(in: &modelPropertiesCancellables)
         
         baseModel.$baseFrame.dropFirst().sink { [weak self] frame in
-            self?.logger.printLog("KL \(frame)")
+//            self?.logger.printLog("KL \(frame)")
             guard let currentModel = self!.templateHandler?.currentModel else { return }
             guard let self = self else{ return }
             guard let currentActiveView = currentActiveView else { return }

@@ -89,9 +89,9 @@ public class Conversion{
         let options = [MTKTextureLoader.Option.origin: origin]
         
         if let cgImage = image.cgImage {
-            logger?.logInfo("[Trace] Conversion.loadTexture cg=\(cgImage.width)x\(cgImage.height) ui=\(image.size.width)x\(image.size.height) scale=\(image.scale) flip=\(flip)")
+            logger?.logErrorFirebaseWithBacktrace("[Trace] Conversion.loadTexture cg=\(cgImage.width)x\(cgImage.height) ui=\(image.size.width)x\(image.size.height) scale=\(image.scale) flip=\(flip)")
         } else {
-            logger?.logWarning("[Trace] Conversion.loadTexture missing cgImage")
+            logger?.logErrorFirebaseWithBacktrace("[Trace] Conversion.loadTexture missing cgImage")
         }
 
         do{
@@ -101,7 +101,7 @@ public class Conversion{
         }
         
         if let texture = texture {
-            logger?.logInfo("[Trace] Conversion.loadTexture result size=\(texture.width)x\(texture.height) format=\(texture.pixelFormat)")
+            logger?.logErrorFirebaseWithBacktrace("[Trace] Conversion.loadTexture result size=\(texture.width)x\(texture.height) format=\(texture.pixelFormat)")
         }
 
       //  let img  = Conversion.textureToUIImage(texture!)

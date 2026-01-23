@@ -16,7 +16,7 @@ class MetalThread {
         print("deinit - \(self)")
     }
     init(label: String) {
-        queue = DispatchQueue(label: label , qos:.background, autoreleaseFrequency: .inherit)
+        queue = DispatchQueue(label: label , qos:.userInteractive, autoreleaseFrequency: .inherit)
     }
 
 

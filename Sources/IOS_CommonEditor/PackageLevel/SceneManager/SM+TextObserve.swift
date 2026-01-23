@@ -28,7 +28,7 @@ extension SceneManager {
             child.setmZRotation(rotation: value.rotation)
             if text.baseFrame.size != value.size && !(self!.templateHandler?.currentActionState.isTextInUpdateMode)!{
                 let textProperties = text.textProperty
-                self?.logger.logInfo("[Trace] SceneManager.observeAsCurrentText sizeChange textId=\(text.textId) modelId=\(text.modelId) size=\(value.size.width)x\(value.size.height) center=\(value.center.x),\(value.center.y) rot=\(value.rotation) scale=\(self?.sceneConfig?.contentScaleFactor ?? 0)")
+//                self.logger.logErrorFirebase("[Trace] SceneManager.observeAsCurrentText sizeChange textId=\(text.textId) modelId=\(text.modelId) size=\(value.size.width)x\(value.size.height) center=\(value.center.x),\(value.center.y) rot=\(value.rotation) scale=\(self?.sceneConfig?.contentScaleFactor ?? 0)")
                 if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont: false, text: text.text, properties: textProperties, refSize: value.size, maxWidth: value.size.width, maxHeight: .infinity, contentScaleFactor: self!.sceneConfig!.contentScaleFactor, logger: self!.logger)!, flip: false ){
                     // Set Texture
                     child.setTexture(texture: texture)
@@ -37,21 +37,34 @@ extension SceneManager {
             }
             else if text.baseFrame.center != value.center {
                 let textProperties = text.textProperty
-                self?.logger.logInfo("[Trace] SceneManager.observeAsCurrentText centerChange textId=\(text.textId) modelId=\(text.modelId) size=\(value.size.width)x\(value.size.height) center=\(value.center.x),\(value.center.y) rot=\(value.rotation) scale=\(self?.sceneConfig?.contentScaleFactor ?? 0)")
-                if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont: false, text: text.text, properties: textProperties, refSize: value.size, maxWidth: value.size.width, maxHeight: .infinity, contentScaleFactor: self!.sceneConfig!.contentScaleFactor, logger: self!.logger)!, flip: false ){
-                    // Set Texture
-                    child.setTexture(texture: texture)
-                    self!.redraw()
-                }
+//                self?.logger.logInfo("[Trace] SceneManager.observeAsCurrentText centerChange textId=\(text.textId) modelId=\(text.modelId) size=\(value.size.width)x\(value.size.height) center=\(value.center.x),\(value.center.y) rot=\(value.rotation) scale=\(self?.sceneConfig?.contentScaleFactor ?? 0)")
+//                if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont: false, text: text.text, properties: textProperties, refSize: value.size, maxWidth: value.size.width, maxHeight: .infinity, contentScaleFactor: self!.sceneConfig!.contentScaleFactor, logger: self!.logger)!, flip: false ){
+//                    // Set Texture
+//                    child.setTexture(texture: texture)
+//                    self!.redraw()
+//                }
+                self!.redraw()
             }
-            else if  text.baseFrame.rotation != value.rotation{
+            else if  text.baseFrame.rotation != value.rotation {
                 let textProperties = text.textProperty
-                self?.logger.logInfo("[Trace] SceneManager.observeAsCurrentText rotationChange textId=\(text.textId) modelId=\(text.modelId) size=\(value.size.width)x\(value.size.height) center=\(value.center.x),\(value.center.y) rot=\(value.rotation) scale=\(self?.sceneConfig?.contentScaleFactor ?? 0)")
-                if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont: false, text: text.text, properties: textProperties, refSize: value.size, maxWidth: value.size.width, maxHeight: .infinity, contentScaleFactor: self!.sceneConfig!.contentScaleFactor, logger: self!.logger)!, flip: false ){
-                    // Set Texture
-                    child.setTexture(texture: texture)
+//                self?.logger.logInfo("[Trace] SceneManager.observeAsCurrentText rotationChange textId=\(text.textId) modelId=\(text.modelId) size=\(value.size.width)x\(value.size.height) center=\(value.center.x),\(value.center.y) rot=\(value.rotation) scale=\(self?.sceneConfig?.contentScaleFactor ?? 0)")
+//                if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont: false, text: text.text, properties: textProperties, refSize: value.size, maxWidth: value.size.width, maxHeight: .infinity, contentScaleFactor: self!.sceneConfig!.contentScaleFactor, logger: self!.logger)!, flip: false ){
+//                    // Set Texture
+//                    child.setTexture(texture: texture)
                     self!.redraw()
-                }
+//                }
+            }
+        }.store(in: &modelPropertiesCancellables)
+
+        text.$endFrame.dropFirst().sink { [weak self] value in
+            guard let self = self else { return }
+
+            if text.endFrame.size != value.size && !(self.templateHandler?.currentActionState.isTextInUpdateMode ?? false) {
+                self.logger.logErrorFirebase("[TraceBreadcrumb] SceneManager.observeAsCurrentText endFrameSizeChange textId=\(text.textId) modelId=\(text.modelId) size=\(value.size.width)x\(value.size.height) center=\(value.center.x),\(value.center.y) rot=\(value.rotation) scale=\(self.sceneConfig?.contentScaleFactor ?? 0)", record: false)
+            } else if text.endFrame.center != value.center {
+                self.logger.logErrorFirebase("[TraceBreadcrumb] SceneManager.observeAsCurrentText endFrameCenterChange textId=\(text.textId) modelId=\(text.modelId) size=\(value.size.width)x\(value.size.height) center=\(value.center.x),\(value.center.y) rot=\(value.rotation) scale=\(self.sceneConfig?.contentScaleFactor ?? 0)", record: false)
+            } else if text.endFrame.rotation != value.rotation {
+                self.logger.logErrorFirebase("[TraceBreadcrumb] SceneManager.observeAsCurrentText endFrameRotationChange textId=\(text.textId) modelId=\(text.modelId) size=\(value.size.width)x\(value.size.height) center=\(value.center.x),\(value.center.y) rot=\(value.rotation) scale=\(self.sceneConfig?.contentScaleFactor ?? 0)", record: false)
             }
         }.store(in: &modelPropertiesCancellables)
         

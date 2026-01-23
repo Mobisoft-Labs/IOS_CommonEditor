@@ -36,7 +36,7 @@ public extension PackageLogger {
 
     func logErrorFirebaseWithBacktrace(_ message: String, record: Bool = true) {
         logErrorFirebase(message, record: record)
-        let stack = Thread.callStackSymbols.joined(separator: "\n")
-        printLog("[FirebaseNonFatal][Backtrace]\n\(stack)")
+//        let stack = Thread.callStackSymbols.joined(separator: "\n")
+//        printLog("[FirebaseNonFatal][Backtrace]\n\(stack)")
     }
 }
