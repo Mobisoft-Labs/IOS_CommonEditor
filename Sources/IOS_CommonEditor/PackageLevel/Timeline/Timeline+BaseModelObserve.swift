@@ -48,11 +48,19 @@ extension TimelineView {
                             logger?.logError("GroupUndoCrash \(index) : \(self.scroller.collectionView.rulingModel!.activeChildren.count): \(parentChildCount) ")
                             let activeCount = self.scroller.collectionView.rulingModel?.activeChildren.count ?? 0
                             let itemCount = self.scroller.collectionView.numberOfItems(inSection: 0)
-                            logger?.logErrorFirebaseWithBacktrace("[TimelineTrace][isActive] currentModelId=\(currentModel.modelId) rulingModelId=\(self.scroller.collectionView.rulingModel?.modelId ?? -1) index=\(index) activeCount=\(activeCount) itemCount=\(itemCount) parentChildCount=\(parentChildCount) isMainThread=\(Thread.isMainThread)", record: false)
+                            let rulingModelId = self.scroller.collectionView.rulingModel?.modelId ?? -1
+                            logger?.logErrorFirebase("[TimelineTrace][isActive] currentModelId=\(currentModel.modelId) rulingModelId=\(rulingModelId) index=\(index) activeCount=\(activeCount) itemCount=\(itemCount) parentChildCount=\(parentChildCount) isMainThread=\(Thread.isMainThread)", record: false)
+                            if currentModel.modelId == -1 || rulingModelId == -1 {
+                                logger?.logErrorFirebaseWithBacktrace("[TimelineTraceGuard] reason=missingIds currentModelId=\(currentModel.modelId) rulingModelId=\(rulingModelId)")
+                            }
                             if index >= 0 && index < itemCount,((self.scroller.collectionView.rulingModel!.activeChildren.count - 1) != 0) {
                                 self.scroller.collectionView.scrollToItem(at: IndexPath(item: index, section: 0), at: .centeredVertically, animated: true)
                             } else {
-                                logger?.logErrorFirebaseWithBacktrace("[TimelineTrace][isActive][skip] currentModelId=\(currentModel.modelId) rulingModelId=\(self.scroller.collectionView.rulingModel?.modelId ?? -1) index=\(index) itemCount=\(itemCount) activeCount=\(activeCount) parentChildCount=\(parentChildCount) isMainThread=\(Thread.isMainThread)", record: true)
+                                let rulingModelId = self.scroller.collectionView.rulingModel?.modelId ?? -1
+                                logger?.logErrorFirebase("[TimelineTrace][isActive][skip] currentModelId=\(currentModel.modelId) rulingModelId=\(rulingModelId) index=\(index) itemCount=\(itemCount) activeCount=\(activeCount) parentChildCount=\(parentChildCount) isMainThread=\(Thread.isMainThread)", record: false)
+                                if currentModel.modelId == -1 || rulingModelId == -1 {
+                                    logger?.logErrorFirebaseWithBacktrace("[TimelineTraceGuard] reason=missingIds currentModelId=\(currentModel.modelId) rulingModelId=\(rulingModelId)")
+                                }
                             }
                         }
                     }

@@ -273,6 +273,11 @@ extension String {
 }
 
 class CTCalculator {
+    private let logger: PackageLogger?
+
+    init(logger: PackageLogger? = nil) {
+        self.logger = logger
+    }
    
 //    deinit {
 //        printLog("de-init \(self)")
@@ -289,7 +294,13 @@ class CTCalculator {
     enum CTAlignmentY {
         case top , bottom , center
     }
-    func getTextBGImage( refSize : CGSize , boundingRect : CGRect , bgColor : UIColor = .clear) -> UIImage?{
+    func getTextBGImage(refSize: CGSize, boundingRect: CGRect, bgColor: UIColor = .clear) -> UIImage? {
+        let activeLogger = logger
+        guard refSize.width > 0, refSize.height > 0 else {
+            activeLogger?.logErrorFirebaseWithBacktrace("[TextRenderGuard] reason=invalidRefSize ref=\(refSize.width)x\(refSize.height)")
+            return nil
+        }
+
         UIGraphicsBeginImageContext(refSize)
         guard let ctx = UIGraphicsGetCurrentContext() else {
           return nil
@@ -1038,6 +1049,7 @@ class CTCalculator {
 //        return mainBound
 //    }
     func drawImageCoreText(textProperties: TextProperties, refSize:CGSize , attributedString : NSMutableAttributedString, maxWidth : CGFloat = .infinity, maxHeight:CGFloat = .infinity , isHeightConstraint : Bool = false,paddingInPerc : CGFloat = 0, logger: PackageLogger?) -> UIImage? {
+        let activeLogger = logger ?? self.logger
         
         var mainBound = CGRect.zero
         var minX = CGFloat.zero
@@ -1051,6 +1063,11 @@ class CTCalculator {
         var lineBounds = [CGRect]()
         var wordBounds = [CGRect]()
         var letterBounds = [CGRect]()
+        
+        guard refSize.width > 0, refSize.height > 0 else {
+            activeLogger?.logErrorFirebaseWithBacktrace("[TextRenderGuard] reason=invalidRefSize ref=\(refSize.width)x\(refSize.height)")
+            return nil
+        }
         
         UIGraphicsBeginImageContext(refSize)
         
@@ -1079,7 +1096,7 @@ class CTCalculator {
         // convert frame to CTFrame For further CoreText Based Calculation ( lines,run and glyphs )
         let frame = getCTFrame(maxWidth: maxWidth,maxHeight: maxHeight, attributedString: attributedString)
         
-        let extractedString = extractText(from: frame, attributedString: attributedString, logger: logger)
+        let extractedString = extractText(from: frame, attributedString: attributedString, logger: activeLogger)
 //        if extractedString.isEmpty || extractedString == "" {
 //            return .zero
 //        }
@@ -1089,8 +1106,12 @@ class CTCalculator {
 //         //   return .zero
 //        }
         
-        let font = attributedString.attribute(.font, at: 0, effectiveRange: nil) as! UIFont
-        let paraStyle = attributedString.attribute(.paragraphStyle, at: 0, effectiveRange: nil) as! NSParagraphStyle
+        guard attributedString.length > 0,
+              let font = attributedString.attribute(.font, at: 0, effectiveRange: nil) as? UIFont,
+              let paraStyle = attributedString.attribute(.paragraphStyle, at: 0, effectiveRange: nil) as? NSParagraphStyle else {
+            activeLogger?.logErrorFirebaseWithBacktrace("[TextRenderGuard] reason=missingAttributes length=\(attributedString.length)")
+            return nil
+        }
 
         let testFont =   CTFontCreateWithName( font.fontName as CFString,CGFloat(font.pointSize) , nil)
         let rect = attributedString.boundingRect(with: CGSize(width: maxWidth, height: .infinity),options: [.usesLineFragmentOrigin,.usesFontLeading,.usesDeviceMetrics], context: nil)
@@ -1121,10 +1142,12 @@ class CTCalculator {
         
        // frame.draw(in: ctx)
         // get Origins Of Every Line
-        var lineOrigins = frame.lineOrigins()
-        
-        // get total Lines
-        var lines = frame.lines()
+        let lineOrigins = frame.lineOrigins()
+        let lines = frame.lines()
+        guard !lineOrigins.isEmpty, lineOrigins.count == lines.count else {
+            activeLogger?.logErrorFirebaseWithBacktrace("[TextRenderGuard] reason=lineCountsMismatch origins=\(lineOrigins.count) lines=\(lines.count)")
+            return nil
+        }
         
         var height : CGFloat = 0
         for loIndex in 0 ..< lineOrigins.count {
@@ -1143,8 +1166,10 @@ class CTCalculator {
             lineBounds.append(lineBox)
             
             let totalGlyphRuns = line.glyphRuns() // Get Total GlyphRuns In Single Line
-            
-            for grIndex in 0...totalGlyphRuns.count - 1 {
+            guard !totalGlyphRuns.isEmpty else {
+                continue
+            }
+            for grIndex in 0..<totalGlyphRuns.count {
                 let run = totalGlyphRuns[grIndex] // Get Current Run
                 let font = run.font // Get Run's Font
                 
@@ -1156,7 +1181,11 @@ class CTCalculator {
                 
                 var leftMostOrigin : CGPoint = lineBox.origin
 
-                for gpIndex in 0 ..< glyphPositions.count { // iterating through every glyphs
+                let glyphCount = min(glyphPositions.count, glyphsBoundingRects.count)
+                guard glyphCount > 0 else {
+                    continue
+                }
+                for gpIndex in 0 ..< glyphCount { // iterating through every glyphs
                     
                     let glyphOrigin = glyphPositions[gpIndex] // Current Glyph XY
                     let glyphBounds = glyphsBoundingRects [gpIndex] // Current Glyph Rect
@@ -2296,7 +2325,9 @@ func drawTextAsImage(keepFontSizeFix:Bool, text: String, boundingBox: CGRect, te
    // var getExactBounds = CTCalculator().getExactBounds(refSize: boundingBox.size, attributedString: attributedString,maxWidth: boundingBox.size.width)
     let newRect = layoutManager.boundingRect(forGlyphRange: layoutManager.glyphRange(for: textContainer), in: textContainer)
 //    print("Bounding Box From Get Bound \(newRect)")
-    var image2 = CTCalculator().drawImageCoreText(textProperties: currentTextProperties, refSize: boundingBox.size, attributedString: attributedString , maxWidth: newRect.width, logger: logger)
+    let preview = String(text.prefix(24))
+    logger?.logErrorFirebase("[TextRenderBreadcrumb] lang=\(userLanguage) textLen=\(text.count) preview=\(preview) ref=\(boundingBox.size.width)x\(boundingBox.size.height) adjusted=\(adjustedRect.size.width)x\(adjustedRect.size.height) font=\(currentTextProperties.fontName) size=\(currentTextProperties.fontSize) maxW=\(newRect.width) threadMain=\(Thread.isMainThread)", record: false)
+    var image2 = CTCalculator(logger: logger).drawImageCoreText(textProperties: currentTextProperties, refSize: boundingBox.size, attributedString: attributedString , maxWidth: newRect.width, logger: logger)
     
     //   Step 6: Generate the UIImage from the graphics context
     //   let image = UIGraphicsGetImageFromCurrentImageContext()

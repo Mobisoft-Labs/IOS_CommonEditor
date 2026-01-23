@@ -103,6 +103,8 @@ public class ViewManager : GestureHandler ,
     
 
     var highlightedNearestSnappingView : BaseView?
+
+    var lastGestureContext: String?
     
     var showControlBar : Bool = false {
         didSet {
@@ -188,6 +190,5 @@ public class ViewManager : GestureHandler ,
 
 
 }
-
 
 

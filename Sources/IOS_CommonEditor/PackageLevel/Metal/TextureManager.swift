@@ -34,9 +34,11 @@ final class TextureManager {
     func textureN(from image: UIImage,
                   usage: MTLTextureUsage = [.shaderRead, .shaderWrite , .renderTarget],flip:Bool = true) throws -> MTLTexture {
                     
-       
-       var textureCreator = MetalTexture(image: image, mipmaped: false)
+        var textureCreator = MetalTexture(image: image, mipmaped: false)
         textureCreator.loadTexture(device: MetalDefaults.GPUDevice, flip: flip)
+        if textureCreator.texture == nil {
+            throw Error.textureCreationFailed
+        }
         return textureCreator.texture
         
 

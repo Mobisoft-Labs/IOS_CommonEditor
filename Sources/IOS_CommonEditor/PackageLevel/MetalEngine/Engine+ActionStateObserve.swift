@@ -753,7 +753,12 @@ extension MetalEngine {
             guard let self = self else { return }
             if value == true{
                 let selectedIds = templateHandler.currentActionState.multiSelectedItems.map { $0.modelId }
-                logger.logErrorFirebaseWithBacktrace("[TimelineTrace][didGroupTapped] currentModelId=\(templateHandler.currentModel?.modelId ?? -1) pageId=\(templateHandler.currentPageModel?.modelId ?? -1) selectedIds=\(selectedIds) isMainThread=\(Thread.isMainThread)", record: false)
+                let currentModelId = templateHandler.currentModel?.modelId ?? -1
+                let pageId = templateHandler.currentPageModel?.modelId ?? -1
+                logger.logErrorFirebase("[TimelineTrace][didGroupTapped] currentModelId=\(currentModelId) pageId=\(pageId) selectedIds=\(selectedIds) isMainThread=\(Thread.isMainThread)", record: false)
+                if currentModelId == -1 || pageId == -1 {
+                    logger.logErrorFirebaseWithBacktrace("[TimelineTraceGuard] reason=missingIds currentModelId=\(currentModelId) pageId=\(pageId)")
+                }
                
                 templateHandler.currentActionState.multiSelectedItems.forEach { model in
                     if let model = templateHandler.getModel(modelId: model.modelId) {

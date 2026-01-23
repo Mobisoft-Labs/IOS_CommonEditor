@@ -10,7 +10,7 @@ import Foundation
 
 public final class ExportSettings: ObservableObject {
     @Published public var name : String = "AceLogoMaker_"
-    @Published public var resolution : ExportVideoResolution = .HD
+    @Published public var resolution : ExportVideoResolution = .FHD
     @Published public var exportType : ExportType = .Photo
     @Published public var exportImageFormat : ExportPhotoFormat = .JPEG
     @Published public var customImageSize: CGSize?
@@ -27,6 +27,20 @@ public final class ExportSettings: ObservableObject {
     @Published public var templateDisplayName: String = ""
     @Published public var exportFolderIdentifier: String = ""
     @Published public var isForcedToSaveTransparent : Bool = false
+    
+    
+    var maxSize : CGSize {
+         switch exportType {
+        case .Variants:
+            return CGSize(width: 2048, height: 2048)
+        case .Video:
+            return resolution.size
+        case .Photo:
+            return exportImageFormat.size
+        case .GIF:
+            return exportImageFormat.size
+        }
+    }
     
     public init() {}
     
@@ -193,18 +207,18 @@ public enum ExportVideoResolution {
             return CGSize(width: 2160, height: 2160)
         }
     }
-    var assetsMaxSize : CGSize {
-        switch self {
-        case .SD:
-            return CGSize(width: 480, height: 480)
-        case .HD:
-            return CGSize(width: 500, height: 500)
-        case .FHD:
-            return CGSize(width: 720, height: 720)
-        case .UHD:
-            return CGSize(width: 1080, height: 1080)
-        }
-    }
+//    var assetsMaxSize : CGSize {
+//        switch self {
+//        case .SD:
+//            return CGSize(width: 480, height: 480)
+//        case .HD:
+//            return CGSize(width: 500, height: 500)
+//        case .FHD:
+//            return CGSize(width: 720, height: 720)
+//        case .UHD:
+//            return CGSize(width: 1080, height: 1080)
+//        }
+//    }
     
     var ext : String {
        return ".mp4"

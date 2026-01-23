@@ -60,7 +60,10 @@ extension TimelineView {
                 let rulingModelId = self.scroller.collectionView.rulingModel?.modelId ?? -1
                 let activeCount = self.scroller.collectionView.rulingModel?.activeChildren.count ?? 0
                 let itemCount = self.scroller.collectionView.numberOfItems(inSection: 0)
-                logger?.logErrorFirebaseWithBacktrace("[TimelineTrace][shouldRefresh] begin currentModelId=\(currentModelId) rulingModelId=\(rulingModelId) activeCount=\(activeCount) itemCount=\(itemCount) isMainThread=\(Thread.isMainThread)", record: false)
+                logger?.logErrorFirebase("[TimelineTrace][shouldRefresh] begin currentModelId=\(currentModelId) rulingModelId=\(rulingModelId) activeCount=\(activeCount) itemCount=\(itemCount) isMainThread=\(Thread.isMainThread)", record: false)
+                if currentModelId == -1 || rulingModelId == -1 {
+                    logger?.logErrorFirebaseWithBacktrace("[TimelineTraceGuard] reason=missingIds currentModelId=\(currentModelId) rulingModelId=\(rulingModelId)")
+                }
                 updateRulingParentViewWithDurationAndStartTime(duration: Double(templateHandler.currentSuperModel!.baseTimeline.duration), startTime: Double(templateHandler.currentSuperModel!.baseTimeline.startTime))
                 if let parentModel = tlManager.templateHandler?.currentModel as? ParentModel{
                     if parentModel.editState{
@@ -73,11 +76,19 @@ extension TimelineView {
                     if let index = self.scroller.collectionView.rulingModel?.activeChildren.firstIndex(where: { $0.modelId == currentModel.modelId }) {
                         let postItemCount = self.scroller.collectionView.numberOfItems(inSection: 0)
                         let postActiveCount = self.scroller.collectionView.rulingModel?.activeChildren.count ?? 0
-                        logger?.logErrorFirebaseWithBacktrace("[TimelineTrace][shouldRefresh] scroll index=\(index) currentModelId=\(currentModel.modelId) rulingModelId=\(self.scroller.collectionView.rulingModel?.modelId ?? -1) activeCount=\(postActiveCount) itemCount=\(postItemCount) isMainThread=\(Thread.isMainThread)", record: false)
+                        let rulingModelId = self.scroller.collectionView.rulingModel?.modelId ?? -1
+                        logger?.logErrorFirebase("[TimelineTrace][shouldRefresh] scroll index=\(index) currentModelId=\(currentModel.modelId) rulingModelId=\(rulingModelId) activeCount=\(postActiveCount) itemCount=\(postItemCount) isMainThread=\(Thread.isMainThread)", record: false)
+                        if currentModel.modelId == -1 || rulingModelId == -1 {
+                            logger?.logErrorFirebaseWithBacktrace("[TimelineTraceGuard] reason=missingIds currentModelId=\(currentModel.modelId) rulingModelId=\(rulingModelId)")
+                        }
                         if index >= 0 && index < postItemCount {
                             self.scroller.collectionView.scrollToItem(at: IndexPath(item: index, section: 0), at: .centeredVertically, animated: true)
                         } else {
-                            logger?.logErrorFirebaseWithBacktrace("[TimelineTrace][shouldRefresh][skip] currentModelId=\(currentModel.modelId) rulingModelId=\(self.scroller.collectionView.rulingModel?.modelId ?? -1) index=\(index) itemCount=\(postItemCount) activeCount=\(postActiveCount) isMainThread=\(Thread.isMainThread)", record: true)
+                            let rulingModelId = self.scroller.collectionView.rulingModel?.modelId ?? -1
+                            logger?.logErrorFirebase("[TimelineTrace][shouldRefresh][skip] currentModelId=\(currentModel.modelId) rulingModelId=\(rulingModelId) index=\(index) itemCount=\(postItemCount) activeCount=\(postActiveCount) isMainThread=\(Thread.isMainThread)", record: false)
+                            if currentModel.modelId == -1 || rulingModelId == -1 {
+                                logger?.logErrorFirebaseWithBacktrace("[TimelineTraceGuard] reason=missingIds currentModelId=\(currentModel.modelId) rulingModelId=\(rulingModelId)")
+                            }
                         }
                         
                     }

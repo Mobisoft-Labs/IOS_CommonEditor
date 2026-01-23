@@ -97,7 +97,7 @@ public class Conversion{
         do{
             texture = try textureManager.textureN(from: image,flip: flip)
         }catch let error as NSError{
-            logger?.printLog("\(error)")
+            logger?.logErrorFirebaseWithBacktrace("[TextureLoaderGuard] reason=textureCreationFailed error=\(error.localizedDescription) cg=\(image.cgImage?.width ?? 0)x\(image.cgImage?.height ?? 0) ui=\(image.size.width)x\(image.size.height) scale=\(image.scale) flip=\(flip)")
         }
         
         if let texture = texture {
