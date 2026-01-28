@@ -7,6 +7,7 @@
 
 import UIKit
 import Combine
+import SwiftUI
 //import UIKit
 
 public class StackedViewController: UIViewController, CustomCollectionViewDelegate {
@@ -14,7 +15,8 @@ public class StackedViewController: UIViewController, CustomCollectionViewDelega
     var multiPlier: Float = 1.0
     var viewModel: LayersViewModel2!
     var customCollectionView: CustomCollectionView!
-    private var feedbackView: LayersFeedbackView?
+    private var feedbackView: UIView?
+    private var feedbackHostingController: UIHostingController<LayersFeedbackSwiftUIView>?
     private var feedbackBottomConstraint: NSLayoutConstraint?
     private var feedbackHeightConstraint: NSLayoutConstraint?
     private var navTitleLabel: UILabel?
@@ -132,30 +134,36 @@ public class StackedViewController: UIViewController, CustomCollectionViewDelega
         customCollectionView.setDropGapHeight(40)
         blurView.contentView.addSubview(customCollectionView)
 
-        let feedbackView = LayersFeedbackView()
-        feedbackView.translatesAutoresizingMaskIntoConstraints = false
-        feedbackView.onYes = { [weak self] in
-            self?.handleFeedback(response: "Yes")
-        }
-        feedbackView.onNo = { [weak self] in
-            self?.handleFeedback(response: "No")
-        }
         if let designSystem = viewModel.designSystem, let config = viewModel.layerConfig {
-            feedbackView.configure(
-                designSystem: designSystem,
+            let feedbackView = LayersFeedbackSwiftUIView(
                 prompt: config.layersFeedbackPromptKey.translate(),
                 yesTitle: config.layersFeedbackYesKey.translate(),
-                noTitle: config.layersFeedbackNoKey.translate()
+                noTitle: config.layersFeedbackNoKey.translate(),
+                promptFont: designSystem.subtitleFont,
+                buttonFont: designSystem.buttonFont,
+                primaryText: designSystem.primaryText,
+                accentColor: designSystem.accentColor,
+                secondaryText: designSystem.secondaryText,
+                onYes: { [weak self] in self?.handleFeedback(response: "Yes") },
+                onNo: { [weak self] in self?.handleFeedback(response: "No") }
             )
+            let hostingController = UIHostingController(rootView: feedbackView)
+            hostingController.view.translatesAutoresizingMaskIntoConstraints = false
+            hostingController.view.backgroundColor = .clear
+            addChild(hostingController)
+            blurView.contentView.addSubview(hostingController.view)
+            hostingController.didMove(toParent: self)
+            self.feedbackHostingController = hostingController
+            self.feedbackView = hostingController.view
+            hostingController.view.isHidden = true
         }
-        self.feedbackView = feedbackView
-        feedbackView.isHidden = true
-        blurView.contentView.addSubview(feedbackView)
         
         // Set up constraints for the navigation panel, blur view, and collection view
-        feedbackBottomConstraint = feedbackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12)
-        feedbackHeightConstraint = feedbackView.heightAnchor.constraint(equalToConstant: 96)
-        NSLayoutConstraint.activate([
+        if let feedbackView = feedbackView {
+            feedbackBottomConstraint = feedbackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12)
+            feedbackHeightConstraint = feedbackView.heightAnchor.constraint(equalToConstant: 96)
+        }
+        var constraints: [NSLayoutConstraint] = [
             
 //            navBlurView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
 //            navBlurView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -175,13 +183,8 @@ public class StackedViewController: UIViewController, CustomCollectionViewDelega
             customCollectionView.topAnchor.constraint(equalTo: blurView.contentView.topAnchor, constant: 10),
             customCollectionView.leadingAnchor.constraint(equalTo: blurView.contentView.leadingAnchor, constant: 10),
             customCollectionView.trailingAnchor.constraint(equalTo: blurView.contentView.trailingAnchor, constant: -10),
-            customCollectionView.bottomAnchor.constraint(equalTo: feedbackView.topAnchor, constant: -12),
+            customCollectionView.bottomAnchor.constraint(equalTo: blurView.contentView.bottomAnchor, constant: -12),
             customCollectionView.heightAnchor.constraint(equalTo: blurView.heightAnchor, multiplier: CGFloat(multiPlier), constant: -60), // Adjust multiplier as needed
-
-            feedbackView.leadingAnchor.constraint(equalTo: blurView.contentView.leadingAnchor, constant: 16),
-            feedbackView.trailingAnchor.constraint(equalTo: blurView.contentView.trailingAnchor, constant: -16),
-            feedbackBottomConstraint!,
-            feedbackHeightConstraint!,
             
             //            panelButton.centerXAnchor.constraint(equalTo: navigationPanel.centerXAnchor),
             //            panelButton.centerYAnchor.constraint(equalTo: navigationPanel.centerYAnchor),
@@ -213,7 +216,19 @@ public class StackedViewController: UIViewController, CustomCollectionViewDelega
 //            
 //            LockAllTitle.leadingAnchor.constraint(equalTo: lockAllImage.trailingAnchor, constant: 0),
 //            LockAllTitle.centerYAnchor.constraint(equalTo: navigationPanel.centerYAnchor)
-        ])
+        ]
+
+        if let feedbackView = feedbackView,
+           let feedbackBottomConstraint,
+           let feedbackHeightConstraint {
+            constraints.append(customCollectionView.bottomAnchor.constraint(equalTo: feedbackView.topAnchor, constant: -12))
+            constraints.append(feedbackView.leadingAnchor.constraint(equalTo: blurView.contentView.leadingAnchor, constant: 16))
+            constraints.append(feedbackView.trailingAnchor.constraint(equalTo: blurView.contentView.trailingAnchor, constant: -16))
+            constraints.append(feedbackBottomConstraint)
+            constraints.append(feedbackHeightConstraint)
+        }
+
+        NSLayoutConstraint.activate(constraints)
         
         
         // Initialize lockAllButton UI based on isAllModelsLocked state
