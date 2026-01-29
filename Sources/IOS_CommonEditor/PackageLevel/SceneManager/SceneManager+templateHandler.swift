@@ -439,7 +439,10 @@ extension SceneManager{
                     
                     if let childText = child as? TextChild , let childModelText = childModel as? TextInfo{
                         let textProperties = childModelText.textProperty
-                        if let texture =  Conversion.loadTexture(image: childModelText.createImage(keepSameFont: false, text: childModelText.text, properties: textProperties, refSize: childModel.baseFrame.size, maxWidth: childModel.baseFrame.size.width, maxHeight: .infinity, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
+                        let sceneSize = currentSceneSize
+                        let maxWidth = sceneSize.width * sceneConfig!.contentScaleFactor
+                        let maxHeight = sceneSize.height * sceneConfig!.contentScaleFactor
+                        if let texture =  Conversion.loadTexture(image: childModelText.createImage(keepSameFont: false, text: childModelText.text, properties: textProperties, refSize: childModel.baseFrame.size, maxWidth: maxWidth, maxHeight: maxHeight, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
                             // Set Texture
                             childText.setTexture(texture: texture)
                             

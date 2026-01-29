@@ -54,6 +54,7 @@ class MScene  : MParent {
     
         let parentInfo = ParentInfo()
         parentInfo.modelId = templateInfo.templateId
+        parentInfo.baseFrame.size = templateInfo.ratioSize
         parentInfo.width = Float(templateInfo.ratioSize.width)
         parentInfo.height = Float(templateInfo.ratioSize.height)
         parentInfo.baseTimeline.duration = templateInfo.totalDuration

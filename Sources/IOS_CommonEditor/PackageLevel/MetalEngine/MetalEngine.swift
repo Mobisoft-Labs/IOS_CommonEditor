@@ -302,7 +302,7 @@ public class MetalEngine : ObservableObject, TemplateObserversProtocol , ActionS
                 
                 
                 
-                let didSucceed = await self.sceneManager.prepareSceneGraph(templateInfo: templateInfo, sceneConfig: sceneConfig)
+                let didSucceed = await self.sceneManager.prepareSceneGraph(templateInfo: templateInfo, sceneConfig: sceneConfig, refSize: refSize)
                 
                 sceneManager.canRenderWatermark(!(engineConfig.isPremium || templateHandler.currentTemplateInfo?.isPremium == 1))
                 if didSucceed {
@@ -491,7 +491,7 @@ extension MetalEngine {
                     
                 }
                 
-                let loaded = await sceneManager.prepareSceneGraph(templateInfo: templateInfo, sceneConfig: sceneConfig)
+                let loaded = await sceneManager.prepareSceneGraph(templateInfo: templateInfo, sceneConfig: sceneConfig, refSize: refSize)
                 if loaded {
                     sceneManager.canRenderWatermark(!(engineConfig.isPremium || templateInfo.isThisTemplateBought))
 
@@ -639,7 +639,7 @@ extension MetalEngine {
                     
                 }
                 
-                let loaded = await sceneManager.prepareSceneGraph(templateInfo: templateInfo, sceneConfig: sceneConfig)
+                let loaded = await sceneManager.prepareSceneGraph(templateInfo: templateInfo, sceneConfig: sceneConfig, refSize: refSize)
                 if loaded {
                     
                     var canRenderWatermark : Bool = false
@@ -797,7 +797,7 @@ extension MetalEngine {
                 
                 
                 
-                let loaded = await sceneManager.prepareSceneGraph(templateInfo: templateInfo, sceneConfig: sceneConfig)
+                let loaded = await sceneManager.prepareSceneGraph(templateInfo: templateInfo, sceneConfig: sceneConfig, refSize: refSize)
                 if Task.isCancelled { return false }
                 if loaded {
                     sceneManager.canRenderWatermark(!(engineConfig.isPremium || templateInfo.isThisTemplateBought))
@@ -938,7 +938,7 @@ extension MetalEngine {
                 
                 
                 
-                let loaded = await sceneManager.prepareSceneGraph(templateInfo: templateInfo, sceneConfig: sceneConfig)
+                let loaded = await sceneManager.prepareSceneGraph(templateInfo: templateInfo, sceneConfig: sceneConfig, refSize: refSize)
                 if loaded {
                     sceneManager.canRenderWatermark(!(engineConfig.isPremium || templateInfo.isThisTemplateBought))
 

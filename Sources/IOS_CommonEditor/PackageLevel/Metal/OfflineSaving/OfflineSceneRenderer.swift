@@ -40,6 +40,8 @@ public class OfflineSceneRenderer : SceneComposable  {
     
     var isUserSubscribed: Bool = false
     
+    var currentSceneSize: CGSize = .zero
+    
     
     
     public enum OfflineRenderingState : Equatable {
@@ -245,6 +247,7 @@ public class OfflineSceneRenderer : SceneComposable  {
             exportSettings.videoLength = templateInfo.totalDuration
         }
        currentScene = MScene(templateInfo: templateInfo)
+       currentSceneSize = templateInfo.ratioSize
         currentScene?._canRenderWatermark = !isUserSubscribed
         if exportSettings.exportType == .Photo{
             currentScene?._shouldOverrideCurrentTime = true

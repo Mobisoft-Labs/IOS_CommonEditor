@@ -25,6 +25,8 @@ public class AISceneOfflineRenderer : SceneComposable {
     
     var isUserSubscribed: Bool = true
     
+    var currentSceneSize: CGSize = .zero
+    
     var metalThread: MetalThread = MetalThread(label: "")
 
     var commandQueue: MTLCommandQueue!
@@ -83,6 +85,7 @@ public class AISceneOfflineRenderer : SceneComposable {
                 return .failure(.CouldNotCreateMPage)
             }
             var currentScene = MScene(templateInfo: templateInfo)
+            currentSceneSize = templateInfo.ratioSize
             guard let firstPage = templateInfo.pageInfo.first else {
                 logger.printLog("No Page To Render")
                 // continuation.resume(returning:.failure(.noPageAvailableIndB))
@@ -157,7 +160,8 @@ public class AISceneOfflineRenderer : SceneComposable {
         
         textChild.setAdjustmentIntensity(brightnessIntensity: textInfo.brightnessIntensity, contrastIntensity: textInfo.contrastIntensity, highlightsIntensity: textInfo.highlightIntensity, shadowsIntensity: textInfo.shadowsIntensity, saturationIntensity: textInfo.saturationIntensity, vibranceIntensity: textInfo.vibranceIntensity, sharpnessIntensity: textInfo.sharpnessIntensity, warmthIntensity: textInfo.warmthIntensity, tintIntensity: textInfo.tintIntensity)
         
-        if let image = textInfo.createImage(thumbUpdate : true, keepSameFont : false, text: textInfo.text, properties: properties, refSize: textInfo.baseFrame.size, maxWidth: textInfo.baseFrame.size.width, maxHeight: .infinity, contentScaleFactor: 1, logger: logger) {
+        let contentScale = sceneConfig?.contentScaleFactor ?? 1
+        if let image = textInfo.createImage(thumbUpdate : true, keepSameFont : false, text: textInfo.text, properties: properties, refSize: textInfo.baseFrame.size, maxWidth: 512, maxHeight: 512, contentScaleFactor: contentScale, logger: logger) {
             
             let texture = Conversion.loadTexture(image: image, flip: false )
             textChild.mContentType = 2

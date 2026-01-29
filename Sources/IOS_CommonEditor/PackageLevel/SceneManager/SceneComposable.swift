@@ -13,6 +13,7 @@ protocol SceneComposable {
     var updateThumb : Bool {get}
     var isUserSubscribed : Bool {get}
     var textureCache : TextureCache {get set}
+    var currentSceneSize: CGSize { get }
     var canCacheMchild : Bool { get set }
     var commandQueue: MTLCommandQueue! {get set}
     var metalThread : MetalThread {get set} 
@@ -48,7 +49,10 @@ extension SceneComposable {
         let textChild = MWatermark(model: text)
         var textProperties = text.textProperty
         textProperties.letterSpacing = 0
-        let texture = Conversion.loadTexture(image: text.createImage( text: text.text, properties: textProperties, refSize: CGSize(width: CGFloat(text.width), height:  CGFloat(text.height)), maxWidth: CGFloat(text.width), maxHeight: .infinity, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false )
+        let sceneSize = currentSceneSize
+        let maxWidth = sceneSize.width * sceneConfig!.contentScaleFactor
+        let maxHeight = sceneSize.height * sceneConfig!.contentScaleFactor
+        let texture = Conversion.loadTexture(image: text.createImage( text: text.text, properties: textProperties, refSize: CGSize(width: CGFloat(text.width), height:  CGFloat(text.height)), maxWidth: maxWidth, maxHeight: maxHeight, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false )
         textChild.mContentType = 2
         textChild.setTexture(texture: texture!)
         textChild.setmOpacity(opacity: Conversion.setOpacityForMetalView(value: (text.modelOpacity)))
@@ -282,7 +286,7 @@ extension SceneComposable {
             DispatchQueue.main.async{
                 textInfo_.width = textInfo.width+textInfo.internalWidthMargin
             }
-            
+             
             let textChild = TextChild(model: textInfo_)
             textChild.setmFilterType(filterType: textInfo.filterType)
             textChild.setAdjustmentIntensity(brightnessIntensity: textInfo_.brightnessIntensity, contrastIntensity: textInfo_.contrastIntensity, highlightsIntensity: textInfo_.highlightIntensity, shadowsIntensity: textInfo_.shadowsIntensity, saturationIntensity: textInfo_.saturationIntensity, vibranceIntensity: textInfo_.vibranceIntensity, sharpnessIntensity: textInfo_.sharpnessIntensity, warmthIntensity: textInfo_.warmthIntensity, tintIntensity: textInfo_.tintIntensity)
@@ -290,7 +294,14 @@ extension SceneComposable {
             
             var properties = textInfo.textProperty
             
-            if let image = textInfo.createImage(thumbUpdate : updateThumb, keepSameFont : false, text: textInfo.text, properties: properties, refSize: textInfo.baseFrame.size, maxWidth: textInfo.baseFrame.size.width, maxHeight: .infinity, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger) {
+            let sceneSize = currentSceneSize
+            let maxWidth: CGFloat
+            let maxHeight: CGFloat
+            
+                maxWidth = sceneSize.width * sceneConfig!.contentScaleFactor
+                maxHeight = sceneSize.height * sceneConfig!.contentScaleFactor
+            
+            if let image = textInfo.createImage(thumbUpdate : updateThumb, keepSameFont : false, text: textInfo.text, properties: properties, refSize: textInfo.baseFrame.size, maxWidth: maxWidth, maxHeight: maxHeight, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger) {
                 
                 let texture = Conversion.loadTexture(image: image, flip: false )
                 textChild.mContentType = 2
@@ -298,6 +309,8 @@ extension SceneComposable {
                 
                 textChild.setmOpacity(opacity: Conversion.setOpacityForMetalView(value: (textInfo.modelOpacity)))
                 // textChild.set
+            } else {
+                print("Couldnt Create TEXT IMAGE ")
             }
             return textChild
         }

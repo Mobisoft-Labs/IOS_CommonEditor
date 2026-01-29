@@ -20,6 +20,10 @@ extension SceneManager {
 
             return
         }
+        let sceneSize = currentSceneSize
+        let contentScale = sceneConfig?.contentScaleFactor ?? 1
+        let capWidth = sceneSize.width * contentScale
+        let capHeight = sceneSize.height * contentScale
         
         text.$baseFrame.dropFirst().sink { [weak self] value in
             // For Text
@@ -29,7 +33,7 @@ extension SceneManager {
             if text.baseFrame.size != value.size && !(self!.templateHandler?.currentActionState.isTextInUpdateMode)!{
                 let textProperties = text.textProperty
 //                self.logger.logErrorFirebase("[Trace] SceneManager.observeAsCurrentText sizeChange textId=\(text.textId) modelId=\(text.modelId) size=\(value.size.width)x\(value.size.height) center=\(value.center.x),\(value.center.y) rot=\(value.rotation) scale=\(self?.sceneConfig?.contentScaleFactor ?? 0)")
-                if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont: false, text: text.text, properties: textProperties, refSize: value.size, maxWidth: value.size.width, maxHeight: .infinity, contentScaleFactor: self!.sceneConfig!.contentScaleFactor, logger: self!.logger)!, flip: false ){
+                if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont: false, text: text.text, properties: textProperties, refSize: value.size, maxWidth: capWidth, maxHeight: capHeight, contentScaleFactor: self!.sceneConfig!.contentScaleFactor, logger: self!.logger)!, flip: false ){
                     // Set Texture
                     child.setTexture(texture: texture)
                     self!.redraw()
@@ -38,7 +42,7 @@ extension SceneManager {
             else if text.baseFrame.center != value.center {
                 let textProperties = text.textProperty
 //                self?.logger.logInfo("[Trace] SceneManager.observeAsCurrentText centerChange textId=\(text.textId) modelId=\(text.modelId) size=\(value.size.width)x\(value.size.height) center=\(value.center.x),\(value.center.y) rot=\(value.rotation) scale=\(self?.sceneConfig?.contentScaleFactor ?? 0)")
-//                if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont: false, text: text.text, properties: textProperties, refSize: value.size, maxWidth: value.size.width, maxHeight: .infinity, contentScaleFactor: self!.sceneConfig!.contentScaleFactor, logger: self!.logger)!, flip: false ){
+//                if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont: false, text: text.text, properties: textProperties, refSize: value.size, maxWidth: capWidth, maxHeight: capHeight, contentScaleFactor: self!.sceneConfig!.contentScaleFactor, logger: self!.logger)!, flip: false ){
 //                    // Set Texture
 //                    child.setTexture(texture: texture)
 //                    self!.redraw()
@@ -48,7 +52,7 @@ extension SceneManager {
             else if  text.baseFrame.rotation != value.rotation {
                 let textProperties = text.textProperty
 //                self?.logger.logInfo("[Trace] SceneManager.observeAsCurrentText rotationChange textId=\(text.textId) modelId=\(text.modelId) size=\(value.size.width)x\(value.size.height) center=\(value.center.x),\(value.center.y) rot=\(value.rotation) scale=\(self?.sceneConfig?.contentScaleFactor ?? 0)")
-//                if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont: false, text: text.text, properties: textProperties, refSize: value.size, maxWidth: value.size.width, maxHeight: .infinity, contentScaleFactor: self!.sceneConfig!.contentScaleFactor, logger: self!.logger)!, flip: false ){
+//                if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont: false, text: text.text, properties: textProperties, refSize: value.size, maxWidth: capWidth, maxHeight: capHeight, contentScaleFactor: self!.sceneConfig!.contentScaleFactor, logger: self!.logger)!, flip: false ){
 //                    // Set Texture
 //                    child.setTexture(texture: texture)
                     self!.redraw()
@@ -82,7 +86,7 @@ extension SceneManager {
             let isPersonalizeActive = (templateHandler?.isPersonalizeActive)!
             // create a new texture
             self.logger.logInfo("[Trace] SceneManager.observeAsCurrentText textChanged textId=\(text.textId) modelId=\(text.modelId) size=\(textChangedModel!.newSize.width)x\(textChangedModel!.newSize.height) scale=\(sceneConfig?.contentScaleFactor ?? 0)")
-            if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont: isPersonalizeActive ? false : true , text: textChangedModel!.newText, properties: textProperty, refSize: textChangedModel!.newSize, maxWidth: textChangedModel!.newSize.width, maxHeight: .infinity, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
+            if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont: isPersonalizeActive ? false : true , text: textChangedModel!.newText, properties: textProperty, refSize: textChangedModel!.newSize, maxWidth: capWidth, maxHeight: capHeight, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
                 // set texture
                 child.setTexture(texture: texture)
                 self.redraw()
@@ -106,7 +110,7 @@ extension SceneManager {
                 textProperties.textColor = color.bgColor
                 textProperties.forgroundColor  = color.bgColor
                 textProperties.bgType = Float(text.bgType)
-                if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont : true, text: text.text, properties: textProperties, refSize: text.baseFrame.size, maxWidth: text.baseFrame.size.width, maxHeight: .infinity, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
+                if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont : true, text: text.text, properties: textProperties, refSize: text.baseFrame.size, maxWidth: capWidth, maxHeight: capHeight, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
                     // set texture
                     child.setTexture(texture: texture)
                     self.redraw()
@@ -121,7 +125,7 @@ extension SceneManager {
             var textProperties = text.textProperty
             
             textProperties.letterSpacing = letterSpacing
-            if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont: false, text: text.text, properties: textProperties, refSize: text.baseFrame.size, maxWidth: text.baseFrame.size.width, maxHeight: .infinity, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
+            if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont: false, text: text.text, properties: textProperties, refSize: text.baseFrame.size, maxWidth: capWidth, maxHeight: capHeight, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
                 // set texture
                 child.setTexture(texture: texture)
                 self.redraw()
@@ -135,7 +139,7 @@ extension SceneManager {
 //            text.lineSpacing = lineSpacing
             var textProperties = text.textProperty
             textProperties.lineSpacing = lineSpacing
-            if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont: false, text: text.text, properties: textProperties, refSize: text.baseFrame.size, maxWidth: text.baseFrame.size.width, maxHeight: .infinity, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
+            if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont: false, text: text.text, properties: textProperties, refSize: text.baseFrame.size, maxWidth: capWidth, maxHeight: capHeight, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
                 // set texture
                 child.setTexture(texture: texture)
                 self.redraw()
@@ -148,7 +152,7 @@ extension SceneManager {
 //            text.shadowDx = dx
             var textProperties = text.textProperty
             textProperties.shadowDx = dx
-            if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont : false, text: text.text, properties: textProperties, refSize: text.baseFrame.size, maxWidth: text.baseFrame.size.width, maxHeight: .infinity, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
+            if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont : false, text: text.text, properties: textProperties, refSize: text.baseFrame.size, maxWidth: capWidth, maxHeight: capHeight, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
                 // set texture
                 child.setTexture(texture: texture)
                 self.redraw()
@@ -161,7 +165,7 @@ extension SceneManager {
 //            text.shadowDy = dy
             var textProperties = text.textProperty
             textProperties.shadowDy = dy
-            if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont : false, text: text.text, properties: textProperties, refSize: text.baseFrame.size, maxWidth: text.baseFrame.size.width, maxHeight: .infinity, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
+            if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont : false, text: text.text, properties: textProperties, refSize: text.baseFrame.size, maxWidth: capWidth, maxHeight: capHeight, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
                 // set texture
                 child.setTexture(texture: texture)
                 self.redraw()
@@ -173,7 +177,7 @@ extension SceneManager {
             guard let self = self else { return }
             var textProperties = text.textProperty
             textProperties.shadowRadius = shadowOpacity
-            if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont : false, text: text.text, properties: textProperties, refSize: text.baseFrame.size, maxWidth: text.baseFrame.size.width, maxHeight: .infinity, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
+            if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont : false, text: text.text, properties: textProperties, refSize: text.baseFrame.size, maxWidth: capWidth, maxHeight: capHeight, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
                 // set texture
                 child.setTexture(texture: texture)
                 self.redraw()
@@ -187,7 +191,7 @@ extension SceneManager {
                 text.shadowColor = shadowColor.filter
                 var textProperties = text.textProperty
                 textProperties.shadowColor = shadowColor.filter
-                if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont : true, text: text.text, properties: textProperties, refSize: text.baseFrame.size, maxWidth: text.baseFrame.size.width, maxHeight: .infinity, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
+                if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont : true, text: text.text, properties: textProperties, refSize: text.baseFrame.size, maxWidth: capWidth, maxHeight: capHeight, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
                     // set texture
                     child.setTexture(texture: texture)
                     self.redraw()
@@ -209,7 +213,7 @@ extension SceneManager {
                 textProperties.bgType = Float(text.bgType)
                 textProperties.backgroundColor = color.bgColor
                
-                if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont : true, text: text.text, properties: textProperties, refSize: text.baseFrame.size, maxWidth: text.baseFrame.size.width, maxHeight: .infinity, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
+                if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont : true, text: text.text, properties: textProperties, refSize: text.baseFrame.size, maxWidth: capWidth, maxHeight: capHeight, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
                     // set texture
                     child.setTexture(texture: texture)
                     self.redraw()
@@ -222,7 +226,7 @@ extension SceneManager {
             guard let self = self else { return }
             var textProperties = text.textProperty
             textProperties.textGravity = textGravity
-            if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont : false, text: text.text, properties: textProperties, refSize: text.baseFrame.size, maxWidth: text.baseFrame.size.width, maxHeight: .infinity, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
+            if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont : false, text: text.text, properties: textProperties, refSize: text.baseFrame.size, maxWidth: capWidth, maxHeight: capHeight, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
                 // set texture
                 child.setTexture(texture: texture)
                 self.redraw()
@@ -234,7 +238,7 @@ extension SceneManager {
             guard let self = self else { return }
             var textProperties = text.textProperty
             textProperties.bgAlpha = alpha
-            if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont : true, text: text.text, properties: textProperties, refSize: text.baseFrame.size, maxWidth: text.baseFrame.size.width, maxHeight: .infinity, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
+            if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont : true, text: text.text, properties: textProperties, refSize: text.baseFrame.size, maxWidth: capWidth, maxHeight: capHeight, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
                 // set texture
                 child.setTexture(texture: texture)
                 self.redraw()
@@ -246,7 +250,7 @@ extension SceneManager {
             guard let self = self else { return }
             var textProperties = text.textProperty
             textProperties.fontName = font.fontName
-            if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont : false, text: text.text, properties: textProperties, refSize: text.baseFrame.size, maxWidth: text.baseFrame.size.width, maxHeight: .infinity, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
+            if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont : false, text: text.text, properties: textProperties, refSize: text.baseFrame.size, maxWidth: capWidth, maxHeight: capHeight, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
                 // set texture
                 child.setTexture(texture: texture)
                 self.redraw()
@@ -260,7 +264,7 @@ extension SceneManager {
             guard let self = self else { return }
             var textProperties = text.textProperty
             textProperties.shadowRadius = radius
-            if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont : false, text: text.text, properties: textProperties, refSize: text.baseFrame.size, maxWidth: text.baseFrame.size.width, maxHeight: .infinity, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
+            if let texture =  Conversion.loadTexture(image: text.createImage(keepSameFont : false, text: text.text, properties: textProperties, refSize: text.baseFrame.size, maxWidth: capWidth, maxHeight: capHeight, contentScaleFactor: sceneConfig!.contentScaleFactor, logger: logger)!, flip: false ){
                 // set texture
                 child.setTexture(texture: texture)
                 self.redraw()

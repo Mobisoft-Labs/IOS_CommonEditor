@@ -452,30 +452,54 @@ extension TextInfo {
         
         if refSize.width == 0.0 || refSize.height == 0.0 {
             logger?.logErrorFirebaseWithBacktrace("[preAvailbaleSize changes] Text RefSize Zero \(text) , returning Empty Image")
-            return createTransparentImage(size: CGSize(width: 10 , height: 10))
+            return nil // createTransparentImage(size: CGSize(width: 10 , height: 10))
         }
 
         if refSize.width < 0.0 || refSize.height < 0.0 {
             logger?.logErrorFirebaseWithBacktrace("[preAvailbaleSize changes] Text RefSize Negative \(refSize) for text: \(text)")
-            return createTransparentImage(size: CGSize(width: 10 , height: 10))
+            return nil // createTransparentImage(size: CGSize(width: 10 , height: 10))
         }
         
         if text.isEmpty {
             logger?.logError("Text Is Empty , Returning Empty Image")
-            return  createTransparentImage(size: CGSize(width: 10 , height: 10))
+            return nil // createTransparentImage(size: CGSize(width: 10 , height: 10))
         }
         
-        let newScaledWidth = refSize.width * contentScaleFactor
-        let newScaledHeight = refSize.height * contentScaleFactor
+        // Example (fit within both caps, preserve aspect ratio):
+        // refSize: 3000 x 400, scaleFactor: 3
+        // preScaled: 9000 x 1200
+        // maxWidth/maxHeight: 350 x 350
+        // scaleDown = min(350/9000, 350/1200, 1) = 0.038888...
+        // postScaled: 9000*0.038888... = 350, 1200*0.038888... = 46.6667
+        let preScaledWidth = refSize.width * contentScaleFactor
+        let preScaledHeight = refSize.height * contentScaleFactor
+        var newScaledWidth = preScaledWidth
+        var newScaledHeight = preScaledHeight
+        let validMaxWidth = (maxWidth.isFinite && maxWidth > 0) ? maxWidth : nil
+        let validMaxHeight = (maxHeight.isFinite && maxHeight > 0) ? maxHeight : nil
+        var scaleDown: CGFloat = 1
+        if let validMaxWidth {
+            scaleDown = min(scaleDown, validMaxWidth / newScaledWidth)
+        }
+        if let validMaxHeight {
+            scaleDown = min(scaleDown, validMaxHeight / newScaledHeight)
+        }
+        if scaleDown < 1 {
+            newScaledWidth *= scaleDown
+            newScaledHeight *= scaleDown
+        }
+        logger?.logInfo("[TextTexture] createImage scale clamp ref=\(refSize.width)x\(refSize.height) scale=\(contentScaleFactor) pre=\(preScaledWidth)x\(preScaledHeight) post=\(newScaledWidth)x\(newScaledHeight) max=\(validMaxWidth ?? 0)x\(validMaxHeight ?? 0)")
         let scaledRefSize = CGSize(width: newScaledWidth, height: newScaledHeight)
-        let maxDimension = CGFloat(16384)
         let pixelWidth = scaledRefSize.width
         let pixelHeight = scaledRefSize.height
         if !pixelWidth.isFinite || !pixelHeight.isFinite || pixelWidth <= 0 || pixelHeight <= 0 {
             logger?.logErrorFirebase("TextInfo.createImage invalid pixel size textId=\(textId) modelId=\(modelId) ref=\(refSize.width)x\(refSize.height) scale=\(contentScaleFactor) pixels=\(pixelWidth)x\(pixelHeight)", record: false)
         }
-        if pixelWidth > maxDimension || pixelHeight > maxDimension {
-            logger?.logErrorFirebase("TextInfo.createImage pixel size too large textId=\(textId) modelId=\(modelId) pixels=\(pixelWidth)x\(pixelHeight) max=\(maxDimension)", record: false)
+        if let validMaxWidth, pixelWidth > validMaxWidth {
+            logger?.logErrorFirebase("TextInfo.createImage pixel width too large textId=\(textId) modelId=\(modelId) pixels=\(pixelWidth)x\(pixelHeight) max=\(validMaxWidth)x\(validMaxHeight ?? 0)", record: false)
+        }
+        if let validMaxHeight, pixelHeight > validMaxHeight {
+            logger?.logErrorFirebase("TextInfo.createImage pixel height too large textId=\(textId) modelId=\(modelId) pixels=\(pixelWidth)x\(pixelHeight) max=\(validMaxWidth ?? 0)x\(validMaxHeight)", record: false)
         }
         logger?.logInfo("[TextTexture] createImage start lang=\(userLanguage) textLen=\(text.count) refSize=\(refSize.width)x\(refSize.height) scaled=\(scaledRefSize.width)x\(scaledRefSize.height) scale=\(contentScaleFactor) thumb=\(thumbUpdate) keepFont=\(keepSameFont)")
         let values =  drawTextAsImage(keepFontSizeFix: keepSameFont, text: text, boundingBox: CGRect(origin: .zero, size: scaledRefSize), textProperties: properties, logger: logger)
