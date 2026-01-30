@@ -117,7 +117,7 @@ class MetalTexture: NSObject {
     let contextRowBytes = width * bytesPerPixel
     let rowAlignment = 256
     let uploadRowBytes = ((contextRowBytes + rowAlignment - 1) / rowAlignment) * rowAlignment
-    Conversion.logger?.logInfo("[Trace] MetalTexture.loadTexture cg=\(image.width)x\(image.height) tex=\(width!)x\(height!) rowBytes=\(contextRowBytes) uploadRowBytes=\(uploadRowBytes) flip=\(flip)")
+    //Conversion.logger?.logInfo("[Trace] MetalTexture.loadTexture cg=\(image.width)x\(image.height) tex=\(width!)x\(height!) rowBytes=\(contextRowBytes) uploadRowBytes=\(uploadRowBytes) flip=\(flip)")
     
       guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: contextRowBytes, space: colorSpace, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else {
         Conversion.logger?.logErrorFirebase("[TextureLoaderBreadcrumb] stage=contextCreateFailed size=\(width!)x\(height!) rowBytes=\(contextRowBytes) flip=\(flip)", record: false)
@@ -146,22 +146,22 @@ class MetalTexture: NSObject {
     
     let pixelsData = context.data!
     let region = MTLRegionMake2D(0, 0, Int(width), Int(height))
-    if uploadRowBytes == contextRowBytes {
+//    if uploadRowBytes == contextRowBytes {
         texture.replace(region: region, mipmapLevel: 0, withBytes: pixelsData, bytesPerRow: Int(contextRowBytes))
-    } else {
-        let uploadBufferSize = uploadRowBytes * height
-        var uploadBuffer = [UInt8](repeating: 0, count: uploadBufferSize)
-        for row in 0..<height {
-            let src = pixelsData.advanced(by: row * contextRowBytes)
-            uploadBuffer.withUnsafeMutableBytes { dest in
-                let destRow = dest.baseAddress!.advanced(by: row * uploadRowBytes)
-                memcpy(destRow, src, contextRowBytes)
-            }
-        }
-        uploadBuffer.withUnsafeBytes { bytes in
-            texture.replace(region: region, mipmapLevel: 0, withBytes: bytes.baseAddress!, bytesPerRow: Int(uploadRowBytes))
-        }
-    }
+//    } else {
+//        let uploadBufferSize = uploadRowBytes * height
+//        var uploadBuffer = [UInt8](repeating: 0, count: uploadBufferSize)
+//        for row in 0..<height {
+//            let src = pixelsData.advanced(by: row * contextRowBytes)
+//            uploadBuffer.withUnsafeMutableBytes { dest in
+//                let destRow = dest.baseAddress!.advanced(by: row * uploadRowBytes)
+//                memcpy(destRow, src, contextRowBytes)
+//            }
+//        }
+//        uploadBuffer.withUnsafeBytes { bytes in
+//            texture.replace(region: region, mipmapLevel: 0, withBytes: bytes.baseAddress!, bytesPerRow: Int(uploadRowBytes))
+//        }
+//    }
     
     if (isMipmaped == true){
 //      generateMipMapLayersUsingSystemFunc(texture: texture, device: device, commandQ: commandQ, block: { (buffer) -> Void in
