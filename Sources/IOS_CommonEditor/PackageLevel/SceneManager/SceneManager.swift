@@ -81,6 +81,7 @@ public class SceneManager  : NSObject, SceneComposable , TemplateObserversProtoc
     
  
     var mChildHandler = MChildHandler()
+    var currentSceneSize: CGSize = .zero
     
     var canCacheMchild: Bool = true
     
@@ -350,11 +351,12 @@ public class SceneManager  : NSObject, SceneComposable , TemplateObserversProtoc
     var child : StickerChild!
     var child2 : StickerChild!
 //    var currentChild:MChild?
-    func prepareSceneGraph(templateInfo:TemplateInfo, sceneConfig: SceneConfiguration) async -> Bool  {
+    func prepareSceneGraph(templateInfo:TemplateInfo, sceneConfig: SceneConfiguration, refSize: CGSize) async -> Bool  {
         print("LOL_5")
             // step 1 create scene
         self.sceneConfig = sceneConfig
             currentScene = MScene(templateInfo: templateInfo)
+            currentSceneSize = refSize
             
             //  RESIZE =  metalDisplay!.bounds.size
             //        child = createSticker(sticker!)
@@ -470,6 +472,7 @@ extension SceneManager {
 extension SceneManager : IOSMetalViewRenderDelegate {
     func IOSMetalView(_ metalView: IOSMetalView, didChangeSize: CGSize) {
         logger.printLog("Size did Change \(didChangeSize)")
+        currentSceneSize = didChangeSize
         guard let scene = currentScene else { return }
         
         if scene.context.drawableSize != didChangeSize {
@@ -576,6 +579,7 @@ public class ThumbManager : SceneComposable {
         }
     }
     
+    var currentSceneSize: CGSize = CGSize(width: 512, height: 512)
     var canCacheMchild: Bool = false
     
     var commandQueue: MTLCommandQueue!
@@ -722,8 +726,10 @@ public class ThumbManager : SceneComposable {
         
          let properties = text.textProperty
         
-        let textImage = text.createImage(thumbUpdate : true,text: text.text, properties: properties, refSize: text.baseFrame.size , maxWidth: text.baseFrame.size.width, maxHeight: .infinity, contentScaleFactor: 1, logger: logger)
         if mText.canRender {
+        let contentScale = sceneConfig?.contentScaleFactor ?? 1
+            let textImage = text.createImage(thumbUpdate : true,text: text.text, properties: properties, refSize: text.baseFrame.size , maxWidth: 512, maxHeight: 512, contentScaleFactor: contentScale, logger: logger)
+
             let textTexture = Conversion.loadTexture(image: textImage!, flip: false )!
             
             //let textTexture = Conversion.loadTexture(image: text.createImage(bgAlpha: 0.0)!, flip: false )!

@@ -198,10 +198,22 @@ extension MetalEngine {
             let newCenter = CGPoint(x: calculateSize[0]+(calculateSize[2]/2), y: calculateSize[1]+(calculateSize[3]/2))
             child.baseFrame.size = newSize
             child.baseFrame.center = newCenter
-            child.prevAvailableWidth = Float(calculateSize[4])
-            child.prevAvailableHeight = Float(calculateSize[5])
+            let oldPrevAvailableWidth = child.prevAvailableWidth
+            let oldPrevAvailableHeight = child.prevAvailableHeight
+            logger.printLog("[preAvailbaleSize changes] ratioChange modelId=\(child.modelId), modelType=\(child.modelType), " +
+                            "prevW=\(oldPrevAvailableWidth), prevH=\(oldPrevAvailableHeight), " +
+                            "parentOld=\(oldParentSize), parentNew=\(newParentSize)")
+            if child.prevAvailableWidth < 0 || child.prevAvailableHeight < 0 {
+                logger.logErrorFirebaseWithBacktrace("[preAvailbaleSize changes] Negative prevAvailable after ratio change: " +
+                                                     "modelId=\(child.modelId), modelType=\(child.modelType), " +
+                                                     "prevAvailableWidth=\(child.prevAvailableWidth), prevAvailableHeight=\(child.prevAvailableHeight)")
+            }
             if !(isDBDisabled){
-                _ = DBManager.shared.updateBaseFrameWithPrevious(modelId: child.modelId, newValue: child.baseFrame, parentFrame: newParentSize, previousWidth: CGFloat(child.prevAvailableWidth), previousHeight: CGFloat(child.prevAvailableHeight))
+                _ = DBManager.shared.updateBaseFrameWithPrevious(modelId: child.modelId,
+                                                                newValue: child.baseFrame,
+                                                                parentFrame: newParentSize,
+                                                                previousWidth: CGFloat(child.prevAvailableWidth),
+                                                                previousHeight: CGFloat(child.prevAvailableHeight))
             }
             if let parent = child as? ParentModel{
                 recursiveChildSizeChange(parent: parent, oldParentSize: oldChildSize, newParentSize: newSize)

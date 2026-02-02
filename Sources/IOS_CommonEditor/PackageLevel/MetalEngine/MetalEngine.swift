@@ -302,7 +302,7 @@ public class MetalEngine : ObservableObject, TemplateObserversProtocol , ActionS
                 
                 
                 
-                let didSucceed = await self.sceneManager.prepareSceneGraph(templateInfo: templateInfo, sceneConfig: sceneConfig)
+                let didSucceed = await self.sceneManager.prepareSceneGraph(templateInfo: templateInfo, sceneConfig: sceneConfig, refSize: refSize)
                 
                 sceneManager.canRenderWatermark(!(engineConfig.isPremium || templateHandler.currentTemplateInfo?.isPremium == 1))
                 if didSucceed {
@@ -491,7 +491,7 @@ extension MetalEngine {
                     
                 }
                 
-                let loaded = await sceneManager.prepareSceneGraph(templateInfo: templateInfo, sceneConfig: sceneConfig)
+                let loaded = await sceneManager.prepareSceneGraph(templateInfo: templateInfo, sceneConfig: sceneConfig, refSize: refSize)
                 if loaded {
                     sceneManager.canRenderWatermark(!(engineConfig.isPremium || templateInfo.isThisTemplateBought))
 
@@ -639,7 +639,7 @@ extension MetalEngine {
                     
                 }
                 
-                let loaded = await sceneManager.prepareSceneGraph(templateInfo: templateInfo, sceneConfig: sceneConfig)
+                let loaded = await sceneManager.prepareSceneGraph(templateInfo: templateInfo, sceneConfig: sceneConfig, refSize: refSize)
                 if loaded {
                     
                     var canRenderWatermark : Bool = false
@@ -695,7 +695,7 @@ extension MetalEngine {
     func loadCanvas(refSize:CGSize) {
         guard let editorView = editorView else { return }
         editorView.prepareCanvasView(size: refSize)
-        editorView.canvasView.backgroundColor = .systemBackground
+        editorView.canvasView.backgroundColor = engineConfig.canvasViewBGColor//.systemBackground
         editorView.prepareMetalView(size: refSize)
     }
     func turnOnMetalDisplay() {
@@ -703,20 +703,24 @@ extension MetalEngine {
         sceneManager.setDisplay(metalView)
     }
     public func prepareScene2(templateID: Int, refSize: CGSize , loadThumbnails:Bool ) async -> Bool {
+        if Task.isCancelled { return false }
         await MainActor.run {
 //            UIStateManager.shared.progress = 0.0
             engineConfig.progress = 0.0
         }
+        if Task.isCancelled { return false }
         await Task {
-        let allFontsChecked =  await checkAndDownloadFontsForTemplateId(templateId: templateID)
+        let allFontsChecked = await checkAndDownloadFontsForTemplateId(templateId: templateID)
             logger.printLog("allFontsCheck")
         }.value
         
         // 1️⃣ Fetch template info on main thread
+        if Task.isCancelled { return false }
         let templateInfo: TemplateInfo? = await MainActor.run {
             databaseManager.fetchTemplate(tempID: templateID, refSize: refSize)
         }
         
+        if Task.isCancelled { return false }
         guard let templateInfo = templateInfo else {
             await MainActor.run { errorOccured(msj: "Template Error \(templateID)") }
             return false
@@ -727,16 +731,19 @@ extension MetalEngine {
             engineConfig.progress = 0.1
         }
         // 2️⃣ Load Canvas on Main Thread
+        if Task.isCancelled { return false }
         await MainActor.run {
             loadCanvas(refSize: refSize)
         }
         
         // 3️⃣ Turn On Metal Display in Background (Sequential)
+        if Task.isCancelled { return false }
         await Task {
             turnOnMetalDisplay()
         }.value
         
         // 4️⃣ Initialize Time Loop Handlers in Background
+        if Task.isCancelled { return false }
         await Task {
             if timeLoopHandler == nil || animTimeLoopHandler == nil {
                 timeLoopHandler = TimeLoopHnadler(timeLengthDuration: TimeInterval(templateInfo.totalDuration), drawCallManager: drawCallManager)
@@ -748,6 +755,7 @@ extension MetalEngine {
         }.value
         
         // 5️⃣ Prepare TemplateHandler in Background
+        if Task.isCancelled { return false }
         let templateHandler = await Task { () -> TemplateHandler in
             let handler = TemplateHandler()
             handler.setPackageLogger(logger: logger, engineConfig: engineConfig)
@@ -763,6 +771,7 @@ extension MetalEngine {
             return handler
         }.value
         
+        if Task.isCancelled { return false }
         await MainActor.run {
             
             self.audioPlayer?.setTemplateHandler(templateHandler: templateHandler)
@@ -778,6 +787,7 @@ extension MetalEngine {
         
             // 7️⃣ Prepare Scene Graph (Background Task)
             let didSucceed = await Task {
+                if Task.isCancelled { return false }
                 sceneManager.sceneProgress = { progress in
                     DispatchQueue.main.async {
 //                        UIStateManager.shared.progress += (progress * ( loadThumbnails ? 0.45 : 0.9))
@@ -787,7 +797,8 @@ extension MetalEngine {
                 
                 
                 
-                let loaded = await sceneManager.prepareSceneGraph(templateInfo: templateInfo, sceneConfig: sceneConfig)
+                let loaded = await sceneManager.prepareSceneGraph(templateInfo: templateInfo, sceneConfig: sceneConfig, refSize: refSize)
+                if Task.isCancelled { return false }
                 if loaded {
                     sceneManager.canRenderWatermark(!(engineConfig.isPremium || templateInfo.isThisTemplateBought))
 
@@ -813,7 +824,7 @@ extension MetalEngine {
       
         sceneManager.sceneProgress = nil
         thumbManagar?.sceneProgress = nil
-        return true
+        return didSucceed && !Task.isCancelled
     }
     
     
@@ -927,7 +938,7 @@ extension MetalEngine {
                 
                 
                 
-                let loaded = await sceneManager.prepareSceneGraph(templateInfo: templateInfo, sceneConfig: sceneConfig)
+                let loaded = await sceneManager.prepareSceneGraph(templateInfo: templateInfo, sceneConfig: sceneConfig, refSize: refSize)
                 if loaded {
                     sceneManager.canRenderWatermark(!(engineConfig.isPremium || templateInfo.isThisTemplateBought))
 

@@ -40,6 +40,8 @@ public class OfflineSceneRenderer : SceneComposable  {
     
     var isUserSubscribed: Bool = false
     
+    var currentSceneSize: CGSize = .zero
+    
     
     
     public enum OfflineRenderingState : Equatable {
@@ -125,7 +127,7 @@ public class OfflineSceneRenderer : SceneComposable  {
         self.logger = logger
         self.resourceProvider = resourceProvider
         self.sceneConfig = sceneConfig
-        textureCache = TextureCache(maxSize: settings.resolution.assetsMaxSize, resourceProvider: resourceProvider, logger: logger)
+        textureCache = TextureCache(maxSize: settings.maxSize, resourceProvider: resourceProvider, logger: logger)
         context = CIContext()
 //        ShaderLibrary.initialise()
 //        MVertexDescriptorLibrary.initialise()
@@ -230,7 +232,7 @@ public class OfflineSceneRenderer : SceneComposable  {
     func prepareForSaving(tempId : Int) async  {
 //        return await withCheckedContinuation { continuation in
         
-        let resolutionSize =  exportSettings.exportType == .Photo ? exportSettings.exportImageFormat.size : exportSettings.resolution.size
+        let resolutionSize =  exportSettings.maxSize  //exportSettings.exportType == .Photo ? exportSettings.exportImageFormat.size : exportSettings.resolution.size
         
         if cancelPreparing {
             logger.logError("return")
@@ -245,6 +247,7 @@ public class OfflineSceneRenderer : SceneComposable  {
             exportSettings.videoLength = templateInfo.totalDuration
         }
        currentScene = MScene(templateInfo: templateInfo)
+       currentSceneSize = templateInfo.ratioSize
         currentScene?._canRenderWatermark = !isUserSubscribed
         if exportSettings.exportType == .Photo{
             currentScene?._shouldOverrideCurrentTime = true

@@ -25,6 +25,7 @@ public class Conversion{
     }
     
     static var logger: PackageLogger?
+
     
     
     //    func getDBValueForX(x:Double)->CGFloat{
@@ -87,13 +88,22 @@ public class Conversion{
         let origin = NSString(string: MTKTextureLoader.Origin.bottomLeft.rawValue)
         let options = [MTKTextureLoader.Option.origin: origin]
         
+        if let cgImage = image.cgImage {
+            logger?.logErrorFirebaseWithBacktrace("[Trace] Conversion.loadTexture cg=\(cgImage.width)x\(cgImage.height) ui=\(image.size.width)x\(image.size.height) scale=\(image.scale) flip=\(flip)")
+        } else {
+            logger?.logErrorFirebaseWithBacktrace("[Trace] Conversion.loadTexture missing cgImage")
+        }
+
         do{
-//            let cg = image.cgImage!
             texture = try textureManager.textureN(from: image,flip: flip)
         }catch let error as NSError{
-            logger?.printLog("\(error)")
+            logger?.logErrorFirebaseWithBacktrace("[TextureLoaderGuard] reason=textureCreationFailed error=\(error.localizedDescription) cg=\(image.cgImage?.width ?? 0)x\(image.cgImage?.height ?? 0) ui=\(image.size.width)x\(image.size.height) scale=\(image.scale) flip=\(flip)")
         }
         
+        if let texture = texture {
+            logger?.logErrorFirebaseWithBacktrace("[Trace] Conversion.loadTexture result size=\(texture.width)x\(texture.height) format=\(texture.pixelFormat)")
+        }
+
       //  let img  = Conversion.textureToUIImage(texture!)
       //  print(img)
         return texture
@@ -223,4 +233,3 @@ public class Conversion{
         return uicolor
     }
 }
-

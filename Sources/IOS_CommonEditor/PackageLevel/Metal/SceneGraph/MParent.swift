@@ -137,6 +137,7 @@ extension MParent : FBOTexturable {
     }
     
     func renderMyChildren(commandBuffer: MTLCommandBuffer) {
+        logger?.logInfo("[Trace] MParent.renderMyChildren id=\(identification) children=\(allChild.count) parentable=\(parentableChilds.count)")
         
         // before rendering check if self is alive(currentTime)
         parentableChilds.forEach { parentable in

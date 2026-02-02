@@ -58,22 +58,27 @@ extension ViewManager{
         logger.logVerbose("Handle Tap Gesture")
         
         guard let rootView = rootView else {
-            logger.logError("rootView Nil")
+            logger.logErrorFirebaseWithBacktrace("[TapGuard] reason=rootViewNil")
             return
         }
         
         guard let templateHandler = templateHandler else {
-            logger.logError("templateHandler Nil")
+            logger.logErrorFirebaseWithBacktrace("[TapGuard] reason=templateHandlerNil")
             return
         }
         guard let currentPageView = rootView.currentPage else {
-            logger.logError("No Current Page Found")
+            logger.logErrorFirebaseWithBacktrace("[TapGuard] reason=currentPageNil")
             return
         }
         
         rootView._templateHandler = templateHandler
         let touchPoint = gesture.location(in: currentPageView)
         let touchPointInScene = gesture.location(in: rootView)
+        let currentModelId = templateHandler.currentModel?.modelId ?? -1
+        let currentSuperModelId = templateHandler.currentSuperModel?.modelId ?? -1
+        let timestamp = Int(Date().timeIntervalSince1970)
+        lastGestureContext = "tap modelId=\(currentModelId) superModelId=\(currentSuperModelId) pageTag=\(currentPageView.tag) multiMode=\(templateHandler.currentActionState.multiModeSelected) ts=\(timestamp)"
+        logger.logErrorFirebase("[TapFlowBreadcrumb] \(lastGestureContext ?? "tap") touch=\(Int(touchPoint.x))x\(Int(touchPoint.y)) scene=\(Int(touchPointInScene.x))x\(Int(touchPointInScene.y))", record: false)
         
         if rootView.isPremiumTapped(touchPointInScene) {
             handleTapForPremiumButton(gesture)
@@ -87,6 +92,7 @@ extension ViewManager{
             
             guard let view = viewToRayCastIn.overlapHitTest(point: gesture.location(in: viewToRayCastIn), withEvent: nil) else {
                 logger.logErrorJD(tag: .viewManager,"ViewNotDetected");
+                logger.logErrorFirebaseWithBacktrace("[TapGuard] reason=multiModeViewNotDetected")
                 return
             }
             
@@ -113,10 +119,15 @@ extension ViewManager{
                 logger.logInfo("Touch Can Be Found Of Recommeneded Parent")
                 guard let view = viewToRayCastIn.overlapHitTest(point: touchPoint, withEvent: nil) else {
                     logger.logErrorJD(tag: .viewManager,"ViewNotDetected");
+                    logger.logErrorFirebaseWithBacktrace("[TapGuard] reason=viewNotDetected")
                     setCurrentModel(view: (viewToRayCastIn))
                     return
                 }
-                setCurrentModel(view: (view as! BaseView))
+                guard let baseView = view as? BaseView else {
+                    logger.logErrorFirebaseWithBacktrace("[TapGuard] reason=hitTestNonBaseView view=\(type(of: view))")
+                    return
+                }
+                setCurrentModel(view: baseView)
             }else {
                 logger.logInfo("Touch Is Out Of Recommeneded Parent")
                 setCurrentModel(view: currentParentView)
@@ -135,27 +146,43 @@ extension ViewManager{
             logger.logError("Page Is Active, No Rotation")
             return
         }
+
+        guard let templateHandler = templateHandler else {
+            logger.logErrorFirebaseWithBacktrace("[RotationGuard] reason=noTemplateHandler state=\(gesture.state.rawValue)")
+            return
+        }
+        guard let currentModel = templateHandler.currentModel else {
+            logger.logErrorFirebaseWithBacktrace("[RotationGuard] reason=noCurrentModel state=\(gesture.state.rawValue)")
+            return
+        }
+        guard let currentActiveView = currentActiveView else {
+            logger.logErrorFirebaseWithBacktrace("[RotationGuard] reason=noActiveView state=\(gesture.state.rawValue)")
+            return
+        }
         
        // if !isPageSelected {
             if gesture.state == .began{
                 // removeControlViews() /* jD Depricated*/
-                currentActiveView?.enableStealthMode = true
+                logger.logErrorFirebase("[RotationFlowBreadcrumb] stage=rotationBegan modelId=\(currentModel.modelId) rotation=\(currentModel.baseFrame.rotation) state=\(gesture.state.rawValue) parent=\(lastGestureContext ?? "none")", record: false)
+                currentActiveView.enableStealthMode = true
                 refreshControlBar = true 
-                currentActiveView?._initialRotation = CGFloat((templateHandler?.currentModel!.baseFrame.rotation)!)
-                initialRotation = (templateHandler?.currentModel!.baseFrame.rotation)!
+                currentActiveView._initialRotation = CGFloat(currentModel.baseFrame.rotation)
+                initialRotation = currentModel.baseFrame.rotation
             }
             if gesture.state == .changed{
+                logger.logErrorFirebase("[RotationFlowBreadcrumb] stage=rotationChanged modelId=\(currentModel.modelId) rotation=\(currentModel.baseFrame.rotation) parent=\(lastGestureContext ?? "none")", record: false)
                 handleRotation(gesture)
 //                gesture.rotation = 0.0
             }
             
             if gesture.state == .ended{
 //                drawControlViews() Jd Depricate
-                currentActiveView?.enableStealthMode = false
+                logger.logErrorFirebase("[RotationFlowBreadcrumb] stage=rotationEnded modelId=\(currentModel.modelId) rotation=\(currentModel.baseFrame.rotation) parent=\(lastGestureContext ?? "none")", record: false)
+                currentActiveView.enableStealthMode = false
                 refreshControlBar = true
                 gridManager?.manageStateForRotation()
-                templateHandler?.currentModel?.beginFrame.rotation = Float(currentActiveView!._initialRotation)
-                templateHandler?.currentModel?.endFrame.rotation = (templateHandler?.currentModel!.baseFrame.rotation)!
+                currentModel.beginFrame.rotation = Float(currentActiveView._initialRotation)
+                currentModel.endFrame.rotation = currentModel.baseFrame.rotation
             }
         
         
@@ -302,7 +329,7 @@ extension ViewManager{
             // if canvas is identity.
             if editView!.bounds == editView!.canvasView.frame && (templateHandler.currentTemplateInfo?.pageInfo.count)! > 1{
                 if gesture.state == .began{
-                    editView!.canvasView.backgroundColor = .white
+                    editView!.canvasView.backgroundColor = vmConfig.canvasViewBGColor//.white
 //                    editView.backgroundColor = .clear
                     // Hide Scene View
                     editView!.canvasView.mtkScene?.isHidden = true

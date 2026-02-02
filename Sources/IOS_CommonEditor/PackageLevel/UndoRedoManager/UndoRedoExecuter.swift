@@ -20,6 +20,12 @@ public class UndoRedoExecuter{
     }
     public func PerformUndoAction(engine: MetalEngine){
         let result = engine.undoRedoManager?.undo()//UndoRedoManager.shared.undo()
+        let currentModelId = engine.templateHandler.currentModel?.modelId ?? -1
+        let pageId = engine.templateHandler.currentPageModel?.modelId ?? -1
+        logger.logErrorFirebase("[TimelineTrace][Undo] begin result=\(String(describing: result)) currentModelId=\(currentModelId) pageId=\(pageId) isMainThread=\(Thread.isMainThread)", record: false)
+        if currentModelId == -1 || pageId == -1 {
+            logger.logErrorFirebaseWithBacktrace("[TimelineTraceGuard] reason=missingIds currentModelId=\(currentModelId) pageId=\(pageId)")
+        }
         switch result{
         case .OpacityChanged(let opacity):
             setCurrentModelIfNeeded(engine: engine, currentId: opacity.id)
@@ -198,6 +204,12 @@ public class UndoRedoExecuter{
             engine.templateHandler.currentStickerModel?.changeOrReplaceImage = stickerImageContent.oldContent
             engine.templateHandler.currentActionState.updateThumb = true
         case .MoveModelChanged(let moveModel):
+            let currentModelId = engine.templateHandler.currentModel?.modelId ?? -1
+            let pageId = engine.templateHandler.currentPageModel?.modelId ?? -1
+            logger.logErrorFirebase("[TimelineTrace][Undo] MoveModelChanged type=\(moveModel.type) oldLast=\(moveModel.oldlastSelectedId) newLast=\(moveModel.newLastSelected) addParentId=\(moveModel.shouldAddParentID ?? -1) removeParentId=\(moveModel.shouldRemoveParentID ?? -1) oldIds=\(moveModel.oldMM.map { $0.modelID }) newIds=\(moveModel.newMM.map { $0.modelID }) currentModelId=\(currentModelId) pageId=\(pageId) isMainThread=\(Thread.isMainThread)", record: false)
+            if currentModelId == -1 || pageId == -1 {
+                logger.logErrorFirebaseWithBacktrace("[TimelineTraceGuard] reason=missingIds currentModelId=\(currentModelId) pageId=\(pageId)")
+            }
             let oldMM = moveModel.newMM
             let newMM = moveModel.oldMM
             var moveModelNew = MoveModel(type: moveModel.type, oldMM: oldMM, newMM: newMM)

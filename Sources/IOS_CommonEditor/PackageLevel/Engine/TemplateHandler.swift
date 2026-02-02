@@ -156,7 +156,7 @@ public class TemplateHandler  : TemplateHandlerProtocol,DictCacheProtocol, Obser
     
    
     
-    var logger: PackageLogger?
+    public var logger: PackageLogger?
     var engineConfig: EngineConfiguration?
     
     deinit {
@@ -1806,6 +1806,12 @@ extension TemplateHandler {
     func performGroupAction(moveModel:MoveModel) {
         
       
+        let pageId = currentPageModel?.modelId ?? -1
+        let currentModelId = currentModel?.modelId ?? -1
+        logger?.logErrorFirebase("[TimelineTrace][performGroupAction] begin type=\(moveModel.type) pageId=\(pageId) oldLast=\(moveModel.oldlastSelectedId) newLast=\(moveModel.newLastSelected) addParentId=\(moveModel.shouldAddParentID ?? -1) removeParentId=\(moveModel.shouldRemoveParentID ?? -1) oldIds=\(moveModel.oldMM.map { $0.modelID }) newIds=\(moveModel.newMM.map { $0.modelID }) isMainThread=\(Thread.isMainThread)", record: false)
+        if currentModelId == -1 || pageId == -1 {
+            logger?.logErrorFirebaseWithBacktrace("[TimelineTraceGuard] reason=missingIds currentModelId=\(currentModelId) pageId=\(pageId)")
+        }
         deepSetCurrentModel(id: currentPageModel?.modelId ?? -1)
         logger?.logInfo("Action:\(moveModel.type)")
         currentActionState.moveModel = moveModel
@@ -1816,6 +1822,11 @@ extension TemplateHandler {
         currentActionState.updatePageAndParentThumb = true
 
         currentActionState.shouldRefreshOnAddComponent = true
+        let endModelId = currentModel?.modelId ?? -1
+        logger?.logErrorFirebase("[TimelineTrace][performGroupAction] end type=\(moveModel.type) currentModelId=\(endModelId) isMainThread=\(Thread.isMainThread)", record: false)
+        if endModelId == -1 {
+            logger?.logErrorFirebaseWithBacktrace("[TimelineTraceGuard] reason=missingCurrentModelId currentModelId=\(endModelId)")
+        }
 
     }
 

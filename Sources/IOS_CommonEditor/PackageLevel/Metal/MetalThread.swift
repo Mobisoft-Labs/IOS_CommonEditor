@@ -12,6 +12,9 @@ class MetalThread {
     private var currentTask: DispatchWorkItem?
     var stopRendering: Bool = false
 
+    deinit {
+        print("deinit - \(self)")
+    }
     init(label: String) {
         queue = DispatchQueue(label: label , qos:.userInteractive, autoreleaseFrequency: .inherit)
     }
@@ -37,6 +40,9 @@ class MetalThread {
            stopRendering = true
        }
     
+    func isCancelled() -> Bool {
+        return currentTask?.isCancelled ?? true
+    }
     
 }
 

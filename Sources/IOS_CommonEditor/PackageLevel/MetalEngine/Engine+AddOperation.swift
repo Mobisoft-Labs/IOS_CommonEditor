@@ -215,6 +215,12 @@ extension MetalEngine {
 //            if templateHandler.currentActionState.multiSelectedItems.isEmpty{
 //                return
 //            }
+        let selectedIds = templateHandler.currentActionState.multiSelectedItems.map { $0.modelId }
+        let pageId = templateHandler.currentPageModel?.modelId ?? -1
+        logger.logErrorFirebase("[TimelineTrace][addParent] begin pageId=\(pageId) selectedIds=\(selectedIds) isMainThread=\(Thread.isMainThread)", record: false)
+        if pageId == -1 {
+            logger.logErrorFirebaseWithBacktrace("[TimelineTraceGuard] reason=missingPageId pageId=\(pageId)")
+        }
         let parentInfo = ParentInfo()
         
         //         templateHandler.currentActionState.multiSelectedItems = [3463,3462]
@@ -250,6 +256,7 @@ extension MetalEngine {
         var animationID = DBManager.shared.replaceAnimationRowIfNeeded(animation: animationModel)
         
         parentInfo.modelId = parentID
+        logger.logErrorFirebase("[TimelineTrace][addParent] created parentId=\(parentID) pageId=\(parentInfo.parentId) orderInParent=\(parentInfo.orderInParent) isMainThread=\(Thread.isMainThread)", record: false)
         
         
         
@@ -279,6 +286,12 @@ extension MetalEngine {
                 
                 moveModel.shouldAddParentID = parentInfo.modelId
                 moveModel.shouldRemoveParentID = nil
+                let oldIds = moveModel.oldMM.map { $0.modelID }
+                let newIds = moveModel.newMM.map { $0.modelID }
+                logger.logErrorFirebase("[TimelineTrace][addParent] moveModel type=\(moveModel.type) parentId=\(parentInfo.modelId) oldIds=\(oldIds) newIds=\(newIds) oldLast=\(moveModel.oldlastSelectedId) newLast=\(moveModel.newLastSelected) isMainThread=\(Thread.isMainThread)", record: false)
+                if parentInfo.modelId == -1 {
+                    logger.logErrorFirebaseWithBacktrace("[TimelineTraceGuard] reason=missingParentId parentId=\(parentInfo.modelId)")
+                }
                 
                 templateHandler?.performGroupAction(moveModel: moveModel)
 

@@ -1548,3 +1548,13 @@ public class Resource {
         return nil
     }
 }
+
+extension Locale {
+    static var userLanguageIdentifier: String {
+        Locale.preferredLanguages.first ?? "unknown"
+    }
+    
+    static var userLanguageCode: String {
+        Locale.current.language.languageCode?.identifier ?? "unknown"
+    }
+}

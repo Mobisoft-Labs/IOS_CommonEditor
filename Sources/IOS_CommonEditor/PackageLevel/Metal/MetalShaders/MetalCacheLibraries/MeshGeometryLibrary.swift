@@ -109,12 +109,12 @@ public class QuadMesh : BaseMesh {
     
     override func updateCropRect(topLeft: float2, topRight: float2, bottomLeft: float2, bottomRight: float2) {
     
-        /*bottomRight*/  vertices[0].textCoords = bottomRight
-        /*bottomLeft*/   vertices[1].textCoords = bottomLeft
-        /*topLEft*/  vertices[2].textCoords = topLeft
-        /*topRight*/  vertices[3].textCoords = topRight
-   
-         buildBuffer()
+//        /*bottomRight*/  vertices[0].textCoords = bottomRight
+//        /*bottomLeft*/   vertices[1].textCoords = bottomLeft
+//        /*topLEft*/  vertices[2].textCoords = topLeft
+//        /*topRight*/  vertices[3].textCoords = topRight
+//   
+//         buildBuffer()
     }
  
     
