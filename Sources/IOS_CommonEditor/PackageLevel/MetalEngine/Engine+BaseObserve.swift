@@ -65,6 +65,9 @@ extension MetalEngine {
                     if !isDBDisabled{
                         _ = DBManager.shared.updateSoftDelete(modelId: baseModel.modelId, newValue: softDelete.toInt())
                     }
+                    templateHandler.normalizeActiveOrders(parentId: baseModel.parentId)
+                    sceneManager.syncOrderForParent(parentId: baseModel.parentId)
+                    viewManager?.syncOrderForParent(parentId: baseModel.parentId)
 //                    templateHandler.setCurrentModel(id: templateHandler.lastSelectedId!)
                 }
                 

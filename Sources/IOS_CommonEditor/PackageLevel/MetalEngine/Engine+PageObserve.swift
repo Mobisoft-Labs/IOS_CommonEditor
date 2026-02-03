@@ -62,6 +62,7 @@ extension MetalEngine {
            pageModel.$lockUnlockState.dropFirst().sink { [weak self] lockUnlockArray in
                guard let self = self else { return }
                var lockAll = false
+               var updatedIds = [Int]()
                
                for item in lockUnlockArray{
                    if let model = templateHandler.getModel(modelId: item.id){
@@ -70,6 +71,7 @@ extension MetalEngine {
                        if !(isDBDisabled){
                            _ = DBManager.shared.updateLockStatus(modelId: item.id, newValue: item.lockStatus.toString())
                        }
+                       updatedIds.append(item.id)
                        if !lockAll{
                            pageModel.unlockedModel.append(LockUnlockModel(id: item.id, lockStatus: true))
                        }
@@ -82,8 +84,11 @@ extension MetalEngine {
                    if lockAll{
                        pageModel.unlockedModel.removeAll()
                    }
-                  
                
+               if !updatedIds.isEmpty {
+                   viewManager?.syncLockStatus(ids: updatedIds)
+                   sceneManager.syncLockStatus(ids: updatedIds)
+               }
                
            }.store(in: &modelPropertiesCancellables)
            

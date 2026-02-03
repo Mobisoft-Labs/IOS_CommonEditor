@@ -12,7 +12,7 @@ public protocol AnyBGContent{
   //  var type : ImageSourceType {get}
 
 }
-struct LockUnlockModel{
+public struct LockUnlockModel{
     let id:Int
     let lockStatus:Bool
 }

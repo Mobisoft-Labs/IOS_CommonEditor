@@ -7,6 +7,7 @@
 
 import UIKit
 import Combine
+import SwiftUI
 //import UIKit
 
 public class StackedViewController: UIViewController, CustomCollectionViewDelegate {
@@ -14,8 +15,20 @@ public class StackedViewController: UIViewController, CustomCollectionViewDelega
     var multiPlier: Float = 1.0
     var viewModel: LayersViewModel2!
     var customCollectionView: CustomCollectionView!
+    private var feedbackView: UIView?
+    private var feedbackHostingController: UIHostingController<LayersFeedbackSwiftUIView>?
+    private var feedbackBottomConstraint: NSLayoutConstraint?
+    private var feedbackHeightConstraint: NSLayoutConstraint?
+    private var navTitleLabel: UILabel?
+    private var panelButton: UIButton?
+    private var leftButton: UIButton?
+    private var rightButton: UIButton?
+    private var unlockAllButton: UIButton?
+    private var headerIconView: UIImageView?
+    private let headerSeparator = UIView()
     var navigationPanel = UIView()
     var blurView: UIVisualEffectView!
+    private var feedbackLongPressCount = 0
 //    var navBlurView: UIVisualEffectView!
     var isAllModelsLocked: Bool{
         return viewModel.isLockAllStatus
@@ -39,6 +52,8 @@ public class StackedViewController: UIViewController, CustomCollectionViewDelega
         //        navigationPanel.backgroundColor = .lightGray // Customize as needed
         navigationPanel.backgroundColor = .systemBackground
         view.addSubview(navigationPanel)
+        headerSeparator.translatesAutoresizingMaskIntoConstraints = false
+        navigationPanel.addSubview(headerSeparator)
         
         // Add the "Layers" label to the navigation panel
         let layersLabel = UILabel()
@@ -46,7 +61,27 @@ public class StackedViewController: UIViewController, CustomCollectionViewDelega
         layersLabel.textColor = .label
         layersLabel.translatesAutoresizingMaskIntoConstraints = false
         navigationPanel.addSubview(layersLabel)
+        navTitleLabel = layersLabel
+
+        let headerIcon = UIImageView()
+        if let image = UIImage(named: "layers") {
+            headerIcon.image = image
+        } else {
+            headerIcon.image = UIImage(systemName: "square.stack.3d.up.fill")
+        }
+        headerIcon.translatesAutoresizingMaskIntoConstraints = false
+        headerIcon.contentMode = .scaleAspectFit
+        navigationPanel.addSubview(headerIcon)
+        headerIconView = headerIcon
         
+        let unlockAllButton = UIButton(type: .system)
+        unlockAllButton.setTitle(isAllModelsLocked ? "UNLOCK ALL" : "LOCK ALL", for: .normal)
+        unlockAllButton.setTitleColor(.secondaryLabel, for: .normal)
+        unlockAllButton.translatesAutoresizingMaskIntoConstraints = false
+        unlockAllButton.addTarget(self, action: #selector(didLeftButtonClick), for: .touchUpInside)
+        navigationPanel.addSubview(unlockAllButton)
+        self.unlockAllButton = unlockAllButton
+
         // Add elements to the navigation panel (e.g., buttons, labels)
         let panelButton = UIButton(type: .system)
         panelButton.setTitle("Done_".translate(), for: .normal)
@@ -54,6 +89,7 @@ public class StackedViewController: UIViewController, CustomCollectionViewDelega
         panelButton.translatesAutoresizingMaskIntoConstraints = false
         panelButton.addTarget(self, action: #selector(panelButtonTapped), for: .touchUpInside)
         navigationPanel.addSubview(panelButton)
+        self.panelButton = panelButton
         
         
 //        // Add the lock all button to the navigation panel
@@ -84,15 +120,50 @@ public class StackedViewController: UIViewController, CustomCollectionViewDelega
         
         
         
+        applyDesignSystem()
+
         // Set up the collection view
         customCollectionView = CustomCollectionView(viewModel: viewModel)
         customCollectionView.customDelegate = self
+        customCollectionView.onLongPressEnded = { [weak self] in
+            self?.handleLongPressEnded()
+        }
         customCollectionView.translatesAutoresizingMaskIntoConstraints = false
         customCollectionView.backgroundColor = .clear
+        customCollectionView.setDropIndicatorStyle(useDetailed: false)
+        customCollectionView.setDropGapHeight(40)
         blurView.contentView.addSubview(customCollectionView)
+
+        if let designSystem = viewModel.designSystem, let config = viewModel.layerConfig {
+            let feedbackView = LayersFeedbackSwiftUIView(
+                prompt: config.layersFeedbackPromptKey.translate(),
+                yesTitle: config.layersFeedbackYesKey.translate(),
+                noTitle: config.layersFeedbackNoKey.translate(),
+                promptFont: designSystem.subtitleFont,
+                buttonFont: designSystem.buttonFont,
+                primaryText: designSystem.primaryText,
+                accentColor: designSystem.accentColor,
+                secondaryText: designSystem.secondaryText,
+                onYes: { [weak self] in self?.handleFeedback(response: "Yes") },
+                onNo: { [weak self] in self?.handleFeedback(response: "No") }
+            )
+            let hostingController = UIHostingController(rootView: feedbackView)
+            hostingController.view.translatesAutoresizingMaskIntoConstraints = false
+            hostingController.view.backgroundColor = .clear
+            addChild(hostingController)
+            blurView.contentView.addSubview(hostingController.view)
+            hostingController.didMove(toParent: self)
+            self.feedbackHostingController = hostingController
+            self.feedbackView = hostingController.view
+            hostingController.view.isHidden = true
+        }
         
         // Set up constraints for the navigation panel, blur view, and collection view
-        NSLayoutConstraint.activate([
+        if let feedbackView = feedbackView {
+            feedbackBottomConstraint = feedbackView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12)
+            feedbackHeightConstraint = feedbackView.heightAnchor.constraint(equalToConstant: 96)
+        }
+        var constraints: [NSLayoutConstraint] = [
             
 //            navBlurView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
 //            navBlurView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -112,18 +183,30 @@ public class StackedViewController: UIViewController, CustomCollectionViewDelega
             customCollectionView.topAnchor.constraint(equalTo: blurView.contentView.topAnchor, constant: 10),
             customCollectionView.leadingAnchor.constraint(equalTo: blurView.contentView.leadingAnchor, constant: 10),
             customCollectionView.trailingAnchor.constraint(equalTo: blurView.contentView.trailingAnchor, constant: -10),
-            customCollectionView.bottomAnchor.constraint(equalTo: blurView.contentView.bottomAnchor, constant: -20),
+            customCollectionView.bottomAnchor.constraint(equalTo: blurView.contentView.bottomAnchor, constant: -12),
             customCollectionView.heightAnchor.constraint(equalTo: blurView.heightAnchor, multiplier: CGFloat(multiPlier), constant: -60), // Adjust multiplier as needed
             
             //            panelButton.centerXAnchor.constraint(equalTo: navigationPanel.centerXAnchor),
             //            panelButton.centerYAnchor.constraint(equalTo: navigationPanel.centerYAnchor),
-            // Center the "Layers" label horizontally and vertically within the navigation panel
-            layersLabel.centerXAnchor.constraint(equalTo: navigationPanel.centerXAnchor),
+            headerIcon.leadingAnchor.constraint(equalTo: navigationPanel.leadingAnchor, constant: 12),
+            headerIcon.centerYAnchor.constraint(equalTo: navigationPanel.centerYAnchor),
+            headerIcon.widthAnchor.constraint(equalToConstant: 24),
+            headerIcon.heightAnchor.constraint(equalToConstant: 24),
+
+            layersLabel.leadingAnchor.constraint(equalTo: headerIcon.trailingAnchor, constant: 8),
             layersLabel.centerYAnchor.constraint(equalTo: navigationPanel.centerYAnchor),
             
+            unlockAllButton.trailingAnchor.constraint(equalTo: panelButton.leadingAnchor, constant: -16),
+            unlockAllButton.centerYAnchor.constraint(equalTo: navigationPanel.centerYAnchor),
+
             // Align the panel button to the trailing edge of the navigation panel
-            panelButton.trailingAnchor.constraint(equalTo: navigationPanel.trailingAnchor, constant: -10),
+            panelButton.trailingAnchor.constraint(equalTo: navigationPanel.trailingAnchor, constant: -12),
             panelButton.centerYAnchor.constraint(equalTo: navigationPanel.centerYAnchor),
+
+            headerSeparator.leadingAnchor.constraint(equalTo: navigationPanel.leadingAnchor),
+            headerSeparator.trailingAnchor.constraint(equalTo: navigationPanel.trailingAnchor),
+            headerSeparator.bottomAnchor.constraint(equalTo: navigationPanel.bottomAnchor),
+            headerSeparator.heightAnchor.constraint(equalToConstant: 1)
             
             // Align the lock all button to the leading edge of the navigation panel
 //            lockAllImage.centerYAnchor.constraint(equalTo: navigationPanel.centerYAnchor),
@@ -133,12 +216,108 @@ public class StackedViewController: UIViewController, CustomCollectionViewDelega
 //            
 //            LockAllTitle.leadingAnchor.constraint(equalTo: lockAllImage.trailingAnchor, constant: 0),
 //            LockAllTitle.centerYAnchor.constraint(equalTo: navigationPanel.centerYAnchor)
-        ])
+        ]
+
+        if let feedbackView = feedbackView,
+           let feedbackBottomConstraint,
+           let feedbackHeightConstraint {
+            constraints.append(customCollectionView.bottomAnchor.constraint(equalTo: feedbackView.topAnchor, constant: -12))
+            constraints.append(feedbackView.leadingAnchor.constraint(equalTo: blurView.contentView.leadingAnchor, constant: 16))
+            constraints.append(feedbackView.trailingAnchor.constraint(equalTo: blurView.contentView.trailingAnchor, constant: -16))
+            constraints.append(feedbackBottomConstraint)
+            constraints.append(feedbackHeightConstraint)
+        }
+
+        NSLayoutConstraint.activate(constraints)
         
         
         // Initialize lockAllButton UI based on isAllModelsLocked state
 //              let initialImage = isAllModelsLocked ? UIImage(named: "unlock") : UIImage(named: "lock")
 //              lockAllImage.setImage(initialImage, for: .normal)
+    }
+
+    private func applyDesignSystem() {
+        guard let designSystem = viewModel.designSystem else { return }
+        navigationPanel.backgroundColor = designSystem.backgroundColor
+        blurView.backgroundColor = designSystem.backgroundColor
+        navTitleLabel?.textColor = designSystem.primaryText
+        navTitleLabel?.font = designSystem.headerFont
+        panelButton?.setTitleColor(designSystem.accentColor, for: .normal)
+        panelButton?.titleLabel?.font = designSystem.headerActionFont
+        unlockAllButton?.setTitleColor(designSystem.secondaryText, for: .normal)
+        unlockAllButton?.titleLabel?.font = designSystem.headerActionFont
+        headerIconView?.tintColor = designSystem.accentColor
+        headerSeparator.backgroundColor = designSystem.separator
+        leftButton?.setTitleColor(designSystem.accentColor, for: .normal)
+        leftButton?.titleLabel?.font = designSystem.buttonFont
+        rightButton?.setTitleColor(designSystem.accentColor, for: .normal)
+        rightButton?.titleLabel?.font = designSystem.buttonFont
+    }
+
+    private func handleLongPressEnded() {
+        feedbackLongPressCount += 1
+        viewModel.logger?.printLog("[LayersFeedback] longPressEnded count=\(feedbackLongPressCount)")
+        updateFeedbackVisibility()
+    }
+
+    private func handleFeedback(response: String) {
+        guard let config = viewModel.layerConfig else { return }
+        config.submitLayersFeedback(subject: config.layersFeedbackSubject,
+                                    response: response,
+                                    userId: config.layersFeedbackUserId)
+        if config.layersFeedbackPersists {
+            UserDefaults.standard.set(true, forKey: config.layersFeedbackPersistenceKey)
+        }
+        hideFeedbackView(animated: true)
+        feedbackLongPressCount = 0
+        viewModel.logger?.printLog("[LayersFeedback] submitted response=\(response) resetCount=0")
+    }
+
+    private func updateFeedbackVisibility() {
+        guard let config = viewModel.layerConfig else { return }
+        let hasProvided = config.layersFeedbackPersists
+            ? UserDefaults.standard.bool(forKey: config.layersFeedbackPersistenceKey)
+            : false
+        let shouldShow = !hasProvided && feedbackLongPressCount >= config.layersFeedbackMinimumLongPressCount
+        viewModel.logger?.printLog("[LayersFeedback] hasProvided=\(hasProvided) minCount=\(config.layersFeedbackMinimumLongPressCount) shouldShow=\(shouldShow)")
+        if shouldShow {
+            showFeedbackView()
+        } else {
+            hideFeedbackView(animated: false)
+        }
+    }
+
+    private func showFeedbackView() {
+        guard let feedbackView else { return }
+        if !feedbackView.isHidden { return }
+        feedbackView.isHidden = false
+        feedbackView.alpha = 0
+        feedbackView.transform = CGAffineTransform(translationX: 0, y: (feedbackHeightConstraint?.constant ?? 84) + 12)
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        UIView.animate(withDuration: 0.28, delay: 0, options: [.curveEaseOut]) { [weak feedbackView] in
+            feedbackView?.alpha = 1
+            feedbackView?.transform = .identity
+        }
+    }
+
+    private func hideFeedbackView(animated: Bool) {
+        guard let feedbackView else { return }
+        let endTransform = CGAffineTransform(translationX: 0, y: (feedbackHeightConstraint?.constant ?? 84) + 12)
+        let animations = { [weak feedbackView] in
+            feedbackView?.alpha = 0
+            feedbackView?.transform = endTransform
+        }
+        let completion: (Bool) -> Void = { [weak feedbackView] _ in
+            feedbackView?.isHidden = true
+            feedbackView?.alpha = 1
+            feedbackView?.transform = .identity
+        }
+        if animated {
+            UIView.animate(withDuration: 0.22, delay: 0, options: [.curveEaseIn], animations: animations, completion: completion)
+        } else {
+            animations()
+            completion(true)
+        }
     }
 
     func setupNavigationBar() {
@@ -156,12 +335,14 @@ public class StackedViewController: UIViewController, CustomCollectionViewDelega
         leftButton.addTarget(self, action: #selector(didLeftButtonClick), for: .touchUpInside)
         leftButton.translatesAutoresizingMaskIntoConstraints = false
         navBarView.addSubview(leftButton)
+        self.leftButton = leftButton
         
         let rightButton = UIButton(type: .system)
         rightButton.setTitle("Done", for: .normal)
         rightButton.addTarget(self, action: #selector(didRightButtonClick), for: .touchUpInside)
         rightButton.translatesAutoresizingMaskIntoConstraints = false
         navBarView.addSubview(rightButton)
+        self.rightButton = rightButton
         
         NSLayoutConstraint.activate([
             titleLabel.centerXAnchor.constraint(equalTo: navBarView.centerXAnchor),
@@ -191,6 +372,7 @@ public class StackedViewController: UIViewController, CustomCollectionViewDelega
         let lockAllButton = navigationPanel.subviews.compactMap { $0 as? UIButton }.first { $0.currentImage == UIImage(named: "lock") || $0.currentImage == UIImage(named: "unlock") }
         let newImage = isAllModelsLocked ? UIImage(named: "unlock") : UIImage(named: "lock")
         lockAllButton?.setImage(newImage, for: .normal)
+        unlockAllButton?.setTitle(isAllModelsLocked ? "UNLOCK ALL" : "LOCK ALL", for: .normal)
         
         customCollectionView.reloadData()
         
@@ -295,6 +477,8 @@ class CustomCollectionView: UICollectionView, UICollectionViewDataSource, UIColl
         viewModel.logger?.logError("Data Is Missing Not")
         viewModel.templateHandler.deepSetCurrentModel(id: viewModel.templateHandler.currentPageModel!.modelId)
         if let destinationParentId = destinationParentNode{
+            let oldParentId = sourceNode.parentId
+            let oldOrder = sourceNode.orderInParent
             var newOrder = order
             var moveModel = MoveModel(type: .NotDefined, oldMM: [], newMM: [])
             
@@ -339,7 +523,35 @@ class CustomCollectionView: UICollectionView, UICollectionViewDataSource, UIColl
            // viewModel.templateHandler.setCurrentModel(id: viewModel.templateHandler.lastSelectedId!)
             viewModel.updateFlatternTree()
             viewModel.selectedChild = sourceNode
-            self.reloadData()
+            if let newIndex = viewModel.flatternTree.firstIndex(where: { $0.modelId == sourceNode.modelId }) {
+                let newIndexPath = IndexPath(item: newIndex, section: sourceIndex.section)
+                let parentIds = Set([oldParentId, destinationParentId])
+                var reloadIndexPaths = [IndexPath]()
+                for (idx, node) in viewModel.flatternTree.enumerated() {
+                    if parentIds.contains(node.parentId) {
+                        reloadIndexPaths.append(IndexPath(item: idx, section: 0))
+                    }
+                }
+                let isMove = newIndexPath != sourceIndex
+                if isMove {
+                    reloadIndexPaths.removeAll { $0 == sourceIndex || $0 == newIndexPath }
+                }
+                performBatchUpdates({
+                    if isMove {
+                        moveItem(at: sourceIndex, to: newIndexPath)
+                    }
+                }, completion: { [weak self] _ in
+                    guard let self else { return }
+                    if !reloadIndexPaths.isEmpty {
+                        self.reloadItems(at: reloadIndexPaths)
+                    }
+                    if newOrder != oldOrder {
+                        self.setNeedsLayout()
+                    }
+                })
+            } else {
+                reloadData()
+            }
             
         }
         
@@ -444,6 +656,7 @@ class CustomCollectionView: UICollectionView, UICollectionViewDataSource, UIColl
     }
     
     weak var customDelegate: CustomCollectionViewDelegate?
+    var onLongPressEnded: (() -> Void)?
     var viewModel: LayersViewModel2
     var selectedID : Int = 0
     init(viewModel: LayersViewModel2) {
@@ -475,14 +688,18 @@ class CustomCollectionView: UICollectionView, UICollectionViewDataSource, UIColl
            delegate = self
            register(LayerCell.self, forCellWithReuseIdentifier: "LayerCell")
 
-           if let layout = collectionViewLayout as? StackedVerticalFlowLayout {
-               layout.delegate = self
-               layout.addGesture()
-               layout.setPackageLogger(logger: viewModel.logger!, layersConfig: viewModel.layerConfig!)
-           }
+        if let layout = collectionViewLayout as? StackedVerticalFlowLayout {
+            layout.delegate = self
+            layout.addGesture()
+            layout.setPackageLogger(logger: viewModel.logger!, layersConfig: viewModel.layerConfig!)
+            layout.onLongPressEnded = { [weak self] in
+                self?.onLongPressEnded?()
+            }
+        }
         
            layoutMargins = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
            showsVerticalScrollIndicator = false
+           contentInset = UIEdgeInsets(top: 8, left: 0, bottom: 80, right: 0)
 //           backgroundColor = .red
             
             
@@ -491,6 +708,23 @@ class CustomCollectionView: UICollectionView, UICollectionViewDataSource, UIColl
     
     func deselectCell() {
         self.selectedCell?.isTapped = false
+    }
+
+    func setDropGapHeight(_ height: CGFloat) {
+        guard let layout = collectionViewLayout as? StackedVerticalFlowLayout else { return }
+        layout.dropGapHeight = height
+    }
+
+    func setDropIndicatorStyle(useDetailed: Bool) {
+        guard let layout = collectionViewLayout as? StackedVerticalFlowLayout else { return }
+        layout.useDetailedDropView = useDetailed
+    }
+
+    func setDragHitTestSources(x: StackedVerticalFlowLayout.DragCoordinateSource,
+                               y: StackedVerticalFlowLayout.DragCoordinateSource) {
+        guard let layout = collectionViewLayout as? StackedVerticalFlowLayout else { return }
+        layout.dragHitTestXSource = x
+        layout.dragHitTestYSource = y
     }
     
     func selectCell() {
@@ -510,12 +744,9 @@ class CustomCollectionView: UICollectionView, UICollectionViewDataSource, UIColl
 //    }
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         guard let cell = collectionView.cellForItem(at: indexPath) as? LayerCell else { return }
-       
-       
-       // viewModel.templateHandler.setCurrentModel(id: cell.node.modelId)
-      //  self.viewModel.selectedID = cell.node.modelId
-        self.viewModel.selectedChild = cell.node
-//        self.viewModel.templateHandler.deepSetCurrentModel(id: cell.node.modelId)
+        selectedCell?.isTapped = false
+        selectedCell = cell
+        cell.isTapped = true
        
     }
 //    func collectionView(_ collectionView: UICollectionView, didDeselectItemAt indexPath: IndexPath) {
@@ -530,14 +761,14 @@ var isFirstTime = true
             return viewModel.flatternTree.count
         }
 
-        func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
             guard let cell = dequeueReusableCell(withReuseIdentifier: "LayerCell", for: indexPath) as? LayerCell else {
                 return UICollectionViewCell()
             }
           
             let node = viewModel.flatternTree[indexPath.item]
 
-            cell.configure(with: node)
+            cell.configure(with: node, designSystem: viewModel.designSystem)
             cell.delegate = self
 
             if let mode = viewModel.selectedChild{
@@ -566,6 +797,9 @@ var isFirstTime = true
     // MARK: - UICollectionViewDelegateFlowLayout
 
        func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+           if let designSystem = viewModel.designSystem {
+               return CGSize(width: bounds.width , height: designSystem.rowHeight)
+           }
            return CGSize(width: bounds.width , height: 40)
        }
 
@@ -591,12 +825,19 @@ var isFirstTime = true
           // setSelectedCell(cell: cell)
        }
 
-       func didTapHiddenButton(cell: LayerCell) {
+    func didTapHiddenButton(cell: LayerCell) {
 //           guard let indexPath = indexPath(for: cell) else { return }
 //           viewModel.toggleHidden(nodeID: cell.node.modelId)
 //           cell.hiddenToggle()
 //           customDelegate?.didTapHiddenButton(cell: cell)
           // setSelectedCell(cell: cell)
+       }
+
+       func didTapSelectButton(cell: LayerCell) {
+           let didSucceed = viewModel.templateHandler.deepSetCurrentModel(id: cell.node.modelId)
+           if didSucceed {
+               viewModel.selectedChild = cell.node
+           }
        }
 
        func didTapExpandCollapseButton(cell: LayerCell) {
@@ -731,6 +972,3 @@ var isFirstTime = true
             }
         }
 }
-
-
-

@@ -54,6 +54,14 @@ extension UndoRedoManager  {
             }
            
         }.store(in: &actionStateCancellables)
+
+        templateHandler.currentActionState.$lockUnlockAllAction.dropFirst().sink { [weak self] action in
+            guard let self = self else { return }
+            guard let action else { return }
+            if !undoState {
+                addOperation(.lockUnlockAll(action))
+            }
+        }.store(in: &actionStateCancellables)
         
         templateHandler.currentTemplateInfo?.$ratioInfo.dropFirst().sink {[weak self] ratioModel in
             guard let self = self else { return }

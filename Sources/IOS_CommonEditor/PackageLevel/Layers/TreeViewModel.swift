@@ -15,6 +15,7 @@ public class LayersViewModel2 : ObservableObject{
     var cancellables = Set<AnyCancellable>()
     var actionCancellables = Set<AnyCancellable>()
     var layerConfig: LayersConfiguration?
+    var designSystem: LayersDesignSystem?
     var logger: PackageLogger?
 //    @Published var isCellSelected : Bool = false
 //    @Published var lockStatus : Bool = false
@@ -92,6 +93,7 @@ public class LayersViewModel2 : ObservableObject{
     func setPackageLogger(logger: PackageLogger, layersConfig: LayersConfiguration){
         self.logger = logger
         self.layerConfig = layersConfig
+        self.designSystem = LayersDesignSystem(config: layersConfig)
     }
     
     func updateFlatternTree() {
@@ -108,10 +110,7 @@ public class LayersViewModel2 : ObservableObject{
             
             return
         }
-        
-        let lockArray = model.unlockedModel
-//        model.unlockedModel.removeAll()
-        model.lockUnlockState = lockArray
+        templateHandler.currentActionState.lockAllState = true
        
         // change button State
     }
@@ -123,10 +122,7 @@ public class LayersViewModel2 : ObservableObject{
             
             return
         }
-        
-        let unlockArray = templateHandler.filterAndTransformUnlockAll(model)
-        model.lockUnlockState = unlockArray
-//        model.unlockedModel = unlockArray
+        templateHandler.currentActionState.lockAllState = false
         // change button State
     }
     
@@ -345,11 +341,13 @@ public class LayersViewModel2 : ObservableObject{
         guard let destinationParentId = destinationParentNode, var destinationParent = findNodeByID(destinationParentId)  as? ParentModel else {
             return
         }
+        logOrder(parent: destinationParent, context: "pre-move destination parentId=\(destinationParentId) insertAt=\(order) sourceId=\(sourceNode.modelId)")
         
         // Check if Source node has a parent
         guard var sourceParentNode = findNodeByID(sourceNode.parentId) as? ParentModel else {
             return
         }
+        logOrder(parent: sourceParentNode, context: "pre-move source parentId=\(sourceParentNode.modelId) sourceId=\(sourceNode.modelId)")
 
         if destinationParent.modelId == sourceParentNode.modelId {
             
@@ -358,42 +356,29 @@ public class LayersViewModel2 : ObservableObject{
             moveNodeInDifferentParent(sourceParentNode: &sourceParentNode, destinationParentNode: &destinationParent, sourceNode: sourceNode, order: order)
         }
 
+        logOrder(parent: destinationParent, context: "post-move destination parentId=\(destinationParent.modelId)")
+        if destinationParent.modelId != sourceParentNode.modelId {
+            logOrder(parent: sourceParentNode, context: "post-move source parentId=\(sourceParentNode.modelId)")
+        }
         // Update the flattened tree if needed
         updateFlatternTree()
     }
 
     private func moveNodeInSameParent(parentNode: inout ParentModel, sourceNode: BaseModel, order: Int) {
-        let sourceSequence = sourceNode.orderInParent
-        parentNode.children.insert(sourceNode, at: order)
-
-        // Remove source node from Source's parent at source sequence
-        // Update source Node order
-        sourceNode.orderInParent = order
-        if order < sourceSequence{
-               if let index = parentNode.children.lastIndex(where: {$0.modelId == sourceNode.modelId}){
-                   parentNode.children.remove(at: index)
-               }else{
-                   print("source node is not present at source Parent's children")
-               }
-               parentNode   = increaseOrderId(parentNode: parentNode, order: order)
-           }
-           else{
-               parentNode   = increaseOrderId(parentNode: parentNode, order: order)
-               if let index = parentNode.children.firstIndex(where: {$0.modelId == sourceNode.modelId}){
-                   parentNode.children.remove(at: index)
-               }else{
-                   print("source node is not present at source Parent's children")
-               }
-               parentNode   = decreaseOrderId(parentNode: parentNode, order: sourceSequence)
-              
-           }
-           
+        // Remove the source from current children list first.
+        if let index = parentNode.children.firstIndex(where: { $0.modelId == sourceNode.modelId }) {
+            parentNode.children.remove(at: index)
+        }
+        let active = parentNode.children.filter { !$0.softDelete }
+        let targetIndex = min(max(0, order), active.count)
+        var newActive = active
+        newActive.insert(sourceNode, at: targetIndex)
+        rebuildChildren(parentNode: &parentNode, activeChildren: newActive)
+        normalizeActiveOrders(parentNode: parentNode)
     }
 
     private func moveNodeInDifferentParent(sourceParentNode: inout ParentModel, destinationParentNode: inout ParentModel, sourceNode: BaseModel, order: Int) {
-        let sourceSequence = sourceNode.orderInParent
         sourceNode.parentId = destinationParentNode.modelId
-        sourceNode.orderInParent = order
 
         // Remove source node from Source's parent at source sequence
         if let index = sourceParentNode.children.firstIndex(where: { $0.modelId == sourceNode.modelId }) {
@@ -418,11 +403,13 @@ public class LayersViewModel2 : ObservableObject{
             }
         }
 
-        destinationParentNode.children.insert(sourceNode, at: order)
-
-        // Update the rest of the sequence
-        destinationParentNode = increaseOrderId(parentNode: destinationParentNode, order: order)
-        sourceParentNode = decreaseOrderId(parentNode: sourceParentNode, order: sourceSequence)
+        let destinationActive = destinationParentNode.children.filter { !$0.softDelete }
+        let targetIndex = min(max(0, order), destinationActive.count)
+        var newActive = destinationActive
+        newActive.insert(sourceNode, at: targetIndex)
+        rebuildChildren(parentNode: &destinationParentNode, activeChildren: newActive)
+        normalizeActiveOrders(parentNode: destinationParentNode)
+        normalizeActiveOrders(parentNode: sourceParentNode)
     }
 
   //  private func removeNode(parentNode: inout BaseModel, node: BaseModel, at sequence: Int) {
@@ -469,20 +456,45 @@ public class LayersViewModel2 : ObservableObject{
 
         return indexPaths
     }
+    
+    private func logOrder(parent: ParentModel, context: String) {
+        let childDesc = parent.children
+            .map {"\($0.modelId):\($0.orderInParent)\($0.softDelete ? "D" : "ND")" }
+            .joined(separator: ",")
+        let activeDesc = parent.activeChildren
+            .map { "\($0.modelId):\($0.orderInParent)" }
+            .joined(separator: ",")
+        let message = "[LayersOrder] \(context) children[\(parent.children.count)]=[\(childDesc)] active[\(parent.activeChildren.count)]=[\(activeDesc)]"
+        if let logger = logger {
+            logger.printLog(message)
+        } else {
+            print(message)
+        }
+    }
+
+    private func rebuildChildren(parentNode: inout ParentModel, activeChildren: [BaseModel]) {
+        let deleted = parentNode.children.filter { $0.softDelete }
+        parentNode.children = activeChildren + deleted
+    }
+
+    private func normalizeActiveOrders(parentNode: ParentModel) {
+        let active = parentNode.children.filter { !$0.softDelete }
+        for (idx, child) in active.enumerated() {
+            if child.orderInParent == idx { continue }
+            child.orderInParent = idx
+            _ = DBManager.shared.updateOrderInParent(modelId: child.modelId, newValue: idx)
+        }
+    }
 }
 
 extension LayersViewModel2{
     
     func lockAllModels(){
-        if let model = templateHandler.currentPageModel{
-            lockAll(parentInfo: model, state: true)
-        }
+        lockAll()
     }
     
     func unlockAllModels(){
-        if let model = templateHandler.currentPageModel {
-            lockAll(parentInfo: model, state: true)
-        }
+        unLockAll()
     }
     
     func lockAll(parentInfo:ParentModel,state:Bool){

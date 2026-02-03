@@ -1829,6 +1829,32 @@ extension TemplateHandler {
         }
 
     }
+
+    /// Normalize active children orders for a given parent. Deleted items keep their order value.
+    public func normalizeActiveOrders(parentId: Int) {
+        guard let parent = getModel(modelId: parentId) as? ParentModel else { return }
+        let activeChildren = parent.children
+            .filter { !$0.softDelete }
+            .sorted {
+                let left = $0.orderInParent < 0 ? Int.max : $0.orderInParent
+                let right = $1.orderInParent < 0 ? Int.max : $1.orderInParent
+                if left == right { return $0.modelId < $1.modelId }
+                return left < right
+            }
+        for (idx, child) in activeChildren.enumerated() {
+            if child.orderInParent == idx { continue }
+            child.orderInParent = idx
+            _ = DBManager.shared.updateOrderInParent(modelId: child.modelId, newValue: idx)
+        }
+    }
+
+    public func performDeleteAction(modelId: Int, newValue: Bool = true) {
+        guard let model = getModel(modelId: modelId) else { return }
+        model.softDelete = newValue
+        currentActionState.isCurrentModelDeleted = newValue
+        currentActionState.updatePageAndParentThumb = true
+        currentActionState.shouldRefreshOnAddComponent = true
+    }
     
      
     public func deepSetCurrentModel(id:Int , smartSelect: Bool = true , deepSmartSelect: Bool = true ) -> Bool {

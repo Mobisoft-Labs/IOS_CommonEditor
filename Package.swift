@@ -30,6 +30,10 @@ let package = Package(
             name: "IOS_CommonEditor",
             targets: ["IOS_CommonEditor"]
         ),
+        .library(
+            name: "LayersV2Core",
+            targets: ["LayersV2Core"]
+        ),
     ],
     dependencies: [
         // ✅ Add FMDB dependency here
@@ -42,6 +46,18 @@ let package = Package(
                 // ✅ Link FMDB to this target
                 .product(name: "FMDB", package: "fmdb")
             ]
+        ),
+        .target(
+            name: "LayersV2Core",
+            path: "LayersV2Core"
+        ),
+        .testTarget(
+            name: "IOS_CommonEditorTests",
+            dependencies: ["IOS_CommonEditor"]
+        ),
+        .testTarget(
+            name: "LayersV2CoreTests",
+            dependencies: ["LayersV2Core"]
         ),
     ],
     swiftLanguageModes: [.v5]

@@ -83,6 +83,33 @@ extension MetalEngine {
             }
 
         }.store(in: &actionStateCancellables)
+
+        templateHandler.currentActionState.$deleteModelId.dropFirst().sink { [weak self] modelId in
+            guard let self = self else { return }
+            guard modelId != 0 else { return }
+            templateHandler.performDeleteAction(modelId: modelId, newValue: true)
+            templateHandler.currentActionState.deleteModelId = 0
+        }.store(in: &actionStateCancellables)
+
+        templateHandler.currentActionState.$lockAllState.dropFirst().sink { [weak self] lockAll in
+            guard let self = self else { return }
+            guard let shouldLock = lockAll else { return }
+            guard let pageModel = templateHandler.currentPageModel else { return }
+            let newArray = shouldLock
+                ? templateHandler.filterAndTransformLockAll(pageModel)
+                : templateHandler.filterAndTransformUnlockAll(pageModel)
+            let oldArray = shouldLock
+                ? templateHandler.filterAndTransformUnlockAll(pageModel)
+                : templateHandler.filterAndTransformLockAll(pageModel)
+            templateHandler.currentActionState.lockAllState = nil
+            if newArray.isEmpty { return }
+            pageModel.lockUnlockState = newArray
+            templateHandler.currentActionState.lockUnlockAllAction = lockUnlockAllAction(
+                id: pageModel.modelId,
+                newArray: newArray,
+                oldArray: oldArray
+            )
+        }.store(in: &actionStateCancellables)
         
         templateHandler.currentActionState.$duplicateModel.dropFirst().sink { [weak self] duplicateModel in
             guard let self = self else { return }
@@ -397,6 +424,17 @@ extension MetalEngine {
             guard let self = self else { return }
             
             guard let moveModel = value else {return}
+            var parentsToNormalize = Set<Int>()
+            
+            func logOrders(_ parent: ParentModel, label: String) {
+                let childDesc = parent.children
+                    .map { "\($0.modelId):\($0.orderInParent)\($0.softDelete ? "D":"ND")" }
+                    .joined(separator: ",")
+                let activeDesc = parent.activeChildren
+                    .map { "\($0.modelId):\($0.orderInParent)" }
+                    .joined(separator: ",")
+                logger.printLog("[MoveOrder] \(label) parent=\(parent.modelId) children[\(parent.children.count)]=[\(childDesc)] active[\(parent.activeChildren.count)]=[\(activeDesc)]")
+            }
                         
             
             // we are checking if any parent needs to be unDelete
@@ -442,7 +480,13 @@ extension MetalEngine {
                     if let oldParent = templateHandler.getModel(modelId: oldChildValue.parentID) as? ParentModel,
                        let newParent = templateHandler.getModel(modelId: newChildValue.parentID) as? ParentModel,
                        let childModel = templateHandler.getModel(modelId: oldChildValue.modelID){
+                        parentsToNormalize.insert(oldParent.modelId)
+                        parentsToNormalize.insert(newParent.modelId)
                         
+                        logOrders(oldParent, label: "pre old")
+                        if oldParent.modelId != newParent.modelId {
+                            logOrders(newParent, label: "pre new")
+                        }
                         // updateDB
                         let size =  newParent.baseFrame.size
                         // update parentID,order and basemodel in DB
@@ -525,11 +569,20 @@ extension MetalEngine {
                             
                         }// if old and new parent is not same
                         
-                        
+                        logOrders(oldParent, label: "post old")
+                        if oldParent.modelId != newParent.modelId {
+                            logOrders(newParent, label: "post new")
+                        }
                         
                     }// end of get old new and child from model
                     
                 }
+
+            if !parentsToNormalize.isEmpty {
+                for parentId in parentsToNormalize {
+                    templateHandler.normalizeActiveOrders(parentId: parentId)
+                }
+            }
             
             if moveModel.type == .UnGroup || moveModel.type == .Group {
                 if let parentIdToAdd = moveModel.shouldRemoveParentID  {
