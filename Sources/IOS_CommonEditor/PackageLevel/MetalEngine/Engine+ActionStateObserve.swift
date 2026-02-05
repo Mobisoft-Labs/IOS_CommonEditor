@@ -790,7 +790,14 @@ extension MetalEngine {
                     
                     templateHandler.selectCurrentPage()
                     
-                    
+//                    if  let currentModel = templateHandler.currentPageModel {
+//                        print("Thumb Update Call")
+//        //                Task {
+//                             self.thumbManagar?.updateParentAndPage(currentTime: self.timeLoopHandler?.currentTime ?? 0.0)
+//        //                }
+//                        
+//        //                sceneManager.updateThumbnail(id: currentModel.modelId)
+//                    }
                     self.templateHandler.currentActionState.updatePageAndParentThumb = true
 
                 }

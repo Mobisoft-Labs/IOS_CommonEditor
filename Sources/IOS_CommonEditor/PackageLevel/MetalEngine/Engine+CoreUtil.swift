@@ -198,6 +198,8 @@ extension MetalEngine {
             let newCenter = CGPoint(x: calculateSize[0]+(calculateSize[2]/2), y: calculateSize[1]+(calculateSize[3]/2))
             child.baseFrame.size = newSize
             child.baseFrame.center = newCenter
+            child.prevAvailableWidth = Float(calculateSize[4])
+            child.prevAvailableHeight = Float(calculateSize[5])
             let oldPrevAvailableWidth = child.prevAvailableWidth
             let oldPrevAvailableHeight = child.prevAvailableHeight
             logger.printLog("[preAvailbaleSize changes] ratioChange modelId=\(child.modelId), modelType=\(child.modelType), " +
@@ -216,12 +218,91 @@ extension MetalEngine {
                                                                 previousHeight: CGFloat(child.prevAvailableHeight))
             }
             if let parent = child as? ParentModel{
+                
                 recursiveChildSizeChange(parent: parent, oldParentSize: oldChildSize, newParentSize: newSize)
             }
         }
     }
     
-    
+//    private func recursiveChildSizeChange(parent: ParentModel,
+//                                          oldParentSize: CGSize,
+//                                          newParentSize: CGSize) {
+//
+//        for child in parent.children {
+//
+//            // ❌ Do NOT use child.baseFrame.size as reference
+//            // let oldChildSize = child.baseFrame.size   // remove this
+//
+//            let componentX = child.baseFrame.center.x - child.baseFrame.size.width / 2
+//            let componentY = child.baseFrame.center.y - child.baseFrame.size.height / 2
+//
+//            let calculateSize = calculateComponentPosition(
+//                componentX: componentX,
+//                componentY: componentY,
+//                componentWidth: child.baseFrame.size.width,
+//                componentHeight: child.baseFrame.size.height,
+//                componentAvailableWidth: CGFloat(child.prevAvailableWidth),
+//                componentAvailableHeight: CGFloat(child.prevAvailableHeight),
+//                rotationInDegree: CGFloat(child.baseFrame.rotation),
+//                currentParentWidth: oldParentSize.width,
+//                currentParentHeight: oldParentSize.height,
+//                newParentWidth: newParentSize.width,
+//                newParentHeight: newParentSize.height
+//            )
+//
+//            let newSize = CGSize(width: calculateSize[2], height: calculateSize[3])
+//            let newCenter = CGPoint(
+//                x: calculateSize[0] + calculateSize[2] / 2,
+//                y: calculateSize[1] + calculateSize[3] / 2
+//            )
+//
+//            // Apply new frame
+//            child.baseFrame.size = newSize
+//            child.baseFrame.center = newCenter
+//
+//            // ❌ Do NOT update prevAvailable during ratio change
+//            // child.prevAvailableWidth = Float(calculateSize[4])
+//            // child.prevAvailableHeight = Float(calculateSize[5])
+//
+//            logger.printLog("[preAvailbaleSize changes] ratioChange modelId=\(child.modelId), modelType=\(child.modelType), " +
+//                            "prevW=\(child.prevAvailableWidth), prevH=\(child.prevAvailableHeight), " +
+//                            "parentOld=\(oldParentSize), parentNew=\(newParentSize)")
+//
+//            if child.prevAvailableWidth < 0 || child.prevAvailableHeight < 0 {
+//                logger.logErrorFirebaseWithBacktrace(
+//                    "[preAvailbaleSize changes] Negative prevAvailable after ratio change: " +
+//                    "modelId=\(child.modelId), modelType=\(child.modelType), " +
+//                    "prevAvailableWidth=\(child.prevAvailableWidth), prevAvailableHeight=\(child.prevAvailableHeight)"
+//                )
+//            }
+//
+//            if !isDBDisabled {
+//                _ = DBManager.shared.updateBaseFrameWithPrevious(
+//                    modelId: child.modelId,
+//                    newValue: child.baseFrame,
+//                    parentFrame: newParentSize,
+//                    previousWidth: CGFloat(child.prevAvailableWidth),
+//                    previousHeight: CGFloat(child.prevAvailableHeight)
+//                )
+//            }
+//
+//            // ✅ Recursive case (FIXED)
+//            if let parent = child as? ParentModel {
+//
+//                // Use prevAvailable as the old reference for nested children
+//                let refOldParentSize = CGSize(
+//                    width: CGFloat(child.prevAvailableWidth),
+//                    height: CGFloat(child.prevAvailableHeight)
+//                )
+//
+//                recursiveChildSizeChange(
+//                    parent: parent,
+//                    oldParentSize: refOldParentSize,
+//                    newParentSize: newSize
+//                )
+//            }
+//        }
+//    }
     func updateModelDeletionStatus(models:  [PageInfo], currentIndex: Int) -> Int? {
         
         // Find the previous or next model that is not soft deleted
@@ -363,8 +444,14 @@ extension MetalEngine{
             let newCenter = recalculateCenterWithParent(parentOldSize: oldSize, parentNewSize: newParentSize, childOldCenter: child.baseFrame.center)
             child.baseFrame.size = newSize
             child.baseFrame.center = newCenter
+            child.prevAvailableWidth = Float(newSize.width)
+            child.prevAvailableHeight = Float(newSize.height)
             if !(isDBDisabled){
-                _ = DBManager.shared.updateBaseFrame(modelId: child.modelId, newValue: child.baseFrame, parentFrame: parent.baseFrame.size)
+                _ = DBManager.shared.updateBaseFrameWithPrevious(modelId: child.modelId,
+                                                                newValue: child.baseFrame,
+                                                                parentFrame: parent.baseFrame.size,
+                                                                previousWidth: CGFloat(child.prevAvailableWidth),
+                                                                previousHeight: CGFloat(child.prevAvailableHeight))
             }
             
             //Neeshu Conflict

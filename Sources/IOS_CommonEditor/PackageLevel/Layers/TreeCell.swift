@@ -189,7 +189,7 @@ class LayerCell: UICollectionViewCell {
         expandCollapseButton.addTarget(self, action: #selector(expandCollapseButtonTapped), for: .touchUpInside)
         lockButton.addTarget(self, action: #selector(lockButtonTapped), for: .touchUpInside)
         selectionButton.addTarget(self, action: #selector(selectButtonTapped), for: .touchUpInside)
-
+        selectionButton.isUserInteractionEnabled = false
 
         NSLayoutConstraint.activate([
             
@@ -215,7 +215,7 @@ class LayerCell: UICollectionViewCell {
             expandCollapseButton.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
             expandCollapseButton.heightAnchor.constraint(equalToConstant: 36),
 
-            thumbnailContainer.leadingAnchor.constraint(equalTo: blurView.leadingAnchor, constant: 12),
+            thumbnailContainer.leadingAnchor.constraint(equalTo: blurView.leadingAnchor, constant: 4),
             thumbnailContainer.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
             thumbnailContainer.widthAnchor.constraint(equalToConstant: 56),
             thumbnailContainer.heightAnchor.constraint(equalToConstant: 56),

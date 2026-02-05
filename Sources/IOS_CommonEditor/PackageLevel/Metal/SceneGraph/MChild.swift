@@ -570,6 +570,7 @@ class MChild :  Renderable{
     }
     
     func setmSize(width:CGFloat , height:CGFloat) {
+        print("ratio size - \(self) : \(width) x \(height)")
         self.size = CGSize(width: width, height: height)
         if let geo = geometry as? QuadMesh {
             geo.setVertices(size: size)

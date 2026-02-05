@@ -744,10 +744,11 @@ class CustomCollectionView: UICollectionView, UICollectionViewDataSource, UIColl
 //    }
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         guard let cell = collectionView.cellForItem(at: indexPath) as? LayerCell else { return }
-        selectedCell?.isTapped = false
-        selectedCell = cell
-        cell.isTapped = true
-       
+//        selectedCell?.isTapped = false
+//        selectedCell = cell
+//        cell.isTapped = true
+        self.viewModel.selectedChild = cell.node
+
     }
 //    func collectionView(_ collectionView: UICollectionView, didDeselectItemAt indexPath: IndexPath) {
 //        guard let cell = collectionView.cellForItem(at: indexPath) as? LayerCell else { return }
@@ -834,10 +835,10 @@ var isFirstTime = true
        }
 
        func didTapSelectButton(cell: LayerCell) {
-           let didSucceed = viewModel.templateHandler.deepSetCurrentModel(id: cell.node.modelId)
-           if didSucceed {
-               viewModel.selectedChild = cell.node
-           }
+//           let didSucceed = viewModel.templateHandler.deepSetCurrentModel(id: cell.node.modelId)
+//           if didSucceed {
+//               viewModel.selectedChild = cell.node
+//           }
        }
 
        func didTapExpandCollapseButton(cell: LayerCell) {

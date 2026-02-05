@@ -43,6 +43,10 @@ public class DBMediator : DictCacheProtocol  {
     }
 
     private func normalizePrevAvailableSize(model: BaseModel, parentSize: CGSize, source: String) {
+        
+        if CGFloat(model.prevAvailableWidth) == model.baseFrame.size.width && CGFloat(model.prevAvailableHeight) == model.baseFrame.size.height {
+            return
+        }
         let prevW = model.prevAvailableWidth
         let prevH = model.prevAvailableHeight
         if !prevW.isFinite || !prevH.isFinite {

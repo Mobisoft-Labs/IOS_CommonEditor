@@ -271,13 +271,25 @@ extension MetalEngine {
            baseModel.$endFrame.dropFirst().sink { [weak self] frame in
                print("Neeshu From Engine")
                guard let self = self else { return }
+               
                 // get parent for calculate size and center with respect to parent
                 let oldFrame = baseModel.beginFrame
+               let oldPrevAvailableWidth = frame.size.width
+               let oldPrevAvailableHeight = frame.size.height
+
+               
+               if oldFrame.size.equalTo(frame.size) {
+                   // dont update prevAvailableWidth
+               } else if oldFrame.rotation != frame.rotation {
+                   baseModel.prevAvailableWidth = Float(frame.size.width)
+                   baseModel.prevAvailableHeight = Float(frame.size.height)
+               }
+               else {
+                   baseModel.prevAvailableWidth = Float(frame.size.width)
+                   baseModel.prevAvailableHeight = Float(frame.size.height)
+
+               }
 //               if !(baseModel.modelType == .Text){
-               let oldPrevAvailableWidth = baseModel.prevAvailableWidth
-               let oldPrevAvailableHeight = baseModel.prevAvailableHeight
-               baseModel.prevAvailableWidth = Float(frame.size.width)
-               baseModel.prevAvailableHeight = Float(frame.size.height)
                logger.printLog("[preAvailbaleSize changes] modelId=\(baseModel.modelId), modelType=\(baseModel.modelType), " +
                                "prevW=\(oldPrevAvailableWidth)->\(baseModel.prevAvailableWidth), " +
                                "prevH=\(oldPrevAvailableHeight)->\(baseModel.prevAvailableHeight), " +

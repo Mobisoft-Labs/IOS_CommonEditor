@@ -324,7 +324,41 @@ public class SceneManager  : NSObject, SceneComposable , TemplateObserversProtoc
                                     watermark?.setMDuration(page.mDuration)
                                 
                             }
+                            if let image = model.bgContent as? BGUserImage{
+                                
+                                let cropPoints = image.content.cropRect
+                                let key = image.content.localPath + cropPoints.toString()
+                                textureCache.remove(textureFor: key)
+                            }
+
                             await setBGSource(imageModel: model.bgContent!, info: page.backgroundChild as! TexturableChild,isRatioChanged: true,tileCount: model.tileMultiple)
+                            
+                            if let overlay2 = ((model.bgOverlayContent as? BGOverlay)?.content as? ImageModel) , let bgChild = page.backgroundChild as? TexturableChild  {
+                                //        bgChild.setColor(color: Conversion.setColorForMetalView(color: _bgInfo.colorInfo))
+                                if let lastPathComponent = overlay2.localPath.components(separatedBy: "/").last  {
+                                    let cropPoints = overlay2.cropRect
+                                    let key = overlay2.localPath + cropPoints.toString()
+                                    textureCache.remove(textureFor: key)
+                                  
+                                    
+                                    if let overlay =  await textureCache.getTextureFromBundle(imageName: lastPathComponent, id: model.overlayID, flip: false){
+                                        
+                                        bgChild.mOverlayTexture = overlay
+                                        
+                                    }
+                                }else{
+                                    if let lastPathComponent = model.overlayLocalPath.components(separatedBy: "/").last  {
+                                        let cropPoints = overlay2.cropRect
+                                        let key = overlay2.localPath + cropPoints.toString()
+                                        textureCache.remove(textureFor: key)
+                                        if let overlay =  await textureCache.getTextureFromBundle(imageName: lastPathComponent, id: model.overlayID, flip: false){
+                                            
+                                            bgChild.mOverlayTexture = overlay
+                                            
+                                        }
+                                    }
+                                }
+                            }
                             redraw()
                             
                             
@@ -898,7 +932,14 @@ public class TextureCache {
                 self.cache[key] = texture
             }
         }
-    
+    func remove(textureFor key: String) {
+        cacheQueue.async(flags: .barrier) { [weak self] in
+            guard let self = self else { return }
+            if let success = self.cache.removeValue(forKey: key) {
+            logger.printLog("Removed In Cache \(key)")
+        }
+        }
+    }
     func getTextureFromBundle(imageName:String,id:Int = 0,crop:CGRect = CGRect(x: 0.0, y: 0.0, width: 1.0, height: 1.0),flip:Bool,isCropped:Bool = false) async -> MTLTexture? {
                 
         if let texture = getTextureFromCache(key: imageName+crop.toString()) {
@@ -909,8 +950,7 @@ public class TextureCache {
         if let url = Bundle.main.resourcePath {
             let imagePath = (url as NSString).appendingPathComponent("\(imageName).png")
             let imageURL = URL(fileURLWithPath: imagePath)
-        
-        
+         
             var cGImage = await resourceProvider.loadImageUsingQL(fileURL: imageURL, maxSize: _fetchIdealSize)
         
         
@@ -992,7 +1032,7 @@ public class TextureCache {
 //                        Task{
 //                            await addToCache(texture: newTexture, id: imageName+"\(id)")
 //                        }
-                        logger.printLog("Adding In Cache \(imageName)")
+                        logger.printLog("Adding In Cache \(imageName+crop.toString())")
 
                         addToCache(texture: newTexture, key: imageName+crop.toString())
                         return newTexture
@@ -1257,7 +1297,7 @@ extension TextureCache {
 func getTextureBGFromServer(imageName:String,id:Int,crop:CGRect = CGRect(x: 0.0, y: 0.0, width: 1.0, height: 1.0),flip:Bool,isCropped:Bool = false,size:CGSize) async -> MTLTexture? {
 
        do {
-           if let texture = getTextureFromCache(key: imageName+crop.toString()) {
+           if let texture = getTextureFromCache(key: imageName+crop.toString()) , !isCropped {
                logger.printLog("Found In Cache \(imageName)")
                return texture
            }
@@ -1281,7 +1321,7 @@ func getTextureBGFromServer(imageName:String,id:Int,crop:CGRect = CGRect(x: 0.0,
 
                    let img = UIImage(cgImage: croppedCGImage)
                    if let newTexture = Conversion.loadTexture(image: img,flip:flip) {
-                       logger.printLog("Adding In Cache \(imageName)")
+                       logger.printLog("Adding In Cache \(imageName+crop.toString())")
 
                        addToCache(texture: newTexture, key: imageName+crop.toString())
                        
@@ -1307,7 +1347,7 @@ func getTextureBGFromServer(imageName:String,id:Int,crop:CGRect = CGRect(x: 0.0,
 
                    let img = UIImage(cgImage: croppedCGImage)
                    if let newTexture = Conversion.loadTexture(image: img,flip:flip) {
-                       logger.printLog("Adding In Cache \(imageName)")
+                       logger.printLog("Adding In Cache  \(imageName+crop.toString())")
 
                        addToCache(texture: newTexture, key: imageName+crop.toString())
                        return newTexture

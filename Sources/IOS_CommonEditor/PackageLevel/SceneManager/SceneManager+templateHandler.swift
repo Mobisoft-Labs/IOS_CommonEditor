@@ -407,7 +407,7 @@ extension SceneManager{
 //                print("parent old child\(child.id)",child.size,child.center)
                
                 // Update the child's baseFrame
-                child.setmSize(width: newChildSize.width, height: newChildSize.height)
+                child.setmSize(width: parent.size.width, height: parent.size.height)
                 child.setmCenter(centerX: center.x, centerY: center.y)
                 
 //                print("parent new child\(child.id)",child.size,child.center)
@@ -661,6 +661,132 @@ func calculateComponentPosition(componentX: CGFloat, componentY: CGFloat, compon
               "newComponentFinalX=\(newComponentFinalX), newComponentFinalY=\(newComponentFinalY)")
     }
 
+    return [newComponentFinalX, newComponentFinalY, newComponentFinalW, newComponentFinalH, newComponentWidth, newComponentHeight]
+}
+
+func calculateComponentPositionProportional(componentX: CGFloat, componentY: CGFloat, componentWidth: CGFloat, componentHeight: CGFloat,
+                                            componentAvailableWidth: CGFloat, componentAvailableHeight: CGFloat, rotationInDegree: CGFloat,
+                                            currentParentWidth: CGFloat, currentParentHeight: CGFloat, newParentWidth: CGFloat, newParentHeight: CGFloat) -> [CGFloat] {
+    let componentCenterX = componentWidth / 2.0 + componentX
+    let componentCenterY = componentHeight / 2.0 + componentY
+    let rotationInRadian = rotationInDegree * .pi / 180.0
+    
+    let componentTopLeftAfterRotationX = componentCenterX + (componentX - componentCenterX) * cos(rotationInRadian) - (componentY - componentCenterY) * sin(rotationInRadian)
+    let componentTopLeftAfterRotationY = componentCenterY + (componentX - componentCenterX) * sin(rotationInRadian) + (componentY - componentCenterY) * cos(rotationInRadian)
+    
+    let componentTopRightAfterRotationX = componentCenterX + (componentX + componentWidth - componentCenterX) * cos(rotationInRadian) - (componentY - componentCenterY) * sin(rotationInRadian)
+    let componentTopRightAfterRotationY = componentCenterY + (componentX + componentWidth - componentCenterX) * sin(rotationInRadian) + (componentY - componentCenterY) * cos(rotationInRadian)
+    
+    let componentBottomLeftAfterRotationX = componentCenterX + (componentX + componentWidth - componentCenterX) * cos(rotationInRadian) - (componentY + componentHeight - componentCenterY) * sin(rotationInRadian)
+    let componentBottomLeftAfterRotationY = componentCenterY + (componentX + componentWidth - componentCenterX) * sin(rotationInRadian) + (componentY + componentHeight - componentCenterY) * cos(rotationInRadian)
+    
+    let componentBottomRightAfterRotationX = componentCenterX + (componentX - componentCenterX) * cos(rotationInRadian) - (componentY + componentHeight - componentCenterY) * sin(rotationInRadian)
+    let componentBottomRightAfterRotationY = componentCenterY + (componentX - componentCenterX) * sin(rotationInRadian) + (componentY + componentHeight - componentCenterY) * cos(rotationInRadian)
+    
+    let componentLeft = min(componentTopLeftAfterRotationX, min(componentTopRightAfterRotationX, min(componentBottomLeftAfterRotationX, componentBottomRightAfterRotationX)))
+    let componentTop = min(componentTopLeftAfterRotationY, min(componentTopRightAfterRotationY, min(componentBottomLeftAfterRotationY, componentBottomRightAfterRotationY)))
+    let componentRight = max(componentTopLeftAfterRotationX, max(componentTopRightAfterRotationX, max(componentBottomLeftAfterRotationX, componentBottomRightAfterRotationX)))
+    let componentBottom = max(componentTopLeftAfterRotationY, max(componentTopRightAfterRotationY, max(componentBottomLeftAfterRotationY, componentBottomRightAfterRotationY)))
+    
+    let currentParentLeft = 0.0
+    let currentParentTop = 0.0
+    let currentParentRight = currentParentWidth
+    let currentParentBottom = currentParentHeight
+    
+    let currentParentCenterX = currentParentWidth / 2.0 + currentParentLeft
+    let currentParentCenterY = currentParentHeight / 2.0 + currentParentTop
+    
+    let componentDistanceFromCXToCX = abs(componentCenterX - currentParentCenterX)
+    let componentDistanceFromCXToLeft = abs(componentCenterX - currentParentLeft)
+    let componentDistanceFromCXToRight = abs(componentCenterX - currentParentRight)
+    
+    let componentDistanceFromCYToCY = abs(componentCenterY - currentParentCenterY)
+    let componentDistanceFromCYToTop = abs(componentCenterY - currentParentTop)
+    let componentDistanceFromCYToBottom = abs(componentCenterY - currentParentBottom)
+    
+    let componentDistanceFromLeftToLeft = abs(componentLeft - currentParentLeft)
+    let componentDistanceFromLeftToCX = abs(componentLeft - currentParentCenterX)
+    
+    let componentDistanceFromTopToTop = abs(componentTop - currentParentTop)
+    let componentDistanceFromTopToCY = abs(componentTop - currentParentCenterY)
+    
+    let componentDistanceFromRightToRight = abs(componentRight - currentParentRight)
+    let componentDistanceFromRightToCX = abs(componentRight - currentParentCenterX)
+    
+    let componentDistanceFromBottomToBottom = abs(componentBottom - currentParentBottom)
+    let componentDistanceFromBottomToCY = abs(componentBottom - currentParentCenterY)
+    
+    let parentRatioX = newParentWidth / currentParentWidth
+    let parentRatioY = newParentHeight / currentParentHeight
+    
+    let newComponentX = componentX * parentRatioX
+    let newComponentY = componentY * parentRatioY
+    
+    let newComponentWidth = componentAvailableWidth * parentRatioX
+    let newComponentHeight = componentAvailableHeight * parentRatioY
+    
+    let proportionalW = componentWidth * parentRatioX
+    let proportionalH = componentHeight * parentRatioY
+    
+    let fitDim = getResizeDim(requiredWidth: CGFloat(componentWidth), requiredHeight: CGFloat(componentHeight), availableWidth: CGFloat(newComponentWidth), availableHeight: CGFloat(newComponentHeight))
+    
+    var newComponentFinalW = proportionalW
+    var newComponentFinalH = proportionalH
+    if proportionalW > newComponentWidth || proportionalH > newComponentHeight {
+        newComponentFinalW = fitDim.width
+        newComponentFinalH = fitDim.height
+    }
+    
+    let changeRatioInComponentWidth = newComponentFinalW / componentWidth
+    let changeRatioInComponentHeight = newComponentFinalH / componentHeight
+    
+    var newComponentFinalX = newComponentX
+    var newComponentFinalY = newComponentY
+    
+    let minDistanceX = min(componentDistanceFromLeftToLeft, min(componentDistanceFromRightToRight, min(componentDistanceFromCXToCX, min(componentDistanceFromLeftToCX, min(componentDistanceFromCXToLeft, min(componentDistanceFromCXToRight, componentDistanceFromRightToCX))))))
+    let minDistanceY = min(componentDistanceFromTopToTop, min(componentDistanceFromBottomToBottom, min(componentDistanceFromCYToCY, min(componentDistanceFromTopToCY, min(componentDistanceFromCYToTop, min(componentDistanceFromCYToBottom, componentDistanceFromBottomToCY))))))
+    
+    if componentDistanceFromLeftToLeft == minDistanceX {
+        newComponentFinalX = currentParentLeft + ((componentX - currentParentLeft) * changeRatioInComponentWidth)
+    } else if componentDistanceFromRightToRight == minDistanceX {
+        newComponentFinalX = newParentWidth - newComponentFinalW + (((componentX + componentWidth) - currentParentRight) * changeRatioInComponentWidth)
+    } else if componentDistanceFromCXToCX == minDistanceX {
+        newComponentFinalX = newParentWidth / 2.0 - newComponentFinalW / 2.0 + ((componentCenterX - currentParentCenterX) * changeRatioInComponentWidth)
+    } else if componentDistanceFromLeftToCX == minDistanceX {
+        newComponentFinalX = newParentWidth / 2.0 + ((componentX - currentParentCenterX) * changeRatioInComponentWidth)
+    } else if componentDistanceFromCXToLeft == minDistanceX {
+        newComponentFinalX = currentParentLeft - newComponentFinalW / 2.0 + ((componentCenterX - currentParentLeft) * changeRatioInComponentWidth)
+    } else if componentDistanceFromRightToCX == minDistanceX {
+        newComponentFinalX = newParentWidth / 2.0 - newComponentFinalW + (((componentX + componentWidth) - currentParentCenterX) * changeRatioInComponentWidth)
+    } else if componentDistanceFromCXToRight == minDistanceX {
+        newComponentFinalX = newParentWidth - newComponentFinalW / 2.0 + ((componentCenterX - currentParentRight) * changeRatioInComponentWidth)
+    }
+    
+    if componentDistanceFromTopToTop == minDistanceY {
+        newComponentFinalY = currentParentTop + ((componentY - currentParentTop) * changeRatioInComponentHeight)
+    } else if componentDistanceFromBottomToBottom == minDistanceY {
+        newComponentFinalY = newParentHeight - newComponentFinalH + (((componentY + componentHeight) - currentParentBottom) * changeRatioInComponentHeight)
+    } else if componentDistanceFromCYToCY == minDistanceY {
+        newComponentFinalY = newParentHeight / 2.0 - newComponentFinalH / 2.0 + ((componentCenterY - currentParentCenterY) * changeRatioInComponentHeight)
+    } else if componentDistanceFromTopToCY == minDistanceY {
+        newComponentFinalY = newParentHeight / 2.0 + ((componentY - currentParentCenterY) * changeRatioInComponentHeight)
+    } else if componentDistanceFromCYToTop == minDistanceY {
+        newComponentFinalY = currentParentTop - newComponentFinalH / 2.0 + ((componentCenterY - currentParentTop) * changeRatioInComponentHeight)
+    } else if componentDistanceFromBottomToCY == minDistanceY {
+        newComponentFinalY = newParentHeight / 2.0 - newComponentFinalH + (((componentY + componentHeight) - currentParentCenterY) * changeRatioInComponentHeight)
+    } else if componentDistanceFromCYToBottom == minDistanceY {
+        newComponentFinalY = newParentHeight - newComponentFinalH / 2.0 + ((componentCenterY - currentParentBottom) * changeRatioInComponentHeight)
+    }
+    
+    if componentAvailableWidth < 0 || componentAvailableHeight < 0 || newComponentWidth < 0 || newComponentHeight < 0 ||
+        newComponentFinalW < 0 || newComponentFinalH < 0 || newComponentFinalX < 0 || newComponentFinalY < 0 {
+        print("[preAvailbaleSize changes] calculateComponentPositionProportional negative sizes: " +
+              "componentAvailableWidth=\(componentAvailableWidth), componentAvailableHeight=\(componentAvailableHeight), " +
+              "newComponentWidth=\(newComponentWidth), newComponentHeight=\(newComponentHeight), " +
+              "newComponentFinalW=\(newComponentFinalW), newComponentFinalH=\(newComponentFinalH), " +
+              "newComponentFinalX=\(newComponentFinalX), newComponentFinalY=\(newComponentFinalY)")
+    }
+    
     return [newComponentFinalX, newComponentFinalY, newComponentFinalW, newComponentFinalH, newComponentWidth, newComponentHeight]
 }
 
