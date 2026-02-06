@@ -10,7 +10,7 @@ import Combine
 
 public struct LayersV2Feature {
     /// Toggle to turn on the new Layers v2 outline. Defaults to off to avoid impacting existing UI.
-    public static var isEnabled: Bool = true
+    public static var isEnabled: Bool = false
 }
 
 public enum LayerOutlineRootMode {

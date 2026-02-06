@@ -547,109 +547,109 @@ func calculateComponentPosition(componentX: CGFloat, componentY: CGFloat, compon
     // - If the parent width doubles while height stays, the available size becomes 600x200.
     // - The content is re-fit into 600x200, producing a 400x200 final size (not 600x300).
     // This prevents incorrect scaling when aspect ratios change.
-    let componentCenterX = componentWidth / 2.0 + componentX
-    let componentCenterY = componentHeight / 2.0 + componentY
-    let rotationInRadian = rotationInDegree * .pi / 180.0
+    let componentCenterX = componentWidth / 2.0 + componentX // child center X (old)
+    let componentCenterY = componentHeight / 2.0 + componentY // child center Y (old)
+    let rotationInRadian = rotationInDegree * .pi / 180.0 // rotation in radians
     
-    let componentTopLeftAfterRotationX = componentCenterX + (componentX - componentCenterX) * cos(rotationInRadian) - (componentY - componentCenterY) * sin(rotationInRadian)
-    let componentTopLeftAfterRotationY = componentCenterY + (componentX - componentCenterX) * sin(rotationInRadian) + (componentY - componentCenterY) * cos(rotationInRadian)
+    let componentTopLeftAfterRotationX = componentCenterX + (componentX - componentCenterX) * cos(rotationInRadian) - (componentY - componentCenterY) * sin(rotationInRadian) // rotated TL X
+    let componentTopLeftAfterRotationY = componentCenterY + (componentX - componentCenterX) * sin(rotationInRadian) + (componentY - componentCenterY) * cos(rotationInRadian) // rotated TL Y
 
-    let componentTopRightAfterRotationX = componentCenterX + (componentX + componentWidth - componentCenterX) * cos(rotationInRadian) - (componentY - componentCenterY) * sin(rotationInRadian)
-    let componentTopRightAfterRotationY = componentCenterY + (componentX + componentWidth - componentCenterX) * sin(rotationInRadian) + (componentY - componentCenterY) * cos(rotationInRadian)
+    let componentTopRightAfterRotationX = componentCenterX + (componentX + componentWidth - componentCenterX) * cos(rotationInRadian) - (componentY - componentCenterY) * sin(rotationInRadian) // rotated TR X
+    let componentTopRightAfterRotationY = componentCenterY + (componentX + componentWidth - componentCenterX) * sin(rotationInRadian) + (componentY - componentCenterY) * cos(rotationInRadian) // rotated TR Y
 
-    let componentBottomLeftAfterRotationX = componentCenterX + (componentX + componentWidth - componentCenterX) * cos(rotationInRadian) - (componentY + componentHeight - componentCenterY) * sin(rotationInRadian)
-    let componentBottomLeftAfterRotationY = componentCenterY + (componentX + componentWidth - componentCenterX) * sin(rotationInRadian) + (componentY + componentHeight - componentCenterY) * cos(rotationInRadian)
+    let componentBottomLeftAfterRotationX = componentCenterX + (componentX + componentWidth - componentCenterX) * cos(rotationInRadian) - (componentY + componentHeight - componentCenterY) * sin(rotationInRadian) // rotated BL X
+    let componentBottomLeftAfterRotationY = componentCenterY + (componentX + componentWidth - componentCenterX) * sin(rotationInRadian) + (componentY + componentHeight - componentCenterY) * cos(rotationInRadian) // rotated BL Y
 
-    let componentBottomRightAfterRotationX = componentCenterX + (componentX - componentCenterX) * cos(rotationInRadian) - (componentY + componentHeight - componentCenterY) * sin(rotationInRadian)
-    let componentBottomRightAfterRotationY = componentCenterY + (componentX - componentCenterX) * sin(rotationInRadian) + (componentY + componentHeight - componentCenterY) * cos(rotationInRadian)
+    let componentBottomRightAfterRotationX = componentCenterX + (componentX - componentCenterX) * cos(rotationInRadian) - (componentY + componentHeight - componentCenterY) * sin(rotationInRadian) // rotated BR X
+    let componentBottomRightAfterRotationY = componentCenterY + (componentX - componentCenterX) * sin(rotationInRadian) + (componentY + componentHeight - componentCenterY) * cos(rotationInRadian) // rotated BR Y
 
     
-    let componentLeft = min(componentTopLeftAfterRotationX, min(componentTopRightAfterRotationX, min(componentBottomLeftAfterRotationX, componentBottomRightAfterRotationX)))
-    let componentTop = min(componentTopLeftAfterRotationY, min(componentTopRightAfterRotationY, min(componentBottomLeftAfterRotationY, componentBottomRightAfterRotationY)))
-    let componentRight = max(componentTopLeftAfterRotationX, max(componentTopRightAfterRotationX, max(componentBottomLeftAfterRotationX, componentBottomRightAfterRotationX)))
-    let componentBottom = max(componentTopLeftAfterRotationY, max(componentTopRightAfterRotationY, max(componentBottomLeftAfterRotationY, componentBottomRightAfterRotationY)))
+    let componentLeft = min(componentTopLeftAfterRotationX, min(componentTopRightAfterRotationX, min(componentBottomLeftAfterRotationX, componentBottomRightAfterRotationX))) // rotated bbox left
+    let componentTop = min(componentTopLeftAfterRotationY, min(componentTopRightAfterRotationY, min(componentBottomLeftAfterRotationY, componentBottomRightAfterRotationY))) // rotated bbox top
+    let componentRight = max(componentTopLeftAfterRotationX, max(componentTopRightAfterRotationX, max(componentBottomLeftAfterRotationX, componentBottomRightAfterRotationX))) // rotated bbox right
+    let componentBottom = max(componentTopLeftAfterRotationY, max(componentTopRightAfterRotationY, max(componentBottomLeftAfterRotationY, componentBottomRightAfterRotationY))) // rotated bbox bottom
     
-    let currentParentLeft = 0.0
-    let currentParentTop = 0.0
-    let currentParentRight = currentParentWidth
-    let currentParentBottom = currentParentHeight
+    let currentParentLeft = 0.0 // parent left edge (old)
+    let currentParentTop = 0.0 // parent top edge (old)
+    let currentParentRight = currentParentWidth // parent right edge (old)
+    let currentParentBottom = currentParentHeight // parent bottom edge (old)
     
-    let currentParentCenterX = currentParentWidth / 2.0 + currentParentLeft
-    let currentParentCenterY = currentParentHeight / 2.0 + currentParentTop
+    let currentParentCenterX = currentParentWidth / 2.0 + currentParentLeft // parent center X (old)
+    let currentParentCenterY = currentParentHeight / 2.0 + currentParentTop // parent center Y (old)
     
-    let componentDistanceFromCXToCX = abs(componentCenterX - currentParentCenterX)
-    let componentDistanceFromCXToLeft = abs(componentCenterX - currentParentLeft)
-    let componentDistanceFromCXToRight = abs(componentCenterX - currentParentRight)
+    let componentDistanceFromCXToCX = abs(componentCenterX - currentParentCenterX) // child center to parent center (X)
+    let componentDistanceFromCXToLeft = abs(componentCenterX - currentParentLeft) // child center to parent left (X)
+    let componentDistanceFromCXToRight = abs(componentCenterX - currentParentRight) // child center to parent right (X)
     
-    let componentDistanceFromCYToCY = abs(componentCenterY - currentParentCenterY)
-    let componentDistanceFromCYToTop = abs(componentCenterY - currentParentTop)
-    let componentDistanceFromCYToBottom = abs(componentCenterY - currentParentBottom)
+    let componentDistanceFromCYToCY = abs(componentCenterY - currentParentCenterY) // child center to parent center (Y)
+    let componentDistanceFromCYToTop = abs(componentCenterY - currentParentTop) // child center to parent top (Y)
+    let componentDistanceFromCYToBottom = abs(componentCenterY - currentParentBottom) // child center to parent bottom (Y)
     
-    let componentDistanceFromLeftToLeft = abs(componentLeft - currentParentLeft)
-    let componentDistanceFromLeftToCX = abs(componentLeft - currentParentCenterX)
+    let componentDistanceFromLeftToLeft = abs(componentLeft - currentParentLeft) // child left to parent left
+    let componentDistanceFromLeftToCX = abs(componentLeft - currentParentCenterX) // child left to parent center X
     
-    let componentDistanceFromTopToTop = abs(componentTop - currentParentTop)
-    let componentDistanceFromTopToCY = abs(componentTop - currentParentCenterY)
+    let componentDistanceFromTopToTop = abs(componentTop - currentParentTop) // child top to parent top
+    let componentDistanceFromTopToCY = abs(componentTop - currentParentCenterY) // child top to parent center Y
     
-    let componentDistanceFromRightToRight = abs(componentRight - currentParentRight)
-    let componentDistanceFromRightToCX = abs(componentRight - currentParentCenterX)
+    let componentDistanceFromRightToRight = abs(componentRight - currentParentRight) // child right to parent right
+    let componentDistanceFromRightToCX = abs(componentRight - currentParentCenterX) // child right to parent center X
     
-    let componentDistanceFromBottomToBottom = abs(componentBottom - currentParentBottom)
-    let componentDistanceFromBottomToCY = abs(componentBottom - currentParentCenterY)
+    let componentDistanceFromBottomToBottom = abs(componentBottom - currentParentBottom) // child bottom to parent bottom
+    let componentDistanceFromBottomToCY = abs(componentBottom - currentParentCenterY) // child bottom to parent center Y
     
-    let parentRatioX = newParentWidth / currentParentWidth
-    let parentRatioY = newParentHeight / currentParentHeight
+    let parentRatioX = newParentWidth / currentParentWidth // X scale of parent
+    let parentRatioY = newParentHeight / currentParentHeight // Y scale of parent
     
-    let newComponentX = componentX * parentRatioX
-    let newComponentY = componentY * parentRatioY
+    let newComponentX = componentX * parentRatioX // scaled child X
+    let newComponentY = componentY * parentRatioY // scaled child Y
     
-    let newComponentWidth = componentAvailableWidth * parentRatioX
-    let newComponentHeight = componentAvailableHeight * parentRatioY
+    let newComponentWidth = componentAvailableWidth * parentRatioX // scaled available width
+    let newComponentHeight = componentAvailableHeight * parentRatioY // scaled available height
     
-    let resizeDim = getResizeDim(requiredWidth: CGFloat(componentWidth), requiredHeight: CGFloat(componentHeight), availableWidth: CGFloat(newComponentWidth), availableHeight: CGFloat(newComponentHeight))
+    let resizeDim = getResizeDim(requiredWidth: CGFloat(componentWidth), requiredHeight: CGFloat(componentHeight), availableWidth: CGFloat(newComponentWidth), availableHeight: CGFloat(newComponentHeight)) // aspect-fit into available
     
-    let newComponentFinalW = resizeDim.width
-    let newComponentFinalH = resizeDim.height
+    let newComponentFinalW = resizeDim.width // final width after fit
+    let newComponentFinalH = resizeDim.height // final height after fit
     
-    let changeRatioInComponentWidth = newComponentFinalW / componentWidth
-    let changeRatioInComponentHeight = newComponentFinalH / componentHeight
+    let changeRatioInComponentWidth = newComponentFinalW / componentWidth // width scale factor
+    let changeRatioInComponentHeight = newComponentFinalH / componentHeight // height scale factor
     
-    var newComponentFinalX = newComponentX
-    var newComponentFinalY = newComponentY
+    var newComponentFinalX = newComponentX // default new X
+    var newComponentFinalY = newComponentY // default new Y
     
-    let minDistanceX = min(componentDistanceFromLeftToLeft, min(componentDistanceFromRightToRight, min(componentDistanceFromCXToCX, min(componentDistanceFromLeftToCX, min(componentDistanceFromCXToLeft, min(componentDistanceFromCXToRight, componentDistanceFromRightToCX))))))
-    let minDistanceY = min(componentDistanceFromTopToTop, min(componentDistanceFromBottomToBottom, min(componentDistanceFromCYToCY, min(componentDistanceFromTopToCY, min(componentDistanceFromCYToTop, min(componentDistanceFromCYToBottom, componentDistanceFromBottomToCY))))))
+    let minDistanceX = min(componentDistanceFromLeftToLeft, min(componentDistanceFromRightToRight, min(componentDistanceFromCXToCX, min(componentDistanceFromLeftToCX, min(componentDistanceFromCXToLeft, min(componentDistanceFromCXToRight, componentDistanceFromRightToCX)))))) // closest X anchor
+    let minDistanceY = min(componentDistanceFromTopToTop, min(componentDistanceFromBottomToBottom, min(componentDistanceFromCYToCY, min(componentDistanceFromTopToCY, min(componentDistanceFromCYToTop, min(componentDistanceFromCYToBottom, componentDistanceFromBottomToCY)))))) // closest Y anchor
     
     if componentDistanceFromLeftToLeft == minDistanceX {
-        newComponentFinalX = currentParentLeft + ((componentX - currentParentLeft) * changeRatioInComponentWidth)
+        newComponentFinalX = currentParentLeft + ((componentX - currentParentLeft) * changeRatioInComponentWidth) // anchor to left
     } else if componentDistanceFromRightToRight == minDistanceX {
-        newComponentFinalX = newParentWidth - newComponentFinalW + (((componentX + componentWidth) - currentParentRight) * changeRatioInComponentWidth)
+        newComponentFinalX = newParentWidth - newComponentFinalW + (((componentX + componentWidth) - currentParentRight) * changeRatioInComponentWidth) // anchor to right
     } else if componentDistanceFromCXToCX == minDistanceX {
-        newComponentFinalX = newParentWidth / 2.0 - newComponentFinalW / 2.0 + ((componentCenterX - currentParentCenterX) * changeRatioInComponentWidth)
+        newComponentFinalX = newParentWidth / 2.0 - newComponentFinalW / 2.0 + ((componentCenterX - currentParentCenterX) * changeRatioInComponentWidth) // anchor to center X
     } else if componentDistanceFromLeftToCX == minDistanceX {
-        newComponentFinalX = newParentWidth / 2.0 + ((componentX - currentParentCenterX) * changeRatioInComponentWidth)
+        newComponentFinalX = newParentWidth / 2.0 + ((componentX - currentParentCenterX) * changeRatioInComponentWidth) // anchor left-to-center
     } else if componentDistanceFromCXToLeft == minDistanceX {
-        newComponentFinalX = currentParentLeft - newComponentFinalW / 2.0 + ((componentCenterX - currentParentLeft) * changeRatioInComponentWidth)
+        newComponentFinalX = currentParentLeft - newComponentFinalW / 2.0 + ((componentCenterX - currentParentLeft) * changeRatioInComponentWidth) // anchor center-to-left
     } else if componentDistanceFromRightToCX == minDistanceX {
-        newComponentFinalX = newParentWidth / 2.0 - newComponentFinalW + (((componentX + componentWidth) - currentParentCenterX) * changeRatioInComponentWidth)
+        newComponentFinalX = newParentWidth / 2.0 - newComponentFinalW + (((componentX + componentWidth) - currentParentCenterX) * changeRatioInComponentWidth) // anchor right-to-center
     } else if componentDistanceFromCXToRight == minDistanceX {
-        newComponentFinalX = newParentWidth - newComponentFinalW / 2.0 + ((componentCenterX - currentParentRight) * changeRatioInComponentWidth)
+        newComponentFinalX = newParentWidth - newComponentFinalW / 2.0 + ((componentCenterX - currentParentRight) * changeRatioInComponentWidth) // anchor center-to-right
     }
     
     if componentDistanceFromTopToTop == minDistanceY {
-        newComponentFinalY = currentParentTop + ((componentY - currentParentTop) * changeRatioInComponentHeight)
+        newComponentFinalY = currentParentTop + ((componentY - currentParentTop) * changeRatioInComponentHeight) // anchor to top
     } else if componentDistanceFromBottomToBottom == minDistanceY {
-        newComponentFinalY = newParentHeight - newComponentFinalH + (((componentY + componentHeight) - currentParentBottom) * changeRatioInComponentHeight)
+        newComponentFinalY = newParentHeight - newComponentFinalH + (((componentY + componentHeight) - currentParentBottom) * changeRatioInComponentHeight) // anchor to bottom
     } else if componentDistanceFromCYToCY == minDistanceY {
-        newComponentFinalY = newParentHeight / 2.0 - newComponentFinalH / 2.0 + ((componentCenterY - currentParentCenterY) * changeRatioInComponentHeight)
+        newComponentFinalY = newParentHeight / 2.0 - newComponentFinalH / 2.0 + ((componentCenterY - currentParentCenterY) * changeRatioInComponentHeight) // anchor to center Y
     } else if componentDistanceFromTopToCY == minDistanceY {
-        newComponentFinalY = newParentHeight / 2.0 + ((componentY - currentParentCenterY) * changeRatioInComponentHeight)
+        newComponentFinalY = newParentHeight / 2.0 + ((componentY - currentParentCenterY) * changeRatioInComponentHeight) // anchor top-to-center
     } else if componentDistanceFromCYToTop == minDistanceY {
-        newComponentFinalY = currentParentTop - newComponentFinalH / 2.0 + ((componentCenterY - currentParentTop) * changeRatioInComponentHeight)
+        newComponentFinalY = currentParentTop - newComponentFinalH / 2.0 + ((componentCenterY - currentParentTop) * changeRatioInComponentHeight) // anchor center-to-top
     } else if componentDistanceFromBottomToCY == minDistanceY {
-        newComponentFinalY = newParentHeight / 2.0 - newComponentFinalH + (((componentY + componentHeight) - currentParentCenterY) * changeRatioInComponentHeight)
+        newComponentFinalY = newParentHeight / 2.0 - newComponentFinalH + (((componentY + componentHeight) - currentParentCenterY) * changeRatioInComponentHeight) // anchor bottom-to-center
     } else if componentDistanceFromCYToBottom == minDistanceY {
-        newComponentFinalY = newParentHeight - newComponentFinalH / 2.0 + ((componentCenterY - currentParentBottom) * changeRatioInComponentHeight)
+        newComponentFinalY = newParentHeight - newComponentFinalH / 2.0 + ((componentCenterY - currentParentBottom) * changeRatioInComponentHeight) // anchor center-to-bottom
     }
     
     if componentAvailableWidth < 0 || componentAvailableHeight < 0 || newComponentWidth < 0 || newComponentHeight < 0 ||

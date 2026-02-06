@@ -79,7 +79,7 @@ public class StackedViewController: UIViewController, CustomCollectionViewDelega
         unlockAllButton.setTitleColor(.secondaryLabel, for: .normal)
         unlockAllButton.translatesAutoresizingMaskIntoConstraints = false
         unlockAllButton.addTarget(self, action: #selector(didLeftButtonClick), for: .touchUpInside)
-        navigationPanel.addSubview(unlockAllButton)
+        //navigationPanel.addSubview(unlockAllButton)
         self.unlockAllButton = unlockAllButton
 
         // Add elements to the navigation panel (e.g., buttons, labels)
@@ -196,8 +196,8 @@ public class StackedViewController: UIViewController, CustomCollectionViewDelega
             layersLabel.leadingAnchor.constraint(equalTo: headerIcon.trailingAnchor, constant: 8),
             layersLabel.centerYAnchor.constraint(equalTo: navigationPanel.centerYAnchor),
             
-            unlockAllButton.trailingAnchor.constraint(equalTo: panelButton.leadingAnchor, constant: -16),
-            unlockAllButton.centerYAnchor.constraint(equalTo: navigationPanel.centerYAnchor),
+//            unlockAllButton.trailingAnchor.constraint(equalTo: panelButton.leadingAnchor, constant: -16),
+//            unlockAllButton.centerYAnchor.constraint(equalTo: navigationPanel.centerYAnchor),
 
             // Align the panel button to the trailing edge of the navigation panel
             panelButton.trailingAnchor.constraint(equalTo: navigationPanel.trailingAnchor, constant: -12),

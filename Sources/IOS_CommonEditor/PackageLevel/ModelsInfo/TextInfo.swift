@@ -449,18 +449,29 @@ extension TextInfo {
         let userLanguage = Locale.userLanguageIdentifier
         logger?.logInfo("[Trace] TextInfo.createImage textId=\(textId) modelId=\(modelId) parentId=\(parentId) templateId=\(templateID) ref=\(refSize.width)x\(refSize.height) max=\(maxWidth)x\(maxHeight) scale=\(contentScaleFactor) thumb=\(thumbUpdate) keepFont=\(keepSameFont) len=\(text.count)")
 
+        func logCreateImageFailed(_ reason: String, file: String = #fileID, function: String = #function, line: Int = #line) {
+            let stack = Thread.callStackSymbols.prefix(12).joined(separator: " | ")
+            let message = "[TextRenderCreateImageFailed] reason=\(reason) file=\(file) func=\(function) line=\(line) class=TextInfo " +
+                          "textId=\(textId) modelId=\(modelId) ref=\(refSize.width)x\(refSize.height) scale=\(contentScaleFactor) " +
+                          "stack=\(stack)"
+            logger?.logErrorFirebase(message, record: true)
+        }
+
         
         if refSize.width == 0.0 || refSize.height == 0.0 {
+            logCreateImageFailed("refSizeZero")
             logger?.logErrorFirebaseWithBacktrace("[preAvailbaleSize changes] Text RefSize Zero \(text) , returning Empty Image")
             return nil // createTransparentImage(size: CGSize(width: 10 , height: 10))
         }
 
         if refSize.width < 0.0 || refSize.height < 0.0 {
+            logCreateImageFailed("refSizeNegative")
             logger?.logErrorFirebaseWithBacktrace("[preAvailbaleSize changes] Text RefSize Negative \(refSize) for text: \(text)")
             return nil // createTransparentImage(size: CGSize(width: 10 , height: 10))
         }
         
         if text.isEmpty {
+            logCreateImageFailed("textEmpty")
             logger?.logError("Text Is Empty , Returning Empty Image")
             return nil // createTransparentImage(size: CGSize(width: 10 , height: 10))
         }
@@ -502,10 +513,17 @@ extension TextInfo {
             logger?.logErrorFirebase("TextInfo.createImage pixel height too large textId=\(textId) modelId=\(modelId) pixels=\(pixelWidth)x\(pixelHeight) max=\(validMaxWidth ?? 0)x\(validMaxHeight)", record: false)
         }
         logger?.logInfo("[TextTexture] createImage start lang=\(userLanguage) textLen=\(text.count) refSize=\(refSize.width)x\(refSize.height) scaled=\(scaledRefSize.width)x\(scaledRefSize.height) scale=\(contentScaleFactor) thumb=\(thumbUpdate) keepFont=\(keepSameFont)")
-        let values =  drawTextAsImage(keepFontSizeFix: keepSameFont, text: text, boundingBox: CGRect(origin: .zero, size: scaledRefSize), textProperties: properties, logger: logger)
-        let image = values!.0!
+        guard let values = drawTextAsImage(keepFontSizeFix: keepSameFont,
+                                           text: text,
+                                           boundingBox: CGRect(origin: .zero, size: scaledRefSize),
+                                           textProperties: properties,
+                                           logger: logger),
+              let image = values.0 else {
+            logCreateImageFailed("drawTextFailed")
+            return nil
+        }
         if !thumbUpdate{
-            fontSize = values!.1
+            fontSize = values.1
         }
         logger?.logInfo("[TextTexture] createImage result size=\(image.size.width)x\(image.size.height) fontSize=\(fontSize)")
 
