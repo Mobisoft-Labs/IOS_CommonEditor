@@ -645,9 +645,7 @@ extension MetalEngine {
             templateHandler.currentTemplateInfo?.ratioId = ratioModel.id
             
             let ratioModel = DBManager.shared.getRatioDbModel(ratioId: ratioModel.id)
-            if !isDBDisabled{
-                _ = DBManager.shared.updateTemplateRatioId(templateId: templateHandler.currentTemplateInfo!.templateId, newValue: ratioModel!.id)
-            }
+            
             if let ratio = templateHandler.currentTemplateInfo?.ratioInfo.getRatioInfo(ratioInfo: ratioModel!, refSize: engineConfig.getBaseSize(), logger: logger){
                 templateHandler.currentTemplateInfo?.ratioInfo = ratio
             }
@@ -769,24 +767,46 @@ extension MetalEngine {
             return }
 
         templateHandler.currentTemplateInfo?.$ratioInfo.dropFirst().sink(receiveValue: {[weak self] newRatioModel in
-            guard let self = self else { return }
             
+            func logNilError(_ isntance:String , var line : String = "\(#line)") {
+                guard let self = self else { return }
+                let stackTrace = "onRatio Change - ratio \(newRatioModel.id), size \(newRatioModel.ratioSize)"
+                logger.logErrorFirebase(stackTrace, record: false)
+
+                let message : String = "onRatio Change: \(isntance) is nil at line \(line)"
+                logger.logErrorFirebase(message, record: true)
+            }
+            guard let self = self else { logNilError("MetalEngine Class") ; return }
+            guard let currentTemplateInfo = templateHandler.currentTemplateInfo else { logNilError("Template Info") ;  return }
+            guard let editorView = editorView else { logNilError("Editor View") ; return }
+
+            if !isDBDisabled{
+                _ = DBManager.shared.updateTemplateRatioId(templateId: currentTemplateInfo.templateId, newValue: newRatioModel.id)
+            }
 //            self.canvas.resizeCanvas(size: newRatioModel.ratioSize)
             let newRefSize = newRatioModel.ratioSize
-            let oldSize = templateHandler.currentTemplateInfo?.ratioSize
+            let oldSize = currentTemplateInfo.ratioSize
             updateRatioOFPage(newPageSize: newRefSize)
  
       
 //            editorView.canvasView.touchView?.frame.size = newRefSize
-            editorView?.updateCenter()
+            editorView.updateCenter()
             
-            Task { [weak self] in
+            self.ratioChangeTask?.cancel()
+            self.ratioChangeTask = nil
+            self.setRatioChangeInProgress(true)
+            self.ratioChangeTask = Task { [weak self] in
                 guard let self = self else { return }
-                
+                defer { self.setRatioChangeInProgress(false) }
+
                 await sceneManager.changeRatio(ratio: newRefSize, refSize: engineConfig.getBaseSize())
-                await MainActor.run {
+                await MainActor.run { [weak self] in
+                    guard let self = self else { return }
+                    guard let viewManager = self.viewManager else { logNilError("View Manager Class") ; return }
+                    guard let currentPageModel = templateHandler.currentPageModel else { logNilError("currentPageModel") ; return }
+
 //                    guard let self = self else { return }
-                    self.viewManager?.ratioDidChange(page: templateHandler.currentPageModel!)
+                    viewManager.ratioDidChange(page: currentPageModel)
                     
                     templateHandler.selectCurrentPage()
                     

@@ -34,6 +34,9 @@ public class MetalEngine : ObservableObject, TemplateObserversProtocol , ActionS
     @Published var fetchStatus : FetchStatus = .Idle
     @Published var progressUnit : CGFloat = 0
     @Published var baseSize : CGSize = .zero
+    @Published public var isRatioChangeInProgress : Bool = false
+
+    var ratioChangeTask: Task<Void, Never>?
     
     var isDBDisabled : Bool = false
     var shouldRenderOnScene : Bool = true  {
@@ -115,6 +118,16 @@ public class MetalEngine : ObservableObject, TemplateObserversProtocol , ActionS
     var currentModel: BaseModelProtocol?
     var audioPlayer: AudioPlayerForMusicView? //= AudioPlayerForMusicView()
     // var currentActionModel: ActionStates?
+
+    func setRatioChangeInProgress(_ value: Bool) {
+        if Thread.isMainThread {
+            isRatioChangeInProgress = value
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                self?.isRatioChangeInProgress = value
+            }
+        }
+    }
     
     
     
