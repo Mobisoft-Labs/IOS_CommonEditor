@@ -295,11 +295,23 @@ extension MetalEngine {
                                "prevH=\(oldPrevAvailableHeight)->\(baseModel.prevAvailableHeight), " +
                                "endW=\(frame.size.width), endH=\(frame.size.height)")
 
-               if baseModel.prevAvailableWidth < 0 || baseModel.prevAvailableHeight < 0 || frame.size.width < 0 || frame.size.height < 0 {
-                   logger.logErrorFirebaseWithBacktrace("[preAvailbaleSize changes] Negative sizes after endFrame: " +
-                                                        "modelId=\(baseModel.modelId), modelType=\(baseModel.modelType), " +
-                                                        "prevAvailableWidth=\(baseModel.prevAvailableWidth), prevAvailableHeight=\(baseModel.prevAvailableHeight), " +
-                                                        "frameW=\(frame.size.width), frameH=\(frame.size.height)")
+               let hasInvalidValues = baseModel.prevAvailableWidth <= 0 ||
+               baseModel.prevAvailableHeight <= 0 ||
+               frame.size.width <= 0 ||
+               frame.size.height <= 0 ||
+               frame.center.x <= 0 ||
+               frame.center.y <= 0
+
+               if hasInvalidValues {
+                   logger.logErrorFirebase("[endFrame] before " +
+                                           "modelId=\(baseModel.modelId), modelType=\(baseModel.modelType), " +
+                                           "oldSize=\(oldFrame.size), oldCenter=\(oldFrame.center), " +
+                                           "oldPrevW=\(oldPrevAvailableWidth), oldPrevH=\(oldPrevAvailableHeight)", record: false)
+                   logger.logErrorFirebase("[endFrame] after " +
+                                           "modelId=\(baseModel.modelId), modelType=\(baseModel.modelType), " +
+                                           "newSize=\(frame.size), newCenter=\(frame.center), " +
+                                           "newPrevW=\(baseModel.prevAvailableWidth), newPrevH=\(baseModel.prevAvailableHeight)", record: false)
+                   logger.logErrorFirebase("[endFrame][negativeSize]", record: true)
                }
                
 //               }

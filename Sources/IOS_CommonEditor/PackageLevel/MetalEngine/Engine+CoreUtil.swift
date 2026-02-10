@@ -191,25 +191,57 @@ extension MetalEngine {
     private func recursiveChildSizeChange(parent:ParentModel,oldParentSize:CGSize,newParentSize:CGSize){
         for child in parent.children{
             let oldChildSize = child.baseFrame.size
+            let oldChildCenter = child.baseFrame.center
             let componentX = child.baseFrame.center.x - child.baseFrame.size.width/2
             let componentY = child.baseFrame.center.y - child.baseFrame.size.height/2
-            let calculateSize = calculateComponentPosition(componentX: componentX, componentY: componentY, componentWidth: child.baseFrame.size.width, componentHeight: child.baseFrame.size.height, componentAvailableWidth: CGFloat(child.prevAvailableWidth), componentAvailableHeight: CGFloat(child.prevAvailableHeight), rotationInDegree: CGFloat(child.baseFrame.rotation), currentParentWidth: oldParentSize.width, currentParentHeight: oldParentSize.height, newParentWidth: newParentSize.width, newParentHeight: newParentSize.height)
-            let newSize = CGSize(width: calculateSize[2], height: calculateSize[3])
-            let newCenter = CGPoint(x: calculateSize[0]+(calculateSize[2]/2), y: calculateSize[1]+(calculateSize[3]/2))
-            child.baseFrame.size = newSize
-            child.baseFrame.center = newCenter
-            child.prevAvailableWidth = Float(calculateSize[4])
-            child.prevAvailableHeight = Float(calculateSize[5])
             let oldPrevAvailableWidth = child.prevAvailableWidth
             let oldPrevAvailableHeight = child.prevAvailableHeight
-            logger.printLog("[preAvailbaleSize changes] ratioChange modelId=\(child.modelId), modelType=\(child.modelType), " +
-                            "prevW=\(oldPrevAvailableWidth), prevH=\(oldPrevAvailableHeight), " +
-                            "parentOld=\(oldParentSize), parentNew=\(newParentSize)")
-            if child.prevAvailableWidth < 0 || child.prevAvailableHeight < 0 {
-                logger.logErrorFirebaseWithBacktrace("[preAvailbaleSize changes] Negative prevAvailable after ratio change: " +
-                                                     "modelId=\(child.modelId), modelType=\(child.modelType), " +
-                                                     "prevAvailableWidth=\(child.prevAvailableWidth), prevAvailableHeight=\(child.prevAvailableHeight)")
+            
+            let calculateSize = calculateComponentPosition(componentX: componentX, componentY: componentY, componentWidth: child.baseFrame.size.width, componentHeight: child.baseFrame.size.height, componentAvailableWidth: CGFloat(child.prevAvailableWidth), componentAvailableHeight: CGFloat(child.prevAvailableHeight), rotationInDegree: CGFloat(child.baseFrame.rotation), currentParentWidth: oldParentSize.width, currentParentHeight: oldParentSize.height, newParentWidth: newParentSize.width, newParentHeight: newParentSize.height)
+            let rawNewSize = CGSize(width: calculateSize[2], height: calculateSize[3])
+            let rawNewCenter = CGPoint(x: calculateSize[0]+(calculateSize[2]/2), y: calculateSize[1]+(calculateSize[3]/2))
+            let rawPrevAvailableWidth = Float(calculateSize[4])
+            let rawPrevAvailableHeight = Float(calculateSize[5])
+
+            
+
+
+            let hasInvalidValues = rawNewSize.width <= 0 ||
+            rawNewSize.height <= 0 ||
+            rawNewCenter.x <= 0 ||
+            rawNewCenter.y <= 0 ||
+            rawPrevAvailableWidth <= 0 ||
+            rawPrevAvailableHeight <= 0
+
+
+            if hasInvalidValues {
+                logger.logErrorFirebase("[ratioChange] before " +
+                                        "modelId=\(child.modelId), modelType=\(child.modelType), " +
+                                        "oldSize=\(oldChildSize), oldCenter=\(oldChildCenter), " +
+                                        "oldPrevW=\(oldPrevAvailableWidth), oldPrevH=\(oldPrevAvailableHeight), " +
+                                        "oldParentSize=\(oldParentSize)", record: false)
+                logger.logErrorFirebase("[ratioChange] after " +
+                                        "modelId=\(child.modelId), modelType=\(child.modelType), " +
+                                        "newSize=\(rawNewSize), newCenter=\(rawNewCenter), " +
+                                        "newPrevW=\(rawPrevAvailableWidth), newPrevH=\(rawPrevAvailableHeight), " +
+                                        "newParentSize=\(newParentSize)", record: false)
+
+                logger.logErrorFirebase("[ratioChange][negativeSize]" , record: true)
             }
+
+            let sanitizedSize = CGSize(width: abs(rawNewSize.width), height: abs(rawNewSize.height))
+            let sanitizedCenter = CGPoint(x: abs(rawNewCenter.x), y: abs(rawNewCenter.y))
+            let sanitizedPrevWidth = abs(rawPrevAvailableWidth)
+            let sanitizedPrevHeight = abs(rawPrevAvailableHeight)
+
+            child.baseFrame.size = sanitizedSize
+            child.baseFrame.center = sanitizedCenter
+            child.prevAvailableWidth = sanitizedPrevWidth
+            child.prevAvailableHeight = sanitizedPrevHeight
+            let NewPrevAvailableWidth = child.prevAvailableWidth
+            let NewPrevAvailableHeight = child.prevAvailableHeight
+            
+
             if !(isDBDisabled){
                 _ = DBManager.shared.updateBaseFrameWithPrevious(modelId: child.modelId,
                                                                 newValue: child.baseFrame,
@@ -218,8 +250,7 @@ extension MetalEngine {
                                                                 previousHeight: CGFloat(child.prevAvailableHeight))
             }
             if let parent = child as? ParentModel{
-                
-                recursiveChildSizeChange(parent: parent, oldParentSize: oldChildSize, newParentSize: newSize)
+                recursiveChildSizeChange(parent: parent, oldParentSize: oldChildSize, newParentSize: sanitizedSize)
             }
         }
     }

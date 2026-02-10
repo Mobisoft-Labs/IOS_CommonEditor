@@ -289,7 +289,7 @@ extension ParentView {
         let size = stickerInfo.baseFrame.size
         stickerView.vISLOCKED = stickerInfo.lockStatus
         stickerView.isHidden = stickerInfo.softDelete
-        print("SV Size \(size) and Center \(center)")
+        logger.logInfo("stickerInfo Size \(size) and Center \(center)")
 //        stickerView.setSize(size: size)
 //        stickerView.setCenter(center: center)
 //        stickerView.setRotation(angle: Double(stickerInfo.baseFrame.rotation))

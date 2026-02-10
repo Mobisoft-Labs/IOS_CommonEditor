@@ -90,7 +90,7 @@ public struct TemplateHeaderModel: Codable, Identifiable ,Hashable{
         var array = [TemplateHeaderModel]()
         
         for each in 0...10 {
-            let element = TemplateHeaderModel(id: "\(each)", thumbServerPath: "", dataPath: "", isPremium: "0", templateDisplayName: "", ratioWidth: "1", ratioHeight: "1")
+            let element = TemplateHeaderModel(id: "-\(each)", thumbServerPath: "", dataPath: "", isPremium: "0", templateDisplayName: "", ratioWidth: "1", ratioHeight: "1")
             array.append(element)
         }
         myArray = array

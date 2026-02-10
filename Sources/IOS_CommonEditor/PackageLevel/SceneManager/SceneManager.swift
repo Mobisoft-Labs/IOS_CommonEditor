@@ -880,6 +880,7 @@ public class ThumbManager : SceneComposable {
                 DispatchQueue.main.async {
                     pageModel.thumbImage = image
                     templateHandler.currentActionState.updatePageArray = true
+                    print("Thumb Create Page")
                 }
             } else {
                 logger.logError("update thumb error texture nil\(page.identification)")

@@ -101,7 +101,7 @@ public class Conversion{
         }
         
         if let texture = texture {
-            logger?.logErrorFirebaseWithBacktrace("[Trace] Conversion.loadTexture result size=\(texture.width)x\(texture.height) format=\(texture.pixelFormat)")
+            // logger?.logErrorFirebaseWithBacktrace("[Trace] Conversion.loadTexture result size=\(texture.width)x\(texture.height) format=\(texture.pixelFormat)")
         }
 
       //  let img  = Conversion.textureToUIImage(texture!)
