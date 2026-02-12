@@ -298,9 +298,7 @@ extension MetalEngine {
                let hasInvalidValues = baseModel.prevAvailableWidth <= 0 ||
                baseModel.prevAvailableHeight <= 0 ||
                frame.size.width <= 0 ||
-               frame.size.height <= 0 ||
-               frame.center.x <= 0 ||
-               frame.center.y <= 0
+               frame.size.height <= 0
 
                if hasInvalidValues {
                    logger.logErrorFirebase("[endFrame] before " +
@@ -309,7 +307,7 @@ extension MetalEngine {
                                            "oldPrevW=\(oldPrevAvailableWidth), oldPrevH=\(oldPrevAvailableHeight)", record: false)
                    logger.logErrorFirebase("[endFrame] after " +
                                            "modelId=\(baseModel.modelId), modelType=\(baseModel.modelType), " +
-                                           "newSize=\(frame.size), newCenter=\(frame.center), " +
+                                           "newSize=\(frame.size), " +
                                            "newPrevW=\(baseModel.prevAvailableWidth), newPrevH=\(baseModel.prevAvailableHeight)", record: false)
                    logger.logErrorFirebase("[endFrame][negativeSize]", record: true)
                }

@@ -634,11 +634,13 @@ public class ThumbManager : SceneComposable {
     }
     
     func updateThumbnail(id:Int = 0) async {
+        
         guard let templateHandler = self.templateHandler else {
             logger.printLog("template handler nil")
-            return }
+            return
+        }
         
-                var baseModels = [BaseModel]()
+        var baseModels = [BaseModel]()
                 
                 if id == 0 {
                     baseModels = templateHandler.childDict.map({return $0.value})
@@ -670,19 +672,25 @@ public class ThumbManager : SceneComposable {
         
         if let page = templateHandler.currentPageModel{
             Task {
-                await processUpdates(currentTime: currentTime, page: page)
+                await processUpdates(templateHandler: templateHandler, currentTime: currentTime, page: page)
             }
         }
     }
     
-    func processUpdates(currentTime : Float, page: PageInfo) async {
+    func processUpdates(templateHandler : TemplateHandler, currentTime : Float, page: PageInfo) async {
         await updatePageThumb(pageModel: page, currentTime: currentTime)
-
+        
+        guard let templateHandler = templateHandler else {
+            logger.logErrorFirebase("[guardFail]", record: true)
+            return
+        }
+        
         let basemodels = templateHandler!.childDict.values.compactMap { $0 as? ParentInfo }
 
          for child in basemodels {
              await updateParentThumb(parentModel: child, currentTime: currentTime)
          }
+        
     }
     
     func updateThum(model:BaseModel) async {

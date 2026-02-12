@@ -102,7 +102,8 @@ class IOSMetalRecorder {
         
         // Create the serialization queue to use for reading and writing the audio data.
         rwAudioSerializationQueue = DispatchQueue(label: rwAudioSerializationQueueDescription)
-        assert(rwAudioSerializationQueue != nil, "Failed to initialize Dispatch Queue")
+        logger.logError("CANCEL ISSUE -  Failed to initialize Dispatch Queue")
+        //assert(rwAudioSerializationQueue != nil, "Failed to initialize Dispatch Queue")
         let filePath = settings.audioFileURL
         let fileUrl = URL(fileURLWithPath: filePath)
         if FileManager.default.fileExists(atPath: filePath) {
@@ -111,7 +112,7 @@ class IOSMetalRecorder {
             var audioFileName = settings.audioFileURL.replacingOccurrences(of: "music/", with: "").replacingOccurrences(of: ".mp3", with: "")
             var url = Bundle.main.url(forResource: audioFileName, withExtension: settings.audioExt)
             if url == nil  || audioFileName == ""{
-                logger.printLog("unable to add any audio tracks.adding silent audio file")
+                logger.logInfo("unable to add any audio tracks.adding silent audio file")
                 url = Bundle.main.url(forResource: "silence", withExtension: "mp3")
             }
             inputURL = url
@@ -119,22 +120,23 @@ class IOSMetalRecorder {
        
         
         asset = AVAsset(url: inputURL)
-        assert(asset != nil, "Error creating AVAsset from input URL")
-        
+      //  assert(asset != nil, "Error creating AVAsset from input URL")
+        logger.logError("CANCEL ISSUE -  Error creating AVAsset from input URL")
+
       
         
         asset.loadValuesAsynchronously(forKeys: ["tracks"], completionHandler: {
             var success = false
             var localError:NSError?
             success = (self.asset.statusOfValue(forKey: "tracks", error: &localError) == AVKeyValueStatus.loaded)
-            self.logger.printLog("\(success)")
+            self.logger.logInfo("\(success)")
             if success  {
                 self.isAudioReady = true
-                self.logger.printLog("Audio Load Success ")
+                self.logger.logInfo("Audio Load Success ")
                 completionHandler(true)
             }else{
               //  textroErrorStatus = .AudioWritingFailed
-                self.logger.printLog("Audio Failed To Load")
+                self.logger.logInfo("Audio Failed To Load")
                 self.isAudioReady = true
                 completionHandler(true)
             }
@@ -168,7 +170,9 @@ class IOSMetalRecorder {
             ]
             
             assetReaderAudioOutput = AVAssetReaderTrackOutput(track: assetAudioTrack!, outputSettings: decompressionAudioSettings)
-            assert(assetReaderAudioOutput != nil, "Failed to initialize AVAssetReaderTrackOutout")
+          //  assert(assetReaderAudioOutput != nil, "Failed to initialize AVAssetReaderTrackOutout")
+            logger.logError("CANCEL ISSUE - Failed to initialize AVAssetReaderTrackOutout")
+
             //assetReader.add(assetReaderAudioOutput)
             
 //            var channelLayout = AudioChannelLayout()
@@ -190,11 +194,13 @@ class IOSMetalRecorder {
                 AVChannelLayoutKey: NSData(bytes:&channelLayout, length:MemoryLayout<AudioChannelLayout>.size),]
             
             assetWriterAudioInput = AVAssetWriterInput(mediaType: AVMediaType.audio, outputSettings: outputSettings)
-            assert(rwAudioSerializationQueue != nil, "Failed to initialize AVAssetWriterInput")
+            logger.logError("CANCEL ISSUE -  Failed to initialize AVAssetWriterInput")
+
+            //assert(rwAudioSerializationQueue != nil, "Failed to initialize AVAssetWriterInput")
             assetWriter.add(assetWriterAudioInput)
             
         }
-        logger.printLog("Finsihed Setup of AVAssetReader and AVAssetWriter")
+        logger.logInfo("Finsihed Setup of AVAssetReader and AVAssetWriter")
         return true
     }
     
@@ -223,7 +229,7 @@ class IOSMetalRecorder {
             videoURL = fileHandler.createNewURL(name: settings.name, ext: settings.resolution.ext)
             assetWriter = try AVAssetWriter(outputURL: videoURL, fileType: AVFileType.mp4) // mp4 JD Update
         } catch {
-            logger.printLog("error")
+            logger.logInfo("error")
         }
     }
     
@@ -240,7 +246,7 @@ class IOSMetalRecorder {
         _ = setUpVideoReaderWriter(size: size)
         // AUDIO
         let didSetupAurdioWriter =  setupAudioReadWriter(asset: self.asset)
-        logger.printLog("didSetupAurdioWriter \(didSetupAurdioWriter)")
+        logger.logInfo("didSetupAurdioWriter \(didSetupAurdioWriter)")
         
         
         assetWriter.shouldOptimizeForNetworkUse = true
@@ -252,7 +258,7 @@ class IOSMetalRecorder {
         var currentCMTime = CMTimeMake(value: 0,timescale: assetCMTime.timescale);
         
       //  assetReader.startReading()
-        logger.printLog("staaaaaart")
+        logger.logInfo("staaaaaart")
        // start()
         assetWriter.startSession(atSourceTime: CMTime.zero)
         // startAssetReaderAndWriter()
@@ -272,8 +278,22 @@ class IOSMetalRecorder {
     
     func endRecording(completion : @escaping (()->Void)) {
         isRecording = false
+//        guard let assetWriter = assetWriter, let assetWriterVideoInput = assetWriterVideoInput else {
+//            logger.logErrorFirebase("[IOSMetalRecorder] endRecording called before writer setup", record: true)
+//            completion()
+//            return
+//        }
+     //   guard let assetWriter = assetWriter, let assetWriterVideoInput = assetWriterVideoInput else {
+    //            logger.logErrorFirebase("[IOSMetalRecorder] endRecording called before writer setup", record: true)
+    //            completion()
+    //            return
+    //        }
+            if assetWriter == nil || assetWriterVideoInput == nil {
+                logger.logError("CANCEL ISSUE - endRecording called before writer setup")
+
+            }
         if isVideoCompleted && isAudioCompleted {
-        assetWriterVideoInput.markAsFinished()
+            assetWriterVideoInput.markAsFinished()
             assetWriter.finishWriting(completionHandler: completion)
         }
     }
@@ -286,18 +306,18 @@ class IOSMetalRecorder {
             return
         }
         
-        logger.printLog("\(framePresentationTime.seconds)")
+        logger.logInfo("\(framePresentationTime.seconds)")
         while !assetWriterVideoInput.isReadyForMoreMediaData   {} //
         
         guard let pixelBufferPool = assetWriterPixelBufferInput.pixelBufferPool else {
-            logger.printLog("Pixel buffer asset writer input did not have a pixel buffer pool available; cannot retrieve frame")
+            logger.logInfo("Pixel buffer asset writer input did not have a pixel buffer pool available; cannot retrieve frame")
             return
         }
         
         var maybePixelBuffer: CVPixelBuffer? = nil
         let status  = CVPixelBufferPoolCreatePixelBuffer(nil, pixelBufferPool, &maybePixelBuffer)
         if status != kCVReturnSuccess {
-            logger.printLog("Could not get pixel buffer from asset writer input; dropping frame...")
+            logger.logInfo("Could not get pixel buffer from asset writer input; dropping frame...")
             return
         }
         
@@ -333,7 +353,7 @@ class IOSMetalRecorder {
                 
             }
             
-            logger.printLog("Audio Is Reached Duration")
+            logger.logInfo("Audio Is Reached Duration")
 
         }
        isAudioCompleted = true
@@ -446,7 +466,7 @@ class IOSMetalRecorder {
          //assetReader.timeRange = CMTimeRange(start: kCMTimeZero, duration: CMTime(seconds: VIDEO_DURATION, preferredTimescale: asset.duration.timescale))
             assetReader.timeRange = TimeRanges[timeRange]
                 guard self.assetReader.startReading() else {
-                    logger.printLog("Couldn't start reading")
+                    logger.logInfo("Couldn't start reading")
                     return
                 }
                 
@@ -467,7 +487,7 @@ class IOSMetalRecorder {
                         sampleBuffer = nil
                         
                     }else{
-                        logger.printLog("audio reached")
+                        logger.logInfo("audio reached")
                         break;
                         }
                     }
@@ -491,5 +511,4 @@ class IOSMetalRecorder {
     
 
 }
-
 

@@ -208,8 +208,6 @@ extension MetalEngine {
 
             let hasInvalidValues = rawNewSize.width <= 0 ||
             rawNewSize.height <= 0 ||
-            rawNewCenter.x <= 0 ||
-            rawNewCenter.y <= 0 ||
             rawPrevAvailableWidth <= 0 ||
             rawPrevAvailableHeight <= 0
 
@@ -222,7 +220,7 @@ extension MetalEngine {
                                         "oldParentSize=\(oldParentSize)", record: false)
                 logger.logErrorFirebase("[ratioChange] after " +
                                         "modelId=\(child.modelId), modelType=\(child.modelType), " +
-                                        "newSize=\(rawNewSize), newCenter=\(rawNewCenter), " +
+                                        "newSize=\(rawNewSize), " +
                                         "newPrevW=\(rawPrevAvailableWidth), newPrevH=\(rawPrevAvailableHeight), " +
                                         "newParentSize=\(newParentSize)", record: false)
 
@@ -230,12 +228,11 @@ extension MetalEngine {
             }
 
             let sanitizedSize = CGSize(width: abs(rawNewSize.width), height: abs(rawNewSize.height))
-            let sanitizedCenter = CGPoint(x: abs(rawNewCenter.x), y: abs(rawNewCenter.y))
             let sanitizedPrevWidth = abs(rawPrevAvailableWidth)
             let sanitizedPrevHeight = abs(rawPrevAvailableHeight)
 
             child.baseFrame.size = sanitizedSize
-            child.baseFrame.center = sanitizedCenter
+            child.baseFrame.center = rawNewCenter
             child.prevAvailableWidth = sanitizedPrevWidth
             child.prevAvailableHeight = sanitizedPrevHeight
             let NewPrevAvailableWidth = child.prevAvailableWidth

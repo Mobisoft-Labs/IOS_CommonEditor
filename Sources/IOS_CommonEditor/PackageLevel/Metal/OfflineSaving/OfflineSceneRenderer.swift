@@ -388,6 +388,10 @@ public class OfflineSceneRenderer : SceneComposable  {
                 logger.logError("Writing Audio")
                 recorder.startWritingAudio(maxDuration:  Double(exportSettings.videoLength))
             }
+        if recorder == nil  {
+            logger.logError("CANCEL ISSUE - recorder is nil \(cancelOfflineSaving)")
+            //return
+        }
             recorder.endRecording { [self] in
                 if cancelOfflineSaving {
                     fileHandler.deleteVideoURL()

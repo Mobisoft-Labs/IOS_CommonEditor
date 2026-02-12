@@ -89,7 +89,7 @@ public class Conversion{
         let options = [MTKTextureLoader.Option.origin: origin]
         
         if let cgImage = image.cgImage {
-            logger?.logErrorFirebaseWithBacktrace("[Trace] Conversion.loadTexture cg=\(cgImage.width)x\(cgImage.height) ui=\(image.size.width)x\(image.size.height) scale=\(image.scale) flip=\(flip)")
+           // logger?.logErrorFirebaseWithBacktrace("[Trace] Conversion.loadTexture cg=\(cgImage.width)x\(cgImage.height) ui=\(image.size.width)x\(image.size.height) scale=\(image.scale) flip=\(flip)")
         } else {
             logger?.logErrorFirebaseWithBacktrace("[Trace] Conversion.loadTexture missing cgImage")
         }
